@@ -14,7 +14,7 @@ export class BasePage {
 
   /** Navigate to a path relative to baseURL */
   async navigate(path = '/'): Promise<void> {
-    await this.page.goto(path);
+    await this.page.goto(path, { waitUntil: 'domcontentloaded' });
   }
 
   /** Get current page URL */

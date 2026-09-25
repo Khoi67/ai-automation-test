@@ -18,7 +18,7 @@ export class HomePage extends BasePage {
     this.heroSection = page.locator('.carousel, .hero, .banner').first();
     this.courseCards = page.locator('.card, .course-card, [class*="course"]');
     this.courseCardTitle = page.locator('.card-title, .course-title, h4, h5');
-    this.searchInput = page.locator('input[type="search"], input[placeholder*="tìm"], input[placeholder*="search"]');
+    this.searchInput = page.getByPlaceholder(/Tìm kiếm/i).first();
     this.btnViewAll = page.getByText('Xem thêm');
   }
 
