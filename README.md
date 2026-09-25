@@ -39,9 +39,12 @@ demo-ai-automation/
 │   └── register-page.ts
 ├── requirements/         # Tài liệu yêu cầu chi tiết đồng bộ từ Jira
 ├── scratch/              # Tệp runtime phục vụ Telegram Bot trigger (notify.js, trigger.txt)
-├── scripts/              # Scripts tiện ích: Telegram Bot daemon, Jira fetcher
-│   ├── integrations/jira/jira_fetcher.js
-│   └── telegram_bot.js
+├── scripts/              # Scripts tiện ích: Telegram Bot daemon, Jira integration
+│   ├── integrations/jira/
+│   │   ├── jira_create_bug.js # Tự động tạo Bug trên Jira + gửi Telegram kèm screenshot
+│   │   ├── jira_fetcher.js    # Kéo User Stories/Requirements từ Jira Cloud
+│   │   └── jira_transition.js # Tự động chuyển trạng thái Ticket (In Review)
+│   └── telegram_bot.js        # Telegram Assistant Bot (Zero-Config, Long-Polling)
 ├── services/             # API Service wrappers (Auth, User, Course)
 ├── test-cases/           # Tài liệu Test Cases chuẩn RBT (SCRUM-2, SCRUM-6,...)
 ├── test-data/            # Dữ liệu kiểm thử ngoại vi
@@ -192,18 +195,117 @@ npm run clean
 
 ---
 
-## 🤖 Điều khiển Tự động hóa qua Telegram Bot
+## 🤖 Quy trình Vận hành AI Automation End-to-End (Telegram Bot + Antigravity IDE)
 
-Dự án tích hợp cơ chế Event-Driven giúp kích hoạt luồng Automation trực tiếp từ Telegram:
+Hệ thống hỗ trợ quy trình tự động hóa khép kín: **Jira Cloud ➔ Telegram Bot ➔ Antigravity AI Agent ➔ Playwright Test ➔ Tự động Phân loại & Log Bug ➔ Git Push ➔ CI/CD ➔ Báo cáo Telegram**.
 
-1. Khởi động Bot:
-   ```bash
-   npm run bot
-   # Hoặc nhấp đúp vào file start-bot.bat trên Windows
+```mermaid
+sequenceDiagram
+    autonumber
+    actor User as Tester / PM
+    participant TG as Telegram Bot (start-bot.bat)
+    participant TF as scratch/trigger.txt
+    participant IDE as Antigravity AI Agent
+    participant Jira as Jira Cloud
+    participant PW as Playwright Tests
+    participant Git as GitHub Actions
+
+    User->>TG: Bấm "🚀 Chạy Automation SCRUM-X" (hoặc gửi /start)
+    TG->>TF: Ghi mã Ticket vào trigger.txt
+    TG-->>User: Phản hồi đã chuyển lệnh cho AI Agent
+    User->>IDE: Gõ lệnh: /e2e_jira_to_automation trigger.txt
+    IDE->>TF: Đọc mã Ticket từ trigger.txt
+    IDE->>Jira: Bước 1: Kéo Requirement & Kiểm tra Requirement Gate
+    IDE->>IDE: Bước 2: Sinh Manual Test Cases & Kiểm tra Test Case Gate
+    IDE->>IDE: Bước 3: Thiết kế Page Object (POM) & Viết Test Spec
+    IDE->>PW: Bước 4: Thực thi test & Phân loại lỗi (Failure Classification)
+    alt Phát hiện App Bug
+        IDE->>Jira: Tự động tạo Bug, link blocks Story & đính kèm screenshot Playwright
+        IDE->>TG: Bắn ảnh screenshot kèm thông tin lỗi chi tiết về Bot
+    else Test PASS x2
+        Note over IDE: Đạt tiêu chuẩn Definition of Done
+    end
+    IDE->>Git: Bước 5: Git commit & push lên main
+    IDE->>Jira: Bước 6: Chuyển trạng thái Ticket sang "In Review"
+    IDE->>TG: Gửi báo cáo tổng kết hoàn tất quy trình
+```
+
+---
+
+### Các bước thực hiện chi tiết:
+
+#### 🔹 Bước 1: Khởi động Telegram Bot Daemon
+Mở thư mục dự án trên máy Windows và khởi động bot:
+* **Cách 1 (Nhanh nhất):** Nhấp đúp chuột vào file **`start-bot.bat`**.
+* **Cách 2 (Dòng lệnh):**
+  ```bash
+  npm run bot
+  # hoặc: node scripts/telegram_bot.js
+  ```
+> 💡 *Bot chạy ở chế độ Long-Polling (Zero-Config): Không cần cài đặt n8n, không cần mở port hay thiết lập Cloudflare Tunnel.*
+
+---
+
+#### 🔹 Bước 2: Kích hoạt Ticket từ Telegram
+1. Mở Telegram và nhắn tin với Bot.
+2. Gửi lệnh `/start` hoặc bấm nút **"🔄 Quét lại Jira"**:
+   * Bot sẽ tự động truy vấn Jira Cloud và chỉ hiển thị danh sách các User Stories đang ở trạng thái **`In Progress`**.
+3. Bấm vào nút inline tương ứng: **"🚀 Chạy Automation SCRUM-X"** (hoặc gửi tin nhắn: `bắt đầu SCRUM-X`):
+   * Bot sẽ ghi mã ticket vào file `scratch/trigger.txt`.
+   * Bot gửi phản hồi thông báo đã tiếp nhận và sẵn sàng chuyển tiếp cho AI Agent.
+
+---
+
+#### 🔹 Bước 3: Kích hoạt AI Agent trong Antigravity IDE
+1. Mở cửa sổ chat của **Antigravity IDE**.
+2. Nhập lệnh sau vào ô chat và nhấn Enter:
+   ```text
+   /e2e_jira_to_automation trigger.txt
    ```
-2. Mở Telegram và gửi lệnh cho bot:
-   - `/start` hoặc `/help`: Xem hướng dẫn sử dụng.
-   - `Bắt đầu SCRUM-6` (hoặc bất kỳ ticket nào): Bot sẽ tự động kéo requirements từ Jira, tạo test case, sinh mã nguồn POM, thực thi kiểm thử và gửi kết quả kèm commit ID trực tiếp về Telegram.
+   *(Hoặc bạn có thể gọi trực tiếp theo mã ticket: `/e2e_jira_to_automation SCRUM-X`)*
+
+---
+
+#### 🔹 Bước 4: AI Agent tự động thực thi trọn vẹn 6 bước
+AI Agent sẽ tự động đọc `scratch/trigger.txt` và lần lượt thực thi:
+
+1. **Bước 1: Kéo Requirements từ Jira (`/fetch_jira_requirements`)**
+   * Tải User Story, Acceptance Criteria và lưu tại `requirements/<KEY>_requirements.md`.
+   * Kiểm tra **Requirement Gate**: Đảm bảo yêu cầu rõ ràng, khả thi để kiểm thử.
+   * Bắn thông báo tiến độ về Telegram Bot.
+
+2. **Bước 2: Phân tích & Sinh Manual Test Cases (`/generate_testcases_from_requirements`)**
+   * Áp dụng kỹ thuật phân vùng tương đương (EP), phân tích giá trị biên (BVA).
+   * Lưu bộ test cases chuẩn tại `test-cases/<KEY>_testcases.md`.
+   * Kiểm tra **Test Case Gate**: Đảm bảo bao phủ Happy Path, Negative Path và Boundary.
+   * Bắn thông báo tiến độ về Telegram Bot.
+
+3. **Bước 3: Thiết kế Page Object (POM) & Test Specs**
+   * Tạo/cập nhật Page Objects trong `page-object/` (chỉ chứa Locators & Actions, không chứa assertions).
+   * Viết test specs tương ứng trong `tests/ui/<feature>.spec.ts`.
+   * Bắn thông báo tiến độ về Telegram Bot.
+
+4. **Bước 4: Chạy Kiểm Thử & Phân Loại Lỗi (Failure Classification)**
+   * Chạy kiểm thử tự động với Playwright: `npx playwright test`.
+   * **Nếu lỗi do automation (locator/timeout):** Tự kích hoạt Self-Healing sửa code cho đến khi PASS ổn định 2 lần liên tiếp.
+   * **Nếu lỗi do ứng dụng (Application Bug / Chưa triển khai logic):**
+     * Dừng test, đánh dấu FAILED (tuyệt đối không sửa code test để ép PASS).
+     * Tự động lấy ảnh chụp màn hình Playwright vừa chụp tại thời điểm fail (có chứa từ khóa trong ô tìm kiếm).
+     * Tự động gọi script `scripts/integrations/jira/jira_create_bug.js`:
+       * Tự động đồng bộ 100% Precondition, Steps, Expected Result từ Test Case sang Bug trên Jira.
+       * Upload ảnh bằng chứng lên Jira issue.
+       * Thiết lập liên kết: Bug ➡️ **blocks** ➡️ User Story.
+       * Bắn ảnh chụp bằng chứng lỗi và thông tin chi tiết về Telegram Bot.
+
+5. **Bước 5: Đẩy Mã Nguồn Lên GitHub (Git Delivery)**
+   * Kiểm tra `git status`, tạo commit chuẩn Conventional Commits.
+   * Tự động `git push origin main` lên GitHub Repository.
+   * Bắn thông báo tiến độ về Telegram Bot.
+
+6. **Bước 6: Chuyển Trạng Thái Jira & Báo Cáo Hoàn Tất**
+   * Tự động chuyển trạng thái Ticket trên Jira sang **`In Review`** qua script `jira_transition.js`.
+   * GitHub Actions CI tự động kích hoạt chạy test suite trên Cloud và cập nhật Allure Report lên GitHub Pages.
+   * Bắn thông báo tổng kết cuối cùng về Telegram Bot.
 
 ---
 
