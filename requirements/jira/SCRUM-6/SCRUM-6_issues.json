@@ -1,0 +1,1147 @@
+{
+  "fetchedAt": "2026-09-23T16:34:41.592Z",
+  "mode": "single",
+  "ticketKey": "SCRUM-6",
+  "total": 1,
+  "issues": [
+    {
+      "key": "SCRUM-6",
+      "id": "10005",
+      "summary": "[Auth] Chức năng Quên mật khẩu và Khôi phục quyền truy cập tài khoản",
+      "description": {
+        "type": "doc",
+        "version": 1,
+        "content": [
+          {
+            "type": "heading",
+            "attrs": {
+              "level": 4,
+              "localId": "830e777dfe8f"
+            },
+            "content": [
+              {
+                "type": "text",
+                "text": "1. User Story",
+                "marks": [
+                  {
+                    "type": "strong"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "type": "bulletList",
+            "content": [
+              {
+                "type": "listItem",
+                "attrs": {
+                  "localId": "3ec5f15ab06b"
+                },
+                "content": [
+                  {
+                    "type": "paragraph",
+                    "content": [
+                      {
+                        "type": "text",
+                        "text": "Là một:",
+                        "marks": [
+                          {
+                            "type": "strong"
+                          }
+                        ]
+                      },
+                      {
+                        "type": "text",
+                        "text": " Học viên / Người dùng đã có tài khoản trên hệ thống E-Learning"
+                      }
+                    ],
+                    "attrs": {
+                      "localId": "c58690505367"
+                    }
+                  }
+                ]
+              },
+              {
+                "type": "listItem",
+                "attrs": {
+                  "localId": "7ba5c94af7a7"
+                },
+                "content": [
+                  {
+                    "type": "paragraph",
+                    "content": [
+                      {
+                        "type": "text",
+                        "text": "Tôi muốn:",
+                        "marks": [
+                          {
+                            "type": "strong"
+                          }
+                        ]
+                      },
+                      {
+                        "type": "text",
+                        "text": " Yêu cầu lấy lại mật khẩu thông qua địa chỉ Email đã đăng ký"
+                      }
+                    ],
+                    "attrs": {
+                      "localId": "f2ef5687b504"
+                    }
+                  }
+                ]
+              },
+              {
+                "type": "listItem",
+                "attrs": {
+                  "localId": "d240df79e1e1"
+                },
+                "content": [
+                  {
+                    "type": "paragraph",
+                    "content": [
+                      {
+                        "type": "text",
+                        "text": "Để mà:",
+                        "marks": [
+                          {
+                            "type": "strong"
+                          }
+                        ]
+                      },
+                      {
+                        "type": "text",
+                        "text": " Tôi có thể khôi phục quyền truy cập vào tài khoản và tiếp tục học tập khi quên mật khẩu cũ."
+                      }
+                    ],
+                    "attrs": {
+                      "localId": "8827a45a44e4"
+                    }
+                  }
+                ]
+              }
+            ],
+            "attrs": {
+              "localId": "223c73e37d31"
+            }
+          },
+          {
+            "type": "rule",
+            "attrs": {
+              "localId": "a9e3e03f16aa"
+            }
+          },
+          {
+            "type": "heading",
+            "attrs": {
+              "level": 4,
+              "localId": "faff88f75a20"
+            },
+            "content": [
+              {
+                "type": "text",
+                "text": "2. Acceptance Criteria (Tiêu chí chấp nhận)",
+                "marks": [
+                  {
+                    "type": "strong"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "type": "bulletList",
+            "content": [
+              {
+                "type": "listItem",
+                "attrs": {
+                  "localId": "78e30950c7b6"
+                },
+                "content": [
+                  {
+                    "type": "paragraph",
+                    "content": [
+                      {
+                        "type": "text",
+                        "text": "AC 1: Yêu cầu khôi phục thành công với Email hợp lệ",
+                        "marks": [
+                          {
+                            "type": "strong"
+                          }
+                        ]
+                      }
+                    ],
+                    "attrs": {
+                      "localId": "1ba77cb5b0cb"
+                    }
+                  },
+                  {
+                    "type": "bulletList",
+                    "content": [
+                      {
+                        "type": "listItem",
+                        "attrs": {
+                          "localId": "37ea64551813"
+                        },
+                        "content": [
+                          {
+                            "type": "paragraph",
+                            "content": [
+                              {
+                                "type": "text",
+                                "text": "Given:",
+                                "marks": [
+                                  {
+                                    "type": "strong"
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "text",
+                                "text": " Người dùng đang ở trang Quên mật khẩu ("
+                              },
+                              {
+                                "type": "text",
+                                "text": "/forgot-password",
+                                "marks": [
+                                  {
+                                    "type": "code"
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "text",
+                                "text": " hoặc pop-up Quên mật khẩu)."
+                              }
+                            ],
+                            "attrs": {
+                              "localId": "bf0dad63f615"
+                            }
+                          }
+                        ]
+                      },
+                      {
+                        "type": "listItem",
+                        "attrs": {
+                          "localId": "f50703a8e2b9"
+                        },
+                        "content": [
+                          {
+                            "type": "paragraph",
+                            "content": [
+                              {
+                                "type": "text",
+                                "text": "When:",
+                                "marks": [
+                                  {
+                                    "type": "strong"
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "text",
+                                "text": " Nhập địa chỉ Email chính xác đã tồn tại trên hệ thống và bấm "
+                              },
+                              {
+                                "type": "text",
+                                "text": "\"Gửi yêu cầu\"",
+                                "marks": [
+                                  {
+                                    "type": "strong"
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "text",
+                                "text": "."
+                              }
+                            ],
+                            "attrs": {
+                              "localId": "135431d0cd0a"
+                            }
+                          }
+                        ]
+                      },
+                      {
+                        "type": "listItem",
+                        "attrs": {
+                          "localId": "a341a2c69017"
+                        },
+                        "content": [
+                          {
+                            "type": "paragraph",
+                            "content": [
+                              {
+                                "type": "text",
+                                "text": "Then:",
+                                "marks": [
+                                  {
+                                    "type": "strong"
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "text",
+                                "text": " Hệ thống gửi email chứa liên kết/mã OTP đặt lại mật khẩu và hiển thị thông báo thành công: "
+                              },
+                              {
+                                "type": "text",
+                                "text": "\"Hướng dẫn đặt lại mật khẩu đã được gửi đến email của bạn.\"",
+                                "marks": [
+                                  {
+                                    "type": "em"
+                                  }
+                                ]
+                              }
+                            ],
+                            "attrs": {
+                              "localId": "8716baa0e956"
+                            }
+                          }
+                        ]
+                      }
+                    ],
+                    "attrs": {
+                      "localId": "e92e3779de13"
+                    }
+                  }
+                ]
+              },
+              {
+                "type": "listItem",
+                "attrs": {
+                  "localId": "d66eef26b36c"
+                },
+                "content": [
+                  {
+                    "type": "paragraph",
+                    "content": [
+                      {
+                        "type": "text",
+                        "text": "AC 2: Xử lý khi Email không tồn tại trên hệ thống",
+                        "marks": [
+                          {
+                            "type": "strong"
+                          }
+                        ]
+                      }
+                    ],
+                    "attrs": {
+                      "localId": "5ada5de0a225"
+                    }
+                  },
+                  {
+                    "type": "bulletList",
+                    "content": [
+                      {
+                        "type": "listItem",
+                        "attrs": {
+                          "localId": "d6ada8033dc4"
+                        },
+                        "content": [
+                          {
+                            "type": "paragraph",
+                            "content": [
+                              {
+                                "type": "text",
+                                "text": "Given:",
+                                "marks": [
+                                  {
+                                    "type": "strong"
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "text",
+                                "text": " Người dùng đang ở màn hình Quên mật khẩu."
+                              }
+                            ],
+                            "attrs": {
+                              "localId": "5f350a0321fc"
+                            }
+                          }
+                        ]
+                      },
+                      {
+                        "type": "listItem",
+                        "attrs": {
+                          "localId": "9945283f6152"
+                        },
+                        "content": [
+                          {
+                            "type": "paragraph",
+                            "content": [
+                              {
+                                "type": "text",
+                                "text": "When:",
+                                "marks": [
+                                  {
+                                    "type": "strong"
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "text",
+                                "text": " Nhập Email có định dạng hợp lệ nhưng "
+                              },
+                              {
+                                "type": "text",
+                                "text": "chưa từng được đăng ký",
+                                "marks": [
+                                  {
+                                    "type": "strong"
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "text",
+                                "text": " trên hệ thống và bấm "
+                              },
+                              {
+                                "type": "text",
+                                "text": "\"Gửi yêu cầu\"",
+                                "marks": [
+                                  {
+                                    "type": "strong"
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "text",
+                                "text": "."
+                              }
+                            ],
+                            "attrs": {
+                              "localId": "db768321226a"
+                            }
+                          }
+                        ]
+                      },
+                      {
+                        "type": "listItem",
+                        "attrs": {
+                          "localId": "27abcafd2d1f"
+                        },
+                        "content": [
+                          {
+                            "type": "paragraph",
+                            "content": [
+                              {
+                                "type": "text",
+                                "text": "Then:",
+                                "marks": [
+                                  {
+                                    "type": "strong"
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "text",
+                                "text": " Hệ thống hiển thị cảnh báo: "
+                              },
+                              {
+                                "type": "text",
+                                "text": "\"Email này chưa được đăng ký trong hệ thống!\"",
+                                "marks": [
+                                  {
+                                    "type": "em"
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "text",
+                                "text": "."
+                              }
+                            ],
+                            "attrs": {
+                              "localId": "fbcab80bd48e"
+                            }
+                          }
+                        ]
+                      }
+                    ],
+                    "attrs": {
+                      "localId": "82e1fb351e19"
+                    }
+                  }
+                ]
+              },
+              {
+                "type": "listItem",
+                "attrs": {
+                  "localId": "ac4c53f79f95"
+                },
+                "content": [
+                  {
+                    "type": "paragraph",
+                    "content": [
+                      {
+                        "type": "text",
+                        "text": "AC 3: Kiểm tra định dạng Email không hợp lệ (Front-end Validation)",
+                        "marks": [
+                          {
+                            "type": "strong"
+                          }
+                        ]
+                      }
+                    ],
+                    "attrs": {
+                      "localId": "50242bbfdbea"
+                    }
+                  },
+                  {
+                    "type": "bulletList",
+                    "content": [
+                      {
+                        "type": "listItem",
+                        "attrs": {
+                          "localId": "9fd5fe0f0224"
+                        },
+                        "content": [
+                          {
+                            "type": "paragraph",
+                            "content": [
+                              {
+                                "type": "text",
+                                "text": "Given:",
+                                "marks": [
+                                  {
+                                    "type": "strong"
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "text",
+                                "text": " Người dùng đang ở màn hình Quên mật khẩu."
+                              }
+                            ],
+                            "attrs": {
+                              "localId": "bf3f044dd579"
+                            }
+                          }
+                        ]
+                      },
+                      {
+                        "type": "listItem",
+                        "attrs": {
+                          "localId": "9b6b74995252"
+                        },
+                        "content": [
+                          {
+                            "type": "paragraph",
+                            "content": [
+                              {
+                                "type": "text",
+                                "text": "When:",
+                                "marks": [
+                                  {
+                                    "type": "strong"
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "text",
+                                "text": " Nhập Email sai định dạng (ví dụ: "
+                              },
+                              {
+                                "type": "text",
+                                "text": "nguyenvana",
+                                "marks": [
+                                  {
+                                    "type": "code"
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "text",
+                                "text": ", "
+                              },
+                              {
+                                "type": "text",
+                                "text": "user@.com",
+                                "marks": [
+                                  {
+                                    "type": "code"
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "text",
+                                "text": ", "
+                              },
+                              {
+                                "type": "text",
+                                "text": "user@gmail",
+                                "marks": [
+                                  {
+                                    "type": "code"
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "text",
+                                "text": ") và rời khỏi ô nhập hoặc bấm "
+                              },
+                              {
+                                "type": "text",
+                                "text": "\"Gửi yêu cầu\"",
+                                "marks": [
+                                  {
+                                    "type": "strong"
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "text",
+                                "text": "."
+                              }
+                            ],
+                            "attrs": {
+                              "localId": "eb888445f488"
+                            }
+                          }
+                        ]
+                      },
+                      {
+                        "type": "listItem",
+                        "attrs": {
+                          "localId": "361be7117532"
+                        },
+                        "content": [
+                          {
+                            "type": "paragraph",
+                            "content": [
+                              {
+                                "type": "text",
+                                "text": "Then:",
+                                "marks": [
+                                  {
+                                    "type": "strong"
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "text",
+                                "text": " Nút submit bị vô hiệu hóa hoặc xuất hiện dòng cảnh báo đỏ ngay dưới ô nhập: "
+                              },
+                              {
+                                "type": "text",
+                                "text": "\"Email không đúng định dạng!\"",
+                                "marks": [
+                                  {
+                                    "type": "em"
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "text",
+                                "text": "."
+                              }
+                            ],
+                            "attrs": {
+                              "localId": "60c704a44a3a"
+                            }
+                          }
+                        ]
+                      }
+                    ],
+                    "attrs": {
+                      "localId": "60c53a736ac8"
+                    }
+                  }
+                ]
+              },
+              {
+                "type": "listItem",
+                "attrs": {
+                  "localId": "fa527e59fbc9"
+                },
+                "content": [
+                  {
+                    "type": "paragraph",
+                    "content": [
+                      {
+                        "type": "text",
+                        "text": "AC 4: Kiểm tra trường bắt buộc (Empty Validation)",
+                        "marks": [
+                          {
+                            "type": "strong"
+                          }
+                        ]
+                      }
+                    ],
+                    "attrs": {
+                      "localId": "9f31e3c9c719"
+                    }
+                  },
+                  {
+                    "type": "bulletList",
+                    "content": [
+                      {
+                        "type": "listItem",
+                        "attrs": {
+                          "localId": "3286e7fd0764"
+                        },
+                        "content": [
+                          {
+                            "type": "paragraph",
+                            "content": [
+                              {
+                                "type": "text",
+                                "text": "Given:",
+                                "marks": [
+                                  {
+                                    "type": "strong"
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "text",
+                                "text": " Người dùng đang ở màn hình Quên mật khẩu."
+                              }
+                            ],
+                            "attrs": {
+                              "localId": "a16cebcb3d84"
+                            }
+                          }
+                        ]
+                      },
+                      {
+                        "type": "listItem",
+                        "attrs": {
+                          "localId": "609f797dd327"
+                        },
+                        "content": [
+                          {
+                            "type": "paragraph",
+                            "content": [
+                              {
+                                "type": "text",
+                                "text": "When:",
+                                "marks": [
+                                  {
+                                    "type": "strong"
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "text",
+                                "text": " Để trống trường Email và bấm "
+                              },
+                              {
+                                "type": "text",
+                                "text": "\"Gửi yêu cầu\"",
+                                "marks": [
+                                  {
+                                    "type": "strong"
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "text",
+                                "text": "."
+                              }
+                            ],
+                            "attrs": {
+                              "localId": "910e99379e8f"
+                            }
+                          }
+                        ]
+                      },
+                      {
+                        "type": "listItem",
+                        "attrs": {
+                          "localId": "88ff01336c43"
+                        },
+                        "content": [
+                          {
+                            "type": "paragraph",
+                            "content": [
+                              {
+                                "type": "text",
+                                "text": "Then:",
+                                "marks": [
+                                  {
+                                    "type": "strong"
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "text",
+                                "text": " Hệ thống cảnh báo: "
+                              },
+                              {
+                                "type": "text",
+                                "text": "\"Vui lòng nhập địa chỉ email của bạn!\"",
+                                "marks": [
+                                  {
+                                    "type": "em"
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "text",
+                                "text": "."
+                              }
+                            ],
+                            "attrs": {
+                              "localId": "cb193a4a24b4"
+                            }
+                          }
+                        ]
+                      }
+                    ],
+                    "attrs": {
+                      "localId": "5824fb9c410f"
+                    }
+                  }
+                ]
+              },
+              {
+                "type": "listItem",
+                "attrs": {
+                  "localId": "dfd3b8e9d0ed"
+                },
+                "content": [
+                  {
+                    "type": "paragraph",
+                    "content": [
+                      {
+                        "type": "text",
+                        "text": "AC 5: Đặt lại mật khẩu mới (Reset Password)",
+                        "marks": [
+                          {
+                            "type": "strong"
+                          }
+                        ]
+                      }
+                    ],
+                    "attrs": {
+                      "localId": "a0e00b88e71f"
+                    }
+                  },
+                  {
+                    "type": "bulletList",
+                    "content": [
+                      {
+                        "type": "listItem",
+                        "attrs": {
+                          "localId": "efa31aa279ba"
+                        },
+                        "content": [
+                          {
+                            "type": "paragraph",
+                            "content": [
+                              {
+                                "type": "text",
+                                "text": "Given:",
+                                "marks": [
+                                  {
+                                    "type": "strong"
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "text",
+                                "text": " Người dùng mở liên kết đặt lại mật khẩu từ email (hoặc nhập đúng mã OTP)."
+                              }
+                            ],
+                            "attrs": {
+                              "localId": "d6c85e044903"
+                            }
+                          }
+                        ]
+                      },
+                      {
+                        "type": "listItem",
+                        "attrs": {
+                          "localId": "0bf538de0de7"
+                        },
+                        "content": [
+                          {
+                            "type": "paragraph",
+                            "content": [
+                              {
+                                "type": "text",
+                                "text": "When:",
+                                "marks": [
+                                  {
+                                    "type": "strong"
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "text",
+                                "text": " Nhập mật khẩu mới thỏa mãn độ dài (ít nhất 6 ký tự) và xác nhận mật khẩu khớp nhau $\\rightarrow$ bấm "
+                              },
+                              {
+                                "type": "text",
+                                "text": "\"Xác nhận\"",
+                                "marks": [
+                                  {
+                                    "type": "strong"
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "text",
+                                "text": "."
+                              }
+                            ],
+                            "attrs": {
+                              "localId": "0f8c57e83a98"
+                            }
+                          }
+                        ]
+                      },
+                      {
+                        "type": "listItem",
+                        "attrs": {
+                          "localId": "a9c646455610"
+                        },
+                        "content": [
+                          {
+                            "type": "paragraph",
+                            "content": [
+                              {
+                                "type": "text",
+                                "text": "Then:",
+                                "marks": [
+                                  {
+                                    "type": "strong"
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "text",
+                                "text": " Hệ thống cập nhật mật khẩu mới, thông báo thành công và tự động chuyển hướng về trang Đăng nhập ("
+                              },
+                              {
+                                "type": "text",
+                                "text": "/login",
+                                "marks": [
+                                  {
+                                    "type": "code"
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "text",
+                                "text": ")."
+                              }
+                            ],
+                            "attrs": {
+                              "localId": "5f362673d05c"
+                            }
+                          }
+                        ]
+                      }
+                    ],
+                    "attrs": {
+                      "localId": "d01727f3611f"
+                    }
+                  }
+                ]
+              }
+            ],
+            "attrs": {
+              "localId": "957af22e8e73"
+            }
+          },
+          {
+            "type": "rule",
+            "attrs": {
+              "localId": "5cc2f622b704"
+            }
+          },
+          {
+            "type": "heading",
+            "attrs": {
+              "level": 4,
+              "localId": "7eb83337fb7f"
+            },
+            "content": [
+              {
+                "type": "text",
+                "text": "3. Test Data tham khảo",
+                "marks": [
+                  {
+                    "type": "strong"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "type": "bulletList",
+            "content": [
+              {
+                "type": "listItem",
+                "attrs": {
+                  "localId": "e531b560459c"
+                },
+                "content": [
+                  {
+                    "type": "paragraph",
+                    "content": [
+                      {
+                        "type": "text",
+                        "text": "Valid Email:",
+                        "marks": [
+                          {
+                            "type": "strong"
+                          }
+                        ]
+                      },
+                      {
+                        "type": "text",
+                        "text": " "
+                      },
+                      {
+                        "type": "text",
+                        "text": "testuser_valid@example.com",
+                        "marks": [
+                          {
+                            "type": "code"
+                          }
+                        ]
+                      }
+                    ],
+                    "attrs": {
+                      "localId": "ef9050b87f8d"
+                    }
+                  }
+                ]
+              },
+              {
+                "type": "listItem",
+                "attrs": {
+                  "localId": "e90f2d67e988"
+                },
+                "content": [
+                  {
+                    "type": "paragraph",
+                    "content": [
+                      {
+                        "type": "text",
+                        "text": "Non-existent Email:",
+                        "marks": [
+                          {
+                            "type": "strong"
+                          }
+                        ]
+                      },
+                      {
+                        "type": "text",
+                        "text": " "
+                      },
+                      {
+                        "type": "text",
+                        "text": "notfound_user_99999@example.com",
+                        "marks": [
+                          {
+                            "type": "code"
+                          }
+                        ]
+                      }
+                    ],
+                    "attrs": {
+                      "localId": "91e4897e946f"
+                    }
+                  }
+                ]
+              },
+              {
+                "type": "listItem",
+                "attrs": {
+                  "localId": "d49e9b780bdf"
+                },
+                "content": [
+                  {
+                    "type": "paragraph",
+                    "content": [
+                      {
+                        "type": "text",
+                        "text": "Invalid Formats:",
+                        "marks": [
+                          {
+                            "type": "strong"
+                          }
+                        ]
+                      },
+                      {
+                        "type": "text",
+                        "text": " "
+                      },
+                      {
+                        "type": "text",
+                        "text": "invalid-email",
+                        "marks": [
+                          {
+                            "type": "code"
+                          }
+                        ]
+                      },
+                      {
+                        "type": "text",
+                        "text": ", "
+                      },
+                      {
+                        "type": "text",
+                        "text": "abc@",
+                        "marks": [
+                          {
+                            "type": "code"
+                          }
+                        ]
+                      },
+                      {
+                        "type": "text",
+                        "text": ", "
+                      },
+                      {
+                        "type": "text",
+                        "text": "@domain.com",
+                        "marks": [
+                          {
+                            "type": "code"
+                          }
+                        ]
+                      }
+                    ],
+                    "attrs": {
+                      "localId": "12e2076973e1"
+                    }
+                  }
+                ]
+              }
+            ],
+            "attrs": {
+              "localId": "7df86bfd32ca"
+            }
+          }
+        ]
+      },
+      "status": "In Progress",
+      "priority": "Medium",
+      "issueType": "Story",
+      "assignee": "Unassigned",
+      "reporter": "Nguyên Khôi",
+      "created": "2026-09-23T23:12:44.387+0700",
+      "updated": "2026-09-23T23:13:12.544+0700",
+      "labels": [],
+      "components": [],
+      "acceptanceCriteria": [
+        {
+          "id": 2,
+          "name": "SCRUM Sprint 0",
+          "state": "active",
+          "boardId": 1,
+          "startDate": "2026-09-23T14:22:54.610Z",
+          "endDate": "2026-10-07T14:22:54.610Z"
+        }
+      ],
+      "attachments": []
+    }
+  ]
+}

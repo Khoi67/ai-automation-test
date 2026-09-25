@@ -1,0 +1,36 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "declaration": false,
+    "outDir": "./dist",
+    "rootDir": ".",
+    "baseUrl": ".",
+    "paths": {
+      "@core/*": ["core/*"],
+      "@pages/*": ["page-object/*"],
+      "@services/*": ["services/*"],
+      "@workflow/*": ["workflow/*"],
+      "@data/*": ["data-object/*"],
+      "@fixture/*": ["fixture/*"],
+      "@constant/*": ["constant/*"],
+      "@test-data/*": ["test-data/*"]
+    }
+  },
+  "include": [
+    "**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "playwright-report",
+    "test-results",
+    "blob-report"
+  ]
+}

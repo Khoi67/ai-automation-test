@@ -1,0 +1,55 @@
+# Node.js
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Playwright & Testing
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/
+
+# Allure Report
+allure-results/
+allure-report/
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# IDEs and Editors
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Environment & credentials
+.env
+.env.local
+.env.*.local
+*.pem
+start-n8n.bat
+start-tunnel.bat
+n8n/playwright_test_automation_workflow.json
+service_account.json
+service-account.json
+
+# Agent / AI local files
+.gemini/
+brain/
+artifacts/
+.agent/logs/
+.agent/tmp/
+
+# Temp data/files
+.playwright-mcp/
+.selenium-mcp/
+.appium-mcp/
+.claude/
+CLAUDE.md
