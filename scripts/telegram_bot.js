@@ -65,7 +65,7 @@ function getJiraHeaders() {
 
 // Fetch latest issues from Jira
 async function fetchLatestJiraIssues(limit = 5) {
-  const jql = `project = "${JIRA_PROJECT_KEY}" ORDER BY updated DESC`;
+  const jql = `project = "${JIRA_PROJECT_KEY}" AND status = "In Progress" ORDER BY updated DESC`;
   const res = await axios.get(`${JIRA_BASE_URL}/rest/api/3/search/jql`, {
     headers: getJiraHeaders(),
     params: {

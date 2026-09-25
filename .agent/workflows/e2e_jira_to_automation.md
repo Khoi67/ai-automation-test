@@ -48,6 +48,7 @@ flowchart TD
 ## Các Bước Thực Hiện Chi Tiết
 
 ### Bước 1: Lấy Requirements từ Jira (`/fetch_jira_requirements`)
+0. Gửi thông báo: `node scratch/notify.js "Bắt đầu Bước 1: Kéo Requirement từ Jira cho ticket <JIRA_KEY>"`
 1. Nhận `JIRA_KEY` (ví dụ: `VL-101`) từ người dùng hoặc từ Webhook n8n.
 2. Thực thi script fetcher để lấy requirement format MD.
 3. **Requirement Gate (Validation):**
@@ -57,6 +58,7 @@ flowchart TD
 ---
 
 ### Bước 2: Sinh Manual Test Cases (`/generate_testcases_from_requirements`)
+0. Gửi thông báo: `node scratch/notify.js "Bắt đầu Bước 2: Sinh Manual Test Cases cho ticket <JIRA_KEY>"`
 1. Áp dụng kỹ thuật phân tích biên (BVA), phân vùng tương đương (EP), và Field-Level Validation theo skill `rbt_manual_testing`.
 2. Tạo file test cases chuẩn tại `test-cases/<JIRA_KEY>_testcases.md`.
 3. **Test Case Gate (Validation):**
@@ -66,6 +68,7 @@ flowchart TD
 ---
 
 ### Bước 3: Chuyển Test Cases Thành Automation Script (`/generate_automation_from_testcases`)
+0. Gửi thông báo: `node scratch/notify.js "Bắt đầu Bước 3: Sinh Automation Scripts cho ticket <JIRA_KEY>"`
 1. Tuân thủ tuyệt đối quy tắc kiến trúc POM của dự án:
    - **Page Objects (`page-object/*.ts`):** Chỉ chứa Scoped Semantic Locators và User Actions. Không chứa `expect()`.
    - **Test Specs (`tests/ui/*.spec.ts`):** Nhận Page Object từ fixture, thực hiện các bước và Web-First Assertions trực tiếp tại tầng Test.
@@ -74,24 +77,38 @@ flowchart TD
 ---
 
 ### Bước 4: Thực Thi Kiểm Thử & Phân Loại Lỗi (Failure Classification)
+0. Gửi thông báo: `node scratch/notify.js "Bắt đầu Bước 4: Chạy Test & Phân loại lỗi cho ticket <JIRA_KEY>"`
 1. Chạy test suite cục bộ: `npm test`
 2. **Failure Classification (CRITICAL):**
    - Thay vì mù quáng "thấy FAIL là tự sửa code test cho đến khi PASS" (gây ra False Healing), phải **phân tích root cause**:
      - **Nguyên nhân 1 (Lỗi Automation):** Do locator sai, timeout, logic test sai $\rightarrow$ **Kích hoạt Self-Healing (Tự sửa code automation)**.
-     - **Nguyên nhân 2 (Lỗi Ứng dụng / Bug thực sự):** Test logic đúng nhưng app hoạt động sai so với requirement $\rightarrow$ **DỪNG LẠI, đánh dấu FAILED và ghi nhận là BUG. Tuyệt đối không sửa code test để "ép" kết quả thành PASS.**
+     - **Nguyên nhân 2 (Lỗi Ứng dụng / Bug thực sự):** Test logic đúng nhưng app hoạt động sai so với requirement $\rightarrow$ **DỪNG LẠI, đánh dấu FAILED và tự động log BUG lên Jira**.
+       - Agent tự gọi script (tự động đồng bộ Precondition, Steps, Expected chuẩn xác 100% từ Test Case): 
+         ```bash
+         node scripts/integrations/jira/jira_create_bug.js \
+           --parent <JIRA_KEY> \
+           --tc <TC_ID> \
+           --summary "[<Module>] <BUG_TITLE>" \
+           --actual "<ACTUAL_RESULT>" \
+           --attachment "auto"
+         ```
+       - Tuyệt đối không sửa code test để "ép" kết quả thành PASS.
 3. **Quality Gate:** Code đã clean chưa? Không còn `console.log`, không hard-code credentials, tuân thủ chặt POM.
 4. **Tiêu chuẩn Definition of Done:** Test suite phải **PASS ít nhất 2 lần liên tiếp** trên local (hoặc Failed do Bug app hợp lệ).
 
 ---
 
 ### Bước 5: Đẩy Mã Nguồn Lên GitHub (Git Delivery)
+0. Gửi thông báo: `node scratch/notify.js "Bắt đầu Bước 5: Đẩy Code lên Github cho ticket <JIRA_KEY>"`
 1. Kiểm tra trạng thái: `git status`.
 2. Stage và commit với message chuẩn Conventional Commits.
 3. Push lên repository.
 
 ---
 
-### Bước 6: GitHub Actions CI & Báo Cáo Telegram
-1. GitHub Actions kích hoạt workflow `Playwright Tests`.
-2. Generate Allure Report và host trên GitHub Pages.
-3. Kích hoạt Webhook (n8n) hoặc script gửi thông báo Telegram với kết quả (PASS/FAIL/BUG) và link Allure Report.
+### Bước 6: Chuyển Trạng Thái Jira, CI & Báo Cáo Telegram
+0. Gửi thông báo: `node scratch/notify.js "Bắt đầu Bước 6: Hoàn tất quy trình, báo cáo kết quả cho ticket <JIRA_KEY>"`
+1. Chuyển trạng thái Jira sang "In Review":
+   - Agent tự chạy: `node scripts/integrations/jira/jira_transition.js --issue <JIRA_KEY> --status "In Review"`
+2. GitHub Actions kích hoạt workflow `Playwright Tests` và Generate Allure Report.
+3. Gửi thông báo Telegram cuối cùng với kết quả tổng quan (PASS/FAIL/BUG) và link Allure Report.

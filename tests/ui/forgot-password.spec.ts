@@ -3,12 +3,7 @@ import { test, expect } from '../../fixture/page-fixture.js';
 /**
  * SCRUM-6: [Auth] Chức năng Quên mật khẩu và Khôi phục quyền truy cập tài khoản
  *
- * Test suite cho tính năng Quên mật khẩu trên demo2.cybersoft.edu.vn.
- * Lưu ý: Chức năng chưa implement hoàn chỉnh trên hệ thống.
- * Tests kiểm tra hiện trạng thực tế (link tồn tại, hành vi click, trang 404).
- *
- * Pre-conditions:
- * - UI_BASE_URL configured in .env (https://demo2.cybersoft.edu.vn)
+ * Test suite mapped directly to test-cases/SCRUM-6_testcases.md
  */
 test.describe('SCRUM-6: Chức năng Quên mật khẩu (UI)', () => {
 
@@ -16,94 +11,87 @@ test.describe('SCRUM-6: Chức năng Quên mật khẩu (UI)', () => {
     await forgotPasswordPage.goToLoginPage();
   });
 
-  test('TC_FORGOT_01: Xác nhận link "Quên mật khẩu?" hiển thị trên trang Đăng nhập', async ({
-    forgotPasswordPage,
-  }) => {
-    // Verify link "Quên mật khẩu?" is visible on login page
-    await expect(
-      forgotPasswordPage.linkForgotPassword,
-      'Link "Quên mật khẩu?" phải hiển thị trên trang Đăng nhập'
-    ).toBeVisible();
-
-    // Verify the link is clickable (has role=link)
-    await expect(
-      forgotPasswordPage.linkForgotPassword,
-      'Link phải có thể click được'
-    ).toBeEnabled();
-  });
-
-  test('TC_FORGOT_02: Kiểm tra hành vi khi click link "Quên mật khẩu?"', async ({
+  test('TC_FORGOT_01: Yêu cầu khôi phục mật khẩu thành công với Email hợp lệ (Happy Path)', async ({
     forgotPasswordPage,
     page,
   }) => {
-    // Click the forgot password link
+    // 1. Click link Quên mật khẩu
     await forgotPasswordPage.clickForgotPasswordLink();
 
-    // Verify URL changes to /login# (anchor link)
-    await expect(page, 'URL phải chứa /login sau khi click').toHaveURL(/\/login/);
-
-    // Verify the page does NOT navigate away — login form elements still visible
+    // 2. Kỳ vọng form/modal nhập email quên mật khẩu hiển thị
     await expect(
-      forgotPasswordPage.inputUsername,
-      'Ô Tài khoản phải vẫn hiển thị sau khi click link'
-    ).toBeVisible();
+      forgotPasswordPage.inputEmailForgot,
+      'Ô nhập Email quên mật khẩu phải hiển thị sau khi click liên kết'
+    ).toBeVisible({ timeout: 5000 });
 
-    await expect(
-      forgotPasswordPage.inputPassword,
-      'Ô Mật khẩu phải vẫn hiển thị sau khi click link'
-    ).toBeVisible();
+    // 3. Nhập email hợp lệ và submit
+    const validEmail = 'test_valid_user@gmail.com';
+    await forgotPasswordPage.inputEmailForgot.fill(validEmail);
+    await forgotPasswordPage.btnSubmitForgot.click();
 
+    // 4. Kỳ vọng hiển thị thông báo thành công
     await expect(
-      forgotPasswordPage.btnLogin,
-      'Nút Đăng nhập phải vẫn hiển thị sau khi click link'
+      forgotPasswordPage.alertSuccess,
+      'Hệ thống phải hiển thị thông báo gửi hướng dẫn đặt lại mật khẩu thành công'
     ).toBeVisible();
   });
 
-  test('TC_FORGOT_03: Kiểm tra trang /forgot-password trả về 404', async ({
+  test('TC_FORGOT_02: Yêu cầu khôi phục mật khẩu với Email không tồn tại (Negative Path)', async ({
     forgotPasswordPage,
+    page,
   }) => {
-    // Navigate directly to /forgot-password
-    await forgotPasswordPage.goToForgotPasswordPage();
+    await forgotPasswordPage.clickForgotPasswordLink();
 
-    // Verify 404 heading is displayed
     await expect(
-      forgotPasswordPage.heading404,
-      'Trang phải hiển thị tiêu đề "404"'
-    ).toBeVisible();
+      forgotPasswordPage.inputEmailForgot,
+      'Ô nhập Email phải hiển thị khi bấm Quên mật khẩu'
+    ).toBeVisible({ timeout: 5000 });
 
-    // Verify error message
-    await expect(
-      forgotPasswordPage.errorMessage404,
-      'Trang phải hiển thị thông báo "Có gì đó sai ở đây"'
-    ).toBeVisible();
+    const nonExistentEmail = `nonexistent_user_${Date.now()}@auto.test`;
+    await forgotPasswordPage.inputEmailForgot.fill(nonExistentEmail);
+    await forgotPasswordPage.btnSubmitForgot.click();
 
-    // Verify "Quay về trang chủ" link exists
+    // Kỳ vọng thông báo lỗi email không tồn tại
     await expect(
-      forgotPasswordPage.btnBackToHome,
-      'Phải có link "Quay về trang chủ"'
+      forgotPasswordPage.alertError,
+      'Hệ thống phải thông báo lỗi Email không tồn tại'
     ).toBeVisible();
   });
 
-  test('TC_FORGOT_04: Link "Quên mật khẩu?" không ảnh hưởng đến form Đăng nhập', async ({
+  test('TC_FORGOT_03: Validation khi để trống trường Email (Empty Field)', async ({
     forgotPasswordPage,
   }) => {
-    const testUsername = 'admin';
-    const testPassword = 'admin123';
-
-    // Fill login form first
-    await forgotPasswordPage.fillLoginForm(testUsername, testPassword);
-
-    // Click forgot password link
     await forgotPasswordPage.clickForgotPasswordLink();
 
-    // Verify form data is preserved after clicking the link
-    const usernameValue = await forgotPasswordPage.getUsernameValue();
-    const passwordValue = await forgotPasswordPage.getPasswordValue();
+    await expect(
+      forgotPasswordPage.inputEmailForgot,
+      'Ô nhập Email phải hiển thị khi bấm Quên mật khẩu'
+    ).toBeVisible({ timeout: 5000 });
 
-    expect(usernameValue, 'Giá trị Tài khoản phải giữ nguyên sau khi click link').toBe(testUsername);
-    expect(passwordValue, 'Giá trị Mật khẩu phải giữ nguyên sau khi click link').toBe(testPassword);
+    // Để trống và submit
+    await forgotPasswordPage.inputEmailForgot.fill('');
+    await forgotPasswordPage.btnSubmitForgot.click();
 
-    // Verify login still works after clicking the link
-    await forgotPasswordPage.clickLoginButton();
+    // Kiểm tra thông báo yêu cầu nhập email
+    const errorText = forgotPasswordPage.page.getByText(/vui lòng nhập email|không được để trống/i);
+    await expect(errorText, 'Phải có thông báo lỗi yêu cầu nhập email').toBeVisible();
+  });
+
+  test('TC_FORGOT_04: Validation khi nhập Email sai định dạng (Invalid Format)', async ({
+    forgotPasswordPage,
+  }) => {
+    await forgotPasswordPage.clickForgotPasswordLink();
+
+    await expect(
+      forgotPasswordPage.inputEmailForgot,
+      'Ô nhập Email phải hiển thị khi bấm Quên mật khẩu'
+    ).toBeVisible({ timeout: 5000 });
+
+    await forgotPasswordPage.inputEmailForgot.fill('invalid_email_format');
+    await forgotPasswordPage.btnSubmitForgot.click();
+
+    // Kiểm tra thông báo lỗi định dạng
+    const errorFormat = forgotPasswordPage.page.getByText(/email không hợp lệ|định dạng email sai/i);
+    await expect(errorFormat, 'Phải có thông báo lỗi email không hợp lệ').toBeVisible();
   });
 });

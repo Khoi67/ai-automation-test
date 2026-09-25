@@ -1,75 +1,55 @@
 # Test Cases for SCRUM-6: [Auth] Chức năng Quên mật khẩu và Khôi phục quyền truy cập tài khoản
 
-> **URL Target:** https://demo2.cybersoft.edu.vn/login
-> **Jira:** SCRUM-6 | Priority: Medium | Status: In Progress
-> **Lưu ý:** Trang Quên mật khẩu trên demo2.cybersoft.edu.vn hiện tại chưa implement đầy đủ (link href="#", không có trang /forgot-password riêng, không có API endpoint). Test cases được thiết kế dựa trên hiện trạng thực tế của hệ thống.
-
----
-
-## TC_FORGOT_01: Xác nhận link "Quên mật khẩu?" hiển thị trên trang Đăng nhập
-**Mục tiêu:** Xác nhận giao diện trang Đăng nhập có hiển thị link "Quên mật khẩu?" cho người dùng.
+## TC_FORGOT_01: Yêu cầu khôi phục mật khẩu thành công với Email hợp lệ (Happy Path)
+**Mục tiêu:** Xác nhận hệ thống gửi email khôi phục mật khẩu thành công khi nhập email đã tồn tại.
 **Pre-condition:**
-- Truy cập được URL `https://demo2.cybersoft.edu.vn/login`.
+- Người dùng đã truy cập trang Đăng nhập `https://demo2.cybersoft.edu.vn/login`.
+- Email `test_valid_user@gmail.com` đã được đăng ký tài khoản trên hệ thống.
 **Steps:**
 1. Điều hướng tới trang Đăng nhập (`/login`).
-2. Quan sát form đăng nhập (phần bên trái hoặc trung tâm).
-3. Kiểm tra sự tồn tại của link "Quên mật khẩu?" bên dưới ô Mật khẩu.
+2. Nhấp vào liên kết "Quên mật khẩu?".
+3. Nhập email hợp lệ: `test_valid_user@gmail.com`.
+4. Nhấn nút "Gửi yêu cầu" (hoặc nút Xác nhận).
 **Expected Results:**
-- Link "Quên mật khẩu?" hiển thị rõ ràng trên trang Đăng nhập.
-- Link có thể click được (role=link).
-- Link nằm trong khu vực form đăng nhập, dưới ô "Mật khẩu" và trên nút "Đăng nhập".
-**Priority:** High | **Automatable:** Yes | **Auto Type:** UI
+- Hệ thống hiển thị thông báo thành công: "Hướng dẫn đặt lại mật khẩu đã được gửi đến email của bạn."
+- Không có lỗi hệ thống (500) xảy ra.
 
----
-
-## TC_FORGOT_02: Kiểm tra hành vi khi click link "Quên mật khẩu?"
-**Mục tiêu:** Xác nhận hành vi thực tế khi người dùng click vào link "Quên mật khẩu?".
+## TC_FORGOT_02: Yêu cầu khôi phục mật khẩu với Email không tồn tại (Negative Path)
+**Mục tiêu:** Xác nhận hệ thống báo lỗi khi nhập email chưa từng đăng ký.
 **Pre-condition:**
-- Đang ở trang Đăng nhập (`/login`).
+- Người dùng đã truy cập trang Đăng nhập `https://demo2.cybersoft.edu.vn/login`.
+- Email `nonexistent_user_1712049@auto.test` chưa từng tồn tại trên hệ thống.
 **Steps:**
-1. Điều hướng tới trang Đăng nhập.
-2. Click vào link "Quên mật khẩu?".
-3. Quan sát hành vi: URL có thay đổi không? Có modal/popup hiện lên không? Có chuyển trang không?
+1. Điều hướng tới trang Đăng nhập (`/login`).
+2. Nhấp vào liên kết "Quên mật khẩu?".
+3. Nhập email chưa đăng ký: `nonexistent_user_1712049@auto.test`.
+4. Nhấn nút "Gửi yêu cầu".
 **Expected Results:**
-- URL thay đổi thành `/login#` (anchor link).
-- Trang KHÔNG chuyển đến trang mới (vẫn ở trang login).
-- Hiện tại chức năng chưa được implement → không có form nhập email hay popup nào xuất hiện.
-**Test Data:** N/A
-**Priority:** High | **Automatable:** Yes | **Auto Type:** UI
+- Hệ thống hiển thị thông báo lỗi: "Email này không tồn tại trong hệ thống. Vui lòng kiểm tra lại."
+- Hệ thống không gửi email và không tạo token reset.
 
----
-
-## TC_FORGOT_03: Kiểm tra trang /forgot-password trả về 404
-**Mục tiêu:** Xác nhận truy cập trực tiếp URL `/forgot-password` trả về trang lỗi 404.
+## TC_FORGOT_03: Validation khi để trống trường Email (Empty Field)
+**Mục tiêu:** Xác nhận hệ thống chặn gửi yêu cầu khi trường email để trống.
 **Pre-condition:**
-- Truy cập được domain `https://demo2.cybersoft.edu.vn`.
+- Người dùng đang mở form Quên mật khẩu.
 **Steps:**
-1. Điều hướng trực tiếp đến URL `https://demo2.cybersoft.edu.vn/forgot-password`.
-2. Quan sát nội dung trang hiển thị.
+1. Điều hướng tới trang Đăng nhập (`/login`).
+2. Nhấp vào liên kết "Quên mật khẩu?".
+3. Để trống ô nhập Email.
+4. Nhấn nút "Gửi yêu cầu".
 **Expected Results:**
-- Trang hiển thị tiêu đề "404".
-- Hiển thị thông báo "Có gì đó sai ở đây".
-- Có nút/link "Quay về trang chủ" cho phép người dùng quay lại.
-**Priority:** Medium | **Automatable:** Yes | **Auto Type:** UI
+- Hệ thống hiển thị thông báo yêu cầu bắt buộc: "Vui lòng nhập email."
+- Nút gửi yêu cầu bị chặn, không có request gửi lên server.
 
----
-
-## TC_FORGOT_04: Xác nhận link "Quên mật khẩu?" không ảnh hưởng đến form Đăng nhập
-**Mục tiêu:** Kiểm tra rằng sau khi click "Quên mật khẩu?", form đăng nhập vẫn hoạt động bình thường.
+## TC_FORGOT_04: Validation khi nhập Email sai định dạng (Invalid Format)
+**Mục tiêu:** Xác nhận hệ thống kiểm tra tính hợp lệ của định dạng email.
 **Pre-condition:**
-- Đang ở trang Đăng nhập.
+- Người dùng đang mở form Quên mật khẩu.
 **Steps:**
-1. Điều hướng tới trang Đăng nhập.
-2. Nhập Tài khoản: `admin` vào ô Tài khoản.
-3. Nhập Mật khẩu: `admin123` vào ô Mật khẩu.
-4. Click vào link "Quên mật khẩu?".
-5. Kiểm tra dữ liệu trong các ô nhập liệu có bị mất không.
-6. Click nút "Đăng nhập".
+1. Điều hướng tới trang Đăng nhập (`/login`).
+2. Nhấp vào liên kết "Quên mật khẩu?".
+3. Nhập email sai định dạng (vd: `invalid_email_format`).
+4. Nhấn nút "Gửi yêu cầu".
 **Expected Results:**
-- Dữ liệu đã nhập trong ô Tài khoản và Mật khẩu vẫn giữ nguyên sau khi click link.
-- Form đăng nhập vẫn submit được bình thường.
-- Đăng nhập thành công (nếu tài khoản hợp lệ).
-**Test Data:**
-- Tài khoản: `admin`
-- Mật khẩu: `admin123`
-**Priority:** Medium | **Automatable:** Yes | **Auto Type:** UI
+- Hệ thống hiển thị thông báo lỗi định dạng: "Email không hợp lệ."
+- Chặn không cho gửi yêu cầu lên server.

@@ -4,45 +4,43 @@ import { BasePage } from './base-page.js';
 /**
  * Forgot Password Page — handles forgot password UI on the login page.
  * Pure Page Object Model: defines locators and user actions only (no assertions).
- *
- * Note: On demo2.cybersoft.edu.vn, the "Quên mật khẩu?" link exists on the login page
- * but currently points to "#" (feature not fully implemented).
  */
 export class ForgotPasswordPage extends BasePage {
   // --- Locators ---
-  /** Login form container (scoped to the sign-in side) */
   readonly loginForm: Locator;
-
-  /** "Quên mật khẩu?" link on the login form */
   readonly linkForgotPassword: Locator;
-
-  /** Username input on login form */
   readonly inputUsername: Locator;
-
-  /** Password input on login form */
   readonly inputPassword: Locator;
-
-  /** Login button */
   readonly btnLogin: Locator;
 
-  /** 404 page heading */
+  // Forgot password form/modal locators
+  readonly forgotPasswordContainer: Locator;
+  readonly inputEmailForgot: Locator;
+  readonly btnSubmitForgot: Locator;
+  readonly alertSuccess: Locator;
+  readonly alertError: Locator;
+
+  // 404 page locators
   readonly heading404: Locator;
-
-  /** 404 error message */
   readonly errorMessage404: Locator;
-
-  /** "Quay về trang chủ" button on 404 page */
   readonly btnBackToHome: Locator;
 
   constructor(page: Page) {
     super(page);
 
-    // Login page locators (scoped to login form)
+    // Login form locators
     this.loginForm = page.locator('form').filter({ hasText: /đăng nhập/i }).first();
     this.linkForgotPassword = page.getByRole('link', { name: /quên mật khẩu/i });
     this.inputUsername = page.locator('form').filter({ hasText: /đăng nhập/i }).getByPlaceholder(/tài khoản/i);
     this.inputPassword = page.locator('form').filter({ hasText: /đăng nhập/i }).getByPlaceholder(/mật khẩu/i);
     this.btnLogin = page.locator('form').filter({ hasText: /đăng nhập/i }).getByRole('button', { name: /đăng nhập/i });
+
+    // Forgot password elements
+    this.forgotPasswordContainer = page.locator('.modal, .popup, [class*="forgot"], form[name*="forgot"]').first();
+    this.inputEmailForgot = page.getByPlaceholder(/nhập email|email của bạn/i).or(page.locator('input[type="email"]'));
+    this.btnSubmitForgot = page.getByRole('button', { name: /gửi yêu cầu|lấy lại mật khẩu|xác nhận/i });
+    this.alertSuccess = page.locator('.alert-success, .toast-success, [class*="success"], [role="alert"]').filter({ hasText: /hướng dẫn|thành công/i });
+    this.alertError = page.locator('.alert-danger, .toast-error, [class*="error"], [role="alert"]').filter({ hasText: /không tồn tại|lỗi/i });
 
     // 404 page locators
     this.heading404 = page.getByRole('heading', { name: '404' });
@@ -57,13 +55,6 @@ export class ForgotPasswordPage extends BasePage {
     });
   }
 
-  /** Navigate directly to /forgot-password (expected 404) */
-  async goToForgotPasswordPage(): Promise<void> {
-    await test.step('Navigate directly to /forgot-password', async () => {
-      await this.navigate('/forgot-password');
-    });
-  }
-
   /** Click the "Quên mật khẩu?" link */
   async clickForgotPasswordLink(): Promise<void> {
     await test.step('Click "Quên mật khẩu?" link', async () => {
@@ -71,28 +62,14 @@ export class ForgotPasswordPage extends BasePage {
     });
   }
 
-  /** Fill login form with credentials */
-  async fillLoginForm(username: string, password: string): Promise<void> {
-    await test.step(`Fill login form (username: '${username}')`, async () => {
-      await this.inputUsername.fill(username);
-      await this.inputPassword.fill(password);
+  /** Request password reset with an email */
+  async requestPasswordReset(email: string): Promise<void> {
+    await test.step(`Request password reset for email: '${email}'`, async () => {
+      await this.clickForgotPasswordLink();
+      if (email) {
+        await this.inputEmailForgot.fill(email);
+      }
+      await this.btnSubmitForgot.click();
     });
-  }
-
-  /** Click login button */
-  async clickLoginButton(): Promise<void> {
-    await test.step('Click login button', async () => {
-      await this.btnLogin.click();
-    });
-  }
-
-  /** Get current value of username input */
-  async getUsernameValue(): Promise<string> {
-    return this.inputUsername.inputValue();
-  }
-
-  /** Get current value of password input */
-  async getPasswordValue(): Promise<string> {
-    return this.inputPassword.inputValue();
   }
 }
