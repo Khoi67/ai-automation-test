@@ -97,9 +97,9 @@ function getJiraHeaders() {
   };
 }
 
-// Fetch latest issues from Jira (Chỉ lấy trạng thái To Do và In Progress)
-async function fetchLatestJiraIssues(limit = 5) {
-  const jql = `project = "${JIRA_PROJECT_KEY}" AND status in ("To Do", "In Progress") ORDER BY updated DESC`;
+// Fetch latest issues from Jira (Chỉ lấy User Stories)
+async function fetchLatestJiraIssues(limit = 10) {
+  const jql = `project = "${JIRA_PROJECT_KEY}" AND issuetype = Story ORDER BY updated DESC`;
   const res = await axios.get(`${JIRA_BASE_URL}/rest/api/3/search/jql`, {
     headers: getJiraHeaders(),
     params: {
@@ -115,16 +115,16 @@ async function fetchLatestJiraIssues(limit = 5) {
 // Display latest Jira tickets with inline buttons
 async function showJiraTicketsList() {
   try {
-    console.log('[LOG] Đang tải danh sách ticket từ Jira Cloud...');
-    const issues = await fetchLatestJiraIssues(5);
-    console.log(`[LOG] Đã nhận ${issues.length} tickets từ Jira.`);
+    console.log('[LOG] Đang tải danh sách User Stories từ Jira Cloud...');
+    const issues = await fetchLatestJiraIssues(10);
+    console.log(`[LOG] Đã nhận ${issues.length} User Stories từ Jira.`);
 
     if (issues.length === 0) {
-      await sendTelegramMessage(`ℹ️ Không có User Story nào ở trạng thái <b>To Do</b> hoặc <b>In Progress</b> trong Project <b>${JIRA_PROJECT_KEY}</b>.`);
+      await sendTelegramMessage(`ℹ️ Không tìm thấy User Story nào trong Project <b>${JIRA_PROJECT_KEY}</b>.`);
       return;
     }
 
-    let msg = `📋 <b>DANH SÁCH TICKET CẦN LÀM (${JIRA_PROJECT_KEY}):</b>\n\n`;
+    let msg = `📋 <b>DANH SÁCH USER STORIES (${JIRA_PROJECT_KEY}):</b>\n\n`;
     const buttons = [];
 
     issues.forEach((issue, idx) => {
@@ -132,14 +132,21 @@ async function showJiraTicketsList() {
       const summary = issue.fields.summary || 'Không có tiêu đề';
       const author = issue.fields.creator?.displayName || 'Team';
       const status = issue.fields.status?.name || 'Open';
+      const isCompleted = status.toLowerCase().includes('review') || 
+                          status.toLowerCase().includes('done') || 
+                          status.toLowerCase().includes('hoàn thành');
+      const displayStatus = isCompleted ? 'Hoàn thành' : status;
 
       msg += `${idx + 1}️⃣ <b>[${key}]</b> ${summary}\n` +
-             `   👤 Tác giả: ${author} | 📌 Trạng thái: <code>${status}</code>\n\n`;
+             `   👤 Tác giả: ${author} | 📌 Trạng thái: <code>${displayStatus}</code>\n\n`;
 
-      buttons.push([
-        { text: `🛠 Viết Code (${key})`, callback_data: `dev:${key}` },
-        { text: `🚀 Chạy CI/CD (${key})`, callback_data: `run_ci:${key}` }
-      ]);
+      const actionRow = [];
+      if (!isCompleted) {
+        actionRow.push({ text: `🛠 Viết Code (${key})`, callback_data: `dev:${key}` });
+      }
+      actionRow.push({ text: `🚀 Chạy CI/CD (${key})`, callback_data: `run_ci:${key}` });
+
+      buttons.push(actionRow);
     });
 
     msg += `👇 <i>Bấm nút bên dưới để thực thi kịch bản cho Ticket tương ứng:</i>`;
@@ -161,8 +168,8 @@ async function pollJiraChanges() {
     const res = await axios.get(`${JIRA_BASE_URL}/rest/api/3/search/jql`, {
       headers: getJiraHeaders(),
       params: {
-        jql: `project = "${JIRA_PROJECT_KEY}" ORDER BY updated DESC`,
-        maxResults: 5,
+        jql: `project = "${JIRA_PROJECT_KEY}" AND issuetype = Story ORDER BY updated DESC`,
+        maxResults: 10,
         fields: 'summary,updated,status,creator,description',
       },
       timeout: 15000,
