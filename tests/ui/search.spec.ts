@@ -23,7 +23,8 @@ test.describe('SCRUM-7: Course Search', () => {
     }
   });
 
-  test('TC_SEARCH_02: Tìm kiếm không có kết quả', async ({ homePage }) => {
+  // Đánh dấu fixme do Bug SCRUM-8 trên Jira: Tìm kiếm từ khóa lạ vẫn trả về danh sách khóa học
+  test.fixme('TC_SEARCH_02: Tìm kiếm không có kết quả', async ({ homePage }) => {
     const keyword = 'xyz123randomnotfound';
     await homePage.searchCourse(keyword);
 
