@@ -19,6 +19,8 @@ export class ForgotPasswordPage extends BasePage {
   readonly btnSubmitForgot: Locator;
   readonly alertSuccess: Locator;
   readonly alertError: Locator;
+  readonly errorMsgRequiredEmail: Locator;
+  readonly errorMsgInvalidFormat: Locator;
 
   // 404 page locators
   readonly heading404: Locator;
@@ -37,10 +39,12 @@ export class ForgotPasswordPage extends BasePage {
 
     // Forgot password elements
     this.forgotPasswordContainer = page.locator('.modal, .popup, [class*="forgot"], form[name*="forgot"]').first();
-    this.inputEmailForgot = page.getByPlaceholder(/nhập email|email của bạn/i).or(page.locator('input[type="email"]'));
-    this.btnSubmitForgot = page.getByRole('button', { name: /gửi yêu cầu|lấy lại mật khẩu|xác nhận/i });
+    this.inputEmailForgot = this.forgotPasswordContainer.getByPlaceholder(/nhập email|email của bạn/i).or(this.forgotPasswordContainer.locator('input[type="email"]'));
+    this.btnSubmitForgot = this.forgotPasswordContainer.getByRole('button', { name: /gửi yêu cầu|lấy lại mật khẩu|xác nhận/i });
     this.alertSuccess = page.locator('.alert-success, .toast-success, [class*="success"], [role="alert"]').filter({ hasText: /hướng dẫn|thành công/i });
     this.alertError = page.locator('.alert-danger, .toast-error, [class*="error"], [role="alert"]').filter({ hasText: /không tồn tại|lỗi/i });
+    this.errorMsgRequiredEmail = page.getByText(/vui lòng nhập email|không được để trống/i);
+    this.errorMsgInvalidFormat = page.getByText(/email không hợp lệ|định dạng email sai/i);
 
     // 404 page locators
     this.heading404 = page.getByRole('heading', { name: '404' });

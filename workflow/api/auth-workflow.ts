@@ -54,11 +54,33 @@ export class AuthApiWorkflow {
   }
 
   /**
+   * Register a genuinely new dynamic account with unique credentials.
+   */
+  async createDynamicAccount(): Promise<ThongTinDangNhap> {
+    const username = generateUsername('user');
+    const email = generateEmail('test');
+    const phone = generatePhoneNumber();
+    const password = 'Password@123';
+
+    const res = await this.userService.register({
+      taiKhoan: username,
+      matKhau: password,
+      hoTen: 'Auto Test User',
+      soDT: phone,
+      maNhom: MA_NHOM,
+      email: email,
+    });
+    expect(res.status(), 'API DangKy should return 200 for dynamic account').toBe(200);
+
+    return { taiKhoan: username, matKhau: password };
+  }
+
+  /**
    * Register a new account and immediately login to get an access token.
    * Replaces the old static default account logic.
    */
   async createAccountAndGetAccessToken(): Promise<{ accessToken: string; credentials: ThongTinDangNhap }> {
-    const credentials = await this.ensureTestAccount();
+    const credentials = await this.createDynamicAccount();
     const accessToken = await this.getAccessToken(credentials.taiKhoan, credentials.matKhau);
     return { accessToken, credentials };
   }

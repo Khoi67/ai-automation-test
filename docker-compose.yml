@@ -1,0 +1,15 @@
+services:
+  telegram-bot:
+    build:
+      context: .
+      dockerfile: docker/bot/Dockerfile
+    container_name: jira-telegram-bot
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      # Mount thư mục scratch để lưu file trigger.txt và jira_state.json không bị mất khi restart container
+      - ./scratch:/usr/src/app/scratch
+    # Đảm bảo múi giờ hiển thị đúng trên log
+    environment:
+      - TZ=Asia/Ho_Chi_Minh

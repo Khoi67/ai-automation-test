@@ -13,6 +13,11 @@ const JIRA_EMAIL = process.env.JIRA_EMAIL;
 const JIRA_API_TOKEN = process.env.JIRA_API_TOKEN;
 const JIRA_PROJECT_KEY = process.env.JIRA_PROJECT_KEY || 'SCRUM';
 
+// GitHub CI/CD env
+const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
+const GITHUB_OWNER = process.env.GITHUB_OWNER;
+const GITHUB_REPO = process.env.GITHUB_REPO;
+
 if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) {
   console.error('[LỖI] TELEGRAM_BOT_TOKEN hoặc TELEGRAM_CHAT_ID chưa được điền trong file .env');
   process.exit(1);
@@ -21,9 +26,38 @@ if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) {
 const TG_API = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}`;
 
 // State cache
-const knownIssuesCache = new Map();
+const CACHE_FILE = path.resolve(__dirname, '../scratch/jira_state.json');
+let knownIssuesCache = new Map();
 let isCheckingJira = false;
 let isExecutingTask = false;
+
+// Đọc cache từ file lúc khởi động
+function loadCache() {
+  try {
+    if (fs.existsSync(CACHE_FILE)) {
+      const data = fs.readFileSync(CACHE_FILE, 'utf8');
+      const parsed = JSON.parse(data);
+      knownIssuesCache = new Map(Object.entries(parsed));
+      console.log(`[LOG] Đã tải cache với ${knownIssuesCache.size} tickets.`);
+    }
+  } catch (err) {
+    console.error('[CACHE ERROR] Không thể đọc cache:', err.message);
+  }
+}
+
+// Lưu cache ra file
+function saveCache() {
+  try {
+    const dir = path.dirname(CACHE_FILE);
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    const obj = Object.fromEntries(knownIssuesCache);
+    fs.writeFileSync(CACHE_FILE, JSON.stringify(obj, null, 2), 'utf8');
+  } catch (err) {
+    console.error('[CACHE ERROR] Không thể ghi cache:', err.message);
+  }
+}
+
+loadCache();
 
 // Helper: send Telegram Message (Uses HTML format to avoid markdown parse errors)
 async function sendTelegramMessage(text, replyMarkup = null) {
@@ -102,7 +136,10 @@ async function showJiraTicketsList() {
       msg += `${idx + 1}️⃣ <b>[${key}]</b> ${summary}\n` +
              `   👤 Tác giả: ${author} | 📌 Trạng thái: <code>${status}</code>\n\n`;
 
-      buttons.push([{ text: `🚀 Chạy Automation ${key}`, callback_data: `run:${key}` }]);
+      buttons.push([
+        { text: `🛠 Viết Code (${key})`, callback_data: `dev:${key}` },
+        { text: `🚀 Chạy CI/CD (${key})`, callback_data: `run_ci:${key}` }
+      ]);
     });
 
     msg += `👇 <i>Bấm nút bên dưới để thực thi kịch bản cho Ticket tương ứng:</i>`;
@@ -122,6 +159,8 @@ async function pollJiraChanges() {
   isCheckingJira = true;
   try {
     const issues = await fetchLatestJiraIssues(5);
+    let cacheChanged = false;
+
     for (const issue of issues) {
       const key = issue.key;
       const updated = issue.fields.updated;
@@ -132,11 +171,17 @@ async function pollJiraChanges() {
       if (prev && prev !== updated) {
         // Detected an update!
         knownIssuesCache.set(key, updated);
+        cacheChanged = true;
         console.log(`[ALERT] Phát hiện thay đổi trên ${key}!`);
         await sendNotification(key, summary, author, 'Yêu cầu được Cập Nhật');
       } else if (!prev) {
         knownIssuesCache.set(key, updated);
+        cacheChanged = true;
       }
+    }
+
+    if (cacheChanged) {
+      saveCache();
     }
   } catch (e) {
     // Silent catch for background polling
@@ -146,12 +191,13 @@ async function pollJiraChanges() {
 }
 
 async function sendNotification(key, summary, author, actionType) {
-  const msg = `🔔 <b>[JIRA UPDATE]</b>\n\n🎯 <b>Ticket:</b> <code>${key}</code>\n📝 <b>Tiêu đề:</b> ${summary}\n👤 <b>Người thực hiện:</b> ${author}\n⚡ <b>Trạng thái:</b> ${actionType}\n\n👉 Bạn có muốn chạy Automation cho Ticket này ngay không?`;
+  const msg = `🔔 <b>[JIRA UPDATE]</b>\n\n🎯 <b>Ticket:</b> <code>${key}</code>\n📝 <b>Tiêu đề:</b> ${summary}\n👤 <b>Người thực hiện:</b> ${author}\n⚡ <b>Trạng thái:</b> ${actionType}\n\n👉 Bạn muốn AI viết script mới hay Chạy Regression trên Cloud?`;
   
   const keyboard = {
     inline_keyboard: [
       [
-        { text: `🚀 Chạy Automation ${key}`, callback_data: `run:${key}` }
+        { text: `🛠 Viết Code (${key})`, callback_data: `dev:${key}` },
+        { text: `🚀 Chạy CI/CD (${key})`, callback_data: `run_ci:${key}` }
       ],
       [
         { text: '📋 Xem danh sách Ticket', callback_data: 'check_jira' }
@@ -162,24 +208,10 @@ async function sendNotification(key, summary, author, actionType) {
   await sendTelegramMessage(msg, keyboard);
 }
 
-// Execute command runner
-function runCommand(command) {
-  return new Promise((resolve) => {
-    exec(command, { cwd: path.resolve(__dirname, '..') }, (error, stdout, stderr) => {
-      resolve({
-        success: !error,
-        stdout: stdout || '',
-        stderr: stderr || '',
-        error: error ? error.message : null,
-      });
-    });
-  });
-}
-
 // Delegate E2E Automation to IDE Agent via trigger file
 const TRIGGER_FILE = path.resolve(__dirname, '../scratch/trigger.txt');
 
-async function executeAutomation(ticketKey) {
+async function executeDevAutomation(ticketKey) {
   if (isExecutingTask) {
     await sendTelegramMessage(`⚠️ Hiện đang có một tiến trình Automation khác đang chạy. Vui lòng chờ.`);
     return;
@@ -187,30 +219,82 @@ async function executeAutomation(ticketKey) {
 
   isExecutingTask = true;
 
-  // Write ticket key to trigger file for IDE Agent to pick up
   try {
+    const dir = path.dirname(TRIGGER_FILE);
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
     fs.writeFileSync(TRIGGER_FILE, ticketKey, 'utf8');
     console.log(`[TRIGGER] Đã ghi ${ticketKey} vào trigger.txt cho IDE Agent.`);
 
     await sendTelegramMessage(
-      `🤖 <b>[ĐÃ CHUYỂN LỆNH CHO AI AGENT]</b>\n\n` +
+      `🤖 <b>[LUỒNG DEV: ĐÃ CHUYỂN LỆNH CHO AI AGENT]</b>\n\n` +
       `🎯 Ticket: <code>${ticketKey}</code>\n\n` +
-      `AI Agent trên IDE đang tiếp nhận và sẽ tự động thực thi quy trình <b>/e2e_jira_to_automation</b> đầy đủ 6 bước:\n\n` +
-      `1️⃣ Fetch Requirement từ Jira\n` +
-      `2️⃣ Phân tích & Sinh Test Cases\n` +
+      `AI Agent trên IDE đang tiếp nhận và sẽ tự động thực thi quy trình:\n` +
+      `1️⃣ Kéo Requirement\n` +
+      `2️⃣ Sinh Test Cases\n` +
       `3️⃣ Viết Automation Scripts (POM + Spec)\n` +
-      `4️⃣ Chạy Test & Self-Healing (đến khi PASS)\n` +
-      `5️⃣ Git Commit & Push lên GitHub\n` +
-      `6️⃣ Báo cáo kết quả về Telegram\n\n` +
-      `⏳ Vui lòng chờ... Agent sẽ phản hồi khi hoàn tất!`
+      `4️⃣ Chạy Test Local\n` +
+      `5️⃣ Push Code lên GitHub\n\n` +
+      `⏳ Bạn có thể kích hoạt bằng lệnh: <code>/e2e_jira_to_automation trigger.txt</code> trên IDE.`
     );
   } catch (err) {
     console.error('[TRIGGER ERROR]', err.message);
     await sendTelegramMessage(`❌ Lỗi khi ghi trigger file: ${err.message}`);
   }
 
-  // Reset flag after a short delay (Agent will handle the rest)
   setTimeout(() => { isExecutingTask = false; }, 5000);
+}
+
+// Xử lý khi người dùng phê duyệt Push Git
+const PUSH_TRIGGER_FILE = path.resolve(__dirname, '../scratch/push_trigger.txt');
+
+async function handleConfirmPush(ticketKey) {
+  try {
+    const dir = path.dirname(PUSH_TRIGGER_FILE);
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(PUSH_TRIGGER_FILE, ticketKey, 'utf8');
+    console.log(`[PUSH TRIGGER] Đã ghi nhận phê duyệt Push cho ${ticketKey} vào push_trigger.txt`);
+
+    await sendTelegramMessage(
+      `✅ <b>[ĐÃ DUYỆT PUSH GIT: ${ticketKey}]</b>\n\n` +
+      `🎯 Bạn vừa phê duyệt đẩy code cho ticket <code>${ticketKey}</code>!\n\n` +
+      `⚡ Hệ thống đã ghi nhận cờ duyệt.\n` +
+      `🤖 Trên Antigravity IDE, bạn có thể gõ: <code>/push ${ticketKey}</code> hoặc bảo Agent <i>"Push ticket ${ticketKey}"</i> để thực hiện tự động:\n` +
+      `• Git Commit & Push lên main\n` +
+      `• Chuyển Jira sang In Review\n` +
+      `• Kích hoạt CI/CD`
+    );
+  } catch (err) {
+    console.error('[CONFIRM PUSH ERROR]', err.message);
+    await sendTelegramMessage(`❌ Lỗi khi ghi nhận phê duyệt: ${err.message}`);
+  }
+}
+
+// Kích hoạt chạy Regression Test trên GitHub Actions
+async function triggerGithubActions(ticketKey) {
+  if (!GITHUB_TOKEN || !GITHUB_OWNER || !GITHUB_REPO) {
+    await sendTelegramMessage('⚠️ Cấu hình GitHub Actions chưa được thiết lập (Thiếu GITHUB_TOKEN, GITHUB_OWNER, GITHUB_REPO trong file .env).');
+    return;
+  }
+  try {
+    await sendTelegramMessage(`🚀 <b>[LUỒNG RUN: BẮT ĐẦU CHẠY TRÊN CLOUD]</b>\n\nĐang gửi lệnh chạy Test cho <code>${ticketKey}</code> lên GitHub Actions...`);
+    const res = await axios.post(
+      `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/actions/workflows/playwright.yml/dispatches`,
+      {
+        ref: 'main',
+        inputs: { test_suite: 'all' }
+      },
+      {
+        headers: {
+          'Accept': 'application/vnd.github.v3+json',
+          'Authorization': `token ${GITHUB_TOKEN}`
+        }
+      }
+    );
+    await sendTelegramMessage(`✅ <b>[THÀNH CÔNG]</b>\n\nĐã kích hoạt thành công GitHub Actions cho <code>${ticketKey}</code>!\n\nVui lòng kiểm tra tab "Actions" trên GitHub repository của bạn để theo dõi tiến độ và chờ link báo cáo Allure Report.`);
+  } catch (err) {
+    console.error('[GITHUB ERROR]', err.response?.data || err.message);
+    await sendTelegramMessage(`❌ Lỗi kích hoạt GitHub Actions: ${err.response?.data?.message || err.message}`);
+  }
 }
 
 // Telegram Long Polling Handler
@@ -234,6 +318,7 @@ async function startPolling() {
   try {
     const initialIssues = await fetchLatestJiraIssues(5);
     initialIssues.forEach(i => knownIssuesCache.set(i.key, i.fields.updated));
+    saveCache();
     console.log(`[LOG] Đã nạp ${initialIssues.length} tickets ban đầu vào bộ nhớ cache.`);
   } catch (e) {
     console.error('[CACHE INIT ERROR]', e.message);
@@ -270,10 +355,18 @@ async function startPolling() {
           console.log(`[LOG] Nhận được cú click nút từ Telegram: ${data}`);
           await answerCallbackQuery(cb.id, 'Đang tiến hành...');
 
-          if (data.startsWith('run:')) {
-            const ticket = data.replace('run:', '');
-            console.log(`[ACTION] Kích hoạt Automation cho ${ticket}`);
-            executeAutomation(ticket);
+          if (data.startsWith('dev:')) {
+            const ticket = data.replace('dev:', '');
+            console.log(`[ACTION] Kích hoạt Automation Dev cho ${ticket}`);
+            executeDevAutomation(ticket);
+          } else if (data.startsWith('run_ci:')) {
+            const ticket = data.replace('run_ci:', '');
+            console.log(`[ACTION] Kích hoạt Automation Run cho ${ticket}`);
+            triggerGithubActions(ticket);
+          } else if (data.startsWith('confirm_push:')) {
+            const ticket = data.replace('confirm_push:', '');
+            console.log(`[ACTION] Người dùng phê duyệt Push Git cho ${ticket}`);
+            handleConfirmPush(ticket);
           } else if (data === 'check_jira') {
             await showJiraTicketsList();
           } else if (data === 'status') {
@@ -303,7 +396,7 @@ async function startPolling() {
             const match = text.match(/[A-Za-z0-9]+-\d+/);
             if (match) {
               const ticket = match[0].toUpperCase();
-              executeAutomation(ticket);
+              executeDevAutomation(ticket); // Mặc định luồng Dev nếu gõ chữ
             } else {
               await sendTelegramMessage('⚠️ Vui lòng cung cấp mã Ticket. Ví dụ: <code>bắt đầu SCRUM-6</code> hoặc <code>/run SCRUM-6</code>');
             }

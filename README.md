@@ -57,8 +57,8 @@ demo-ai-automation/
 ├── .env.example          # Mẫu cấu hình biến môi trường
 ├── package.json          # Dependencies & npm scripts
 ├── playwright.config.ts  # Cấu hình Playwright (browsers, viewports, reporters)
-├── README.md             # Hướng dẫn dự án chi tiết
-└── start-bot.bat         # Script khởi động Telegram Bot nhanh trên Windows
+├── docker-compose.yml    # Cấu hình khởi chạy Telegram Bot container
+└── README.md             # Hướng dẫn dự án chi tiết
 ```
 
 ---
@@ -203,7 +203,7 @@ Hệ thống hỗ trợ quy trình tự động hóa khép kín: **Jira Cloud �
 sequenceDiagram
     autonumber
     actor User as Tester / PM
-    participant TG as Telegram Bot (start-bot.bat)
+    participant TG as Telegram Bot (Docker)
     participant TF as scratch/trigger.txt
     participant IDE as Antigravity AI Agent
     participant Jira as Jira Cloud
@@ -234,15 +234,24 @@ sequenceDiagram
 
 ### Các bước thực hiện chi tiết:
 
-#### 🔹 Bước 1: Khởi động Telegram Bot Daemon
-Mở thư mục dự án trên máy Windows và khởi động bot:
-* **Cách 1 (Nhanh nhất):** Nhấp đúp chuột vào file **`start-bot.bat`**.
-* **Cách 2 (Dòng lệnh):**
+#### 🔹 Bước 1: Khởi động Telegram Bot Daemon (Docker)
+Khởi động container bot chạy ngầm bằng Docker Compose:
+* **Khởi chạy container ngầm:**
   ```bash
-  npm run bot
-  # hoặc: node scripts/telegram_bot.js
+  docker compose up -d
+  # hoặc: npm run docker:up
   ```
-> 💡 *Bot chạy ở chế độ Long-Polling (Zero-Config): Không cần cài đặt n8n, không cần mở port hay thiết lập Cloudflare Tunnel.*
+* **Xem logs trực tiếp:**
+  ```bash
+  docker compose logs -f bot
+  # hoặc: npm run docker:logs
+  ```
+* **Dừng bot:**
+  ```bash
+  docker compose down
+  # hoặc: npm run docker:down
+  ```
+> 💡 *Container được cấu hình `restart: unless-stopped` giúp Bot luôn tự động thức dậy cùng hệ thống mỗi khi máy tính bật lại.*
 
 ---
 

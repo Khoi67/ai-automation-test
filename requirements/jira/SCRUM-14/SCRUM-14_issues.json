@@ -1,0 +1,387 @@
+{
+  "fetchedAt": "2026-09-26T08:09:30.188Z",
+  "mode": "single",
+  "ticketKey": "SCRUM-14",
+  "total": 1,
+  "issues": [
+    {
+      "key": "SCRUM-14",
+      "id": "10013",
+      "summary": "[Enroll] Đăng ký ghi danh tham gia khóa học dành cho học viên",
+      "description": {
+        "type": "doc",
+        "version": 1,
+        "content": [
+          {
+            "type": "paragraph",
+            "content": [
+              {
+                "type": "text",
+                "text": "h3. 📌 User Story"
+              },
+              {
+                "type": "hardBreak"
+              },
+              {
+                "type": "text",
+                "text": "Là",
+                "marks": [
+                  {
+                    "type": "em"
+                  }
+                ]
+              },
+              {
+                "type": "text",
+                "text": " một học viên đã đăng nhập vào hệ thống,"
+              },
+              {
+                "type": "hardBreak"
+              },
+              {
+                "type": "text",
+                "text": "Tôi muốn",
+                "marks": [
+                  {
+                    "type": "em"
+                  }
+                ]
+              },
+              {
+                "type": "text",
+                "text": " bấm Đăng ký ghi danh một khóa học cụ thể,"
+              },
+              {
+                "type": "hardBreak"
+              },
+              {
+                "type": "text",
+                "text": "Để",
+                "marks": [
+                  {
+                    "type": "em"
+                  }
+                ]
+              },
+              {
+                "type": "text",
+                "text": " có quyền truy cập vào nội dung bài giảng và tài liệu của khóa học đó."
+              }
+            ],
+            "attrs": {
+              "localId": "7df1368c21f5"
+            }
+          },
+          {
+            "type": "paragraph",
+            "content": [
+              {
+                "type": "text",
+                "text": "h3. 📋 Acceptance Criteria (AC)"
+              },
+              {
+                "type": "hardBreak"
+              },
+              {
+                "type": "text",
+                "text": "AC 1: Ghi danh thành công khi đã đăng nhập",
+                "marks": [
+                  {
+                    "type": "em"
+                  }
+                ]
+              }
+            ],
+            "attrs": {
+              "localId": "eb7b99168b22"
+            }
+          },
+          {
+            "type": "bulletList",
+            "content": [
+              {
+                "type": "listItem",
+                "attrs": {
+                  "localId": "2bb16940074f"
+                },
+                "content": [
+                  {
+                    "type": "paragraph",
+                    "content": [
+                      {
+                        "type": "text",
+                        "text": "GIVEN: Học viên đã đăng nhập thành công và truy cập trang Chi tiết khóa học ("
+                      },
+                      {
+                        "type": "text",
+                        "text": "/chitietkhoahoc/<maKhoaHoc>",
+                        "marks": [
+                          {
+                            "type": "code"
+                          }
+                        ]
+                      },
+                      {
+                        "type": "text",
+                        "text": ")."
+                      }
+                    ],
+                    "attrs": {
+                      "localId": "40fe22e830a8"
+                    }
+                  }
+                ]
+              },
+              {
+                "type": "listItem",
+                "attrs": {
+                  "localId": "a94ad505fc95"
+                },
+                "content": [
+                  {
+                    "type": "paragraph",
+                    "content": [
+                      {
+                        "type": "text",
+                        "text": "WHEN: Học viên nhấn nút \"Đăng ký\" / \"Ghi danh\"."
+                      }
+                    ],
+                    "attrs": {
+                      "localId": "b046af5f2589"
+                    }
+                  }
+                ]
+              },
+              {
+                "type": "listItem",
+                "attrs": {
+                  "localId": "43f5383d722e"
+                },
+                "content": [
+                  {
+                    "type": "paragraph",
+                    "content": [
+                      {
+                        "type": "text",
+                        "text": "THEN: Hệ thống hiển thị pop-up/thông báo \"Đăng ký khóa học thành công!\", trạng thái khóa học chuyển sang \"Đã ghi danh\"."
+                      }
+                    ],
+                    "attrs": {
+                      "localId": "ad9bfc13b7c8"
+                    }
+                  }
+                ]
+              }
+            ],
+            "attrs": {
+              "localId": "d358c4116d6e"
+            }
+          },
+          {
+            "type": "paragraph",
+            "content": [
+              {
+                "type": "text",
+                "text": "AC 2: Yêu cầu đăng nhập khi chưa xác thực (Guest)",
+                "marks": [
+                  {
+                    "type": "em"
+                  }
+                ]
+              }
+            ],
+            "attrs": {
+              "localId": "c6c210d9246f"
+            }
+          },
+          {
+            "type": "bulletList",
+            "content": [
+              {
+                "type": "listItem",
+                "attrs": {
+                  "localId": "280dff71f8df"
+                },
+                "content": [
+                  {
+                    "type": "paragraph",
+                    "content": [
+                      {
+                        "type": "text",
+                        "text": "GIVEN: Khách vãng lai (chưa đăng nhập) vào xem Chi tiết khóa học."
+                      }
+                    ],
+                    "attrs": {
+                      "localId": "4fd4350f6a7f"
+                    }
+                  }
+                ]
+              },
+              {
+                "type": "listItem",
+                "attrs": {
+                  "localId": "3bc759ee3427"
+                },
+                "content": [
+                  {
+                    "type": "paragraph",
+                    "content": [
+                      {
+                        "type": "text",
+                        "text": "WHEN: Nhấn nút \"Đăng ký\"."
+                      }
+                    ],
+                    "attrs": {
+                      "localId": "a3895bd29388"
+                    }
+                  }
+                ]
+              },
+              {
+                "type": "listItem",
+                "attrs": {
+                  "localId": "e8420eecc4c3"
+                },
+                "content": [
+                  {
+                    "type": "paragraph",
+                    "content": [
+                      {
+                        "type": "text",
+                        "text": "THEN: Hệ thống hiển thị cảnh báo yêu cầu đăng nhập và chuyển hướng người dùng đến trang "
+                      },
+                      {
+                        "type": "text",
+                        "text": "/login",
+                        "marks": [
+                          {
+                            "type": "code"
+                          }
+                        ]
+                      },
+                      {
+                        "type": "text",
+                        "text": "."
+                      }
+                    ],
+                    "attrs": {
+                      "localId": "30cf9eac68f5"
+                    }
+                  }
+                ]
+              }
+            ],
+            "attrs": {
+              "localId": "1e1631d6d076"
+            }
+          },
+          {
+            "type": "paragraph",
+            "content": [
+              {
+                "type": "text",
+                "text": "AC 3: Chặn ghi danh trùng lặp",
+                "marks": [
+                  {
+                    "type": "em"
+                  }
+                ]
+              }
+            ],
+            "attrs": {
+              "localId": "0e6246746d11"
+            }
+          },
+          {
+            "type": "bulletList",
+            "content": [
+              {
+                "type": "listItem",
+                "attrs": {
+                  "localId": "1d82a44ebf45"
+                },
+                "content": [
+                  {
+                    "type": "paragraph",
+                    "content": [
+                      {
+                        "type": "text",
+                        "text": "GIVEN: Học viên đã ghi danh khóa học này từ trước."
+                      }
+                    ],
+                    "attrs": {
+                      "localId": "a00637da987a"
+                    }
+                  }
+                ]
+              },
+              {
+                "type": "listItem",
+                "attrs": {
+                  "localId": "d07ca2997d6b"
+                },
+                "content": [
+                  {
+                    "type": "paragraph",
+                    "content": [
+                      {
+                        "type": "text",
+                        "text": "WHEN: Truy cập lại trang khóa học."
+                      }
+                    ],
+                    "attrs": {
+                      "localId": "4a3dfe29150d"
+                    }
+                  }
+                ]
+              },
+              {
+                "type": "listItem",
+                "attrs": {
+                  "localId": "6dec99213b00"
+                },
+                "content": [
+                  {
+                    "type": "paragraph",
+                    "content": [
+                      {
+                        "type": "text",
+                        "text": "THEN: Nút \"Đăng ký\" được đổi thành \"Vào học\" hoặc bị disable, không cho phép ghi danh trùng."
+                      }
+                    ],
+                    "attrs": {
+                      "localId": "b3e6bf0e89ee"
+                    }
+                  }
+                ]
+              }
+            ],
+            "attrs": {
+              "localId": "3fc4e2f91a3a"
+            }
+          }
+        ]
+      },
+      "status": "In Progress",
+      "priority": "Medium",
+      "issueType": "Story",
+      "assignee": "Unassigned",
+      "reporter": "Nguyên Khôi",
+      "created": "2026-09-25T20:36:52.180+0700",
+      "updated": "2026-09-25T20:37:35.507+0700",
+      "labels": [],
+      "components": [],
+      "acceptanceCriteria": [
+        {
+          "id": 2,
+          "name": "SCRUM Sprint 0",
+          "state": "active",
+          "boardId": 1,
+          "startDate": "2026-09-23T14:22:54.610Z",
+          "endDate": "2026-10-07T14:22:54.610Z"
+        }
+      ],
+      "attachments": []
+    }
+  ]
+}
