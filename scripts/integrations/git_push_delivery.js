@@ -25,14 +25,18 @@ if (!ticket) {
   process.exit(1);
 }
 
-async function sendTg(msg) {
+async function sendTg(msg, replyMarkup = null) {
   if (!TG_BOT_TOKEN || !TG_CHAT_ID) return;
   try {
-    await axios.post(`https://api.telegram.org/bot${TG_BOT_TOKEN}/sendMessage`, {
+    const payload = {
       chat_id: TG_CHAT_ID,
       text: msg,
       parse_mode: 'HTML'
-    });
+    };
+    if (replyMarkup) {
+      payload.reply_markup = replyMarkup;
+    }
+    await axios.post(`https://api.telegram.org/bot${TG_BOT_TOKEN}/sendMessage`, payload);
   } catch (e) {
     console.error('[TG ERROR]', e.message);
   }
@@ -79,10 +83,17 @@ async function runDelivery() {
     // 6. Gửi thông báo thành công
     await sendTg(
       `🎉 <b>[HOÀN TẤT BÀN GIAO: ${ticket}]</b>\n\n` +
+      `⚡ <b>Trạng thái:</b> <code>Hoàn thành</code>\n` +
       `✅ <b>Code:</b> Đã push thành công lên nhánh <code>main</code>\n` +
       `✅ <b>Jira:</b> Đã chuyển trạng thái sang <b>In Review</b>\n` +
       `⚡ <b>CI/CD:</b> GitHub Actions đang tự động kích hoạt workflow kiểm thử trên Cloud.\n\n` +
-      `👏 Chúc mừng! Quy trình kết thúc thành công.`
+      `👏 Chúc mừng! Quy trình hoàn thành xuất sắc.`,
+      {
+        inline_keyboard: [
+          [{ text: `🚀 Chạy CI/CD (${ticket})`, callback_data: `run_ci:${ticket}` }],
+          [{ text: '📋 Xem danh sách Ticket', callback_data: 'check_jira' }]
+        ]
+      }
     );
     console.log(`[GIT DELIVERY] Hoàn tất thành công cho ${ticket}!`);
   } catch (err) {

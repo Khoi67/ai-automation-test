@@ -97,9 +97,9 @@ function getJiraHeaders() {
   };
 }
 
-// Fetch latest issues from Jira
+// Fetch latest issues from Jira (Chỉ lấy trạng thái To Do và In Progress)
 async function fetchLatestJiraIssues(limit = 5) {
-  const jql = `project = "${JIRA_PROJECT_KEY}" AND status = "In Progress" ORDER BY updated DESC`;
+  const jql = `project = "${JIRA_PROJECT_KEY}" AND status in ("To Do", "In Progress") ORDER BY updated DESC`;
   const res = await axios.get(`${JIRA_BASE_URL}/rest/api/3/search/jql`, {
     headers: getJiraHeaders(),
     params: {
@@ -120,11 +120,11 @@ async function showJiraTicketsList() {
     console.log(`[LOG] Đã nhận ${issues.length} tickets từ Jira.`);
 
     if (issues.length === 0) {
-      await sendTelegramMessage(`ℹ️ Không tìm thấy User Story nào trong Project <b>${JIRA_PROJECT_KEY}</b>.`);
+      await sendTelegramMessage(`ℹ️ Không có User Story nào ở trạng thái <b>To Do</b> hoặc <b>In Progress</b> trong Project <b>${JIRA_PROJECT_KEY}</b>.`);
       return;
     }
 
-    let msg = `📋 <b>DANH SÁCH TICKET MỚI NHẤT TRÊN JIRA (${JIRA_PROJECT_KEY}):</b>\n\n`;
+    let msg = `📋 <b>DANH SÁCH TICKET CẦN LÀM (${JIRA_PROJECT_KEY}):</b>\n\n`;
     const buttons = [];
 
     issues.forEach((issue, idx) => {
@@ -158,7 +158,16 @@ async function pollJiraChanges() {
   if (isCheckingJira) return;
   isCheckingJira = true;
   try {
-    const issues = await fetchLatestJiraIssues(5);
+    const res = await axios.get(`${JIRA_BASE_URL}/rest/api/3/search/jql`, {
+      headers: getJiraHeaders(),
+      params: {
+        jql: `project = "${JIRA_PROJECT_KEY}" ORDER BY updated DESC`,
+        maxResults: 5,
+        fields: 'summary,updated,status,creator,description',
+      },
+      timeout: 15000,
+    });
+    const issues = res.data.issues || [];
     let cacheChanged = false;
 
     for (const issue of issues) {
@@ -166,14 +175,15 @@ async function pollJiraChanges() {
       const updated = issue.fields.updated;
       const summary = issue.fields.summary;
       const author = issue.fields.creator?.displayName || 'Team';
+      const statusName = issue.fields.status?.name || 'In Progress';
 
       const prev = knownIssuesCache.get(key);
       if (prev && prev !== updated) {
         // Detected an update!
         knownIssuesCache.set(key, updated);
         cacheChanged = true;
-        console.log(`[ALERT] Phát hiện thay đổi trên ${key}!`);
-        await sendNotification(key, summary, author, 'Yêu cầu được Cập Nhật');
+        console.log(`[ALERT] Phát hiện thay đổi trên ${key} (${statusName})!`);
+        await sendNotification(key, summary, author, statusName);
       } else if (!prev) {
         knownIssuesCache.set(key, updated);
         cacheChanged = true;
@@ -190,20 +200,42 @@ async function pollJiraChanges() {
   }
 }
 
-async function sendNotification(key, summary, author, actionType) {
-  const msg = `🔔 <b>[JIRA UPDATE]</b>\n\n🎯 <b>Ticket:</b> <code>${key}</code>\n📝 <b>Tiêu đề:</b> ${summary}\n👤 <b>Người thực hiện:</b> ${author}\n⚡ <b>Trạng thái:</b> ${actionType}\n\n👉 Bạn muốn AI viết script mới hay Chạy Regression trên Cloud?`;
-  
-  const keyboard = {
-    inline_keyboard: [
-      [
-        { text: `🛠 Viết Code (${key})`, callback_data: `dev:${key}` },
-        { text: `🚀 Chạy CI/CD (${key})`, callback_data: `run_ci:${key}` }
-      ],
-      [
-        { text: '📋 Xem danh sách Ticket', callback_data: 'check_jira' }
+async function sendNotification(key, summary, author, statusName) {
+  const isCompleted = statusName.toLowerCase().includes('review') || 
+                      statusName.toLowerCase().includes('done') || 
+                      statusName.toLowerCase().includes('hoàn thành');
+
+  const displayStatus = isCompleted ? 'Hoàn thành' : statusName;
+
+  let msg = `🔔 <b>[JIRA UPDATE]</b>\n\n` +
+            `🎯 <b>Ticket:</b> <code>${key}</code>\n` +
+            `📝 <b>Tiêu đề:</b> ${summary}\n` +
+            `👤 <b>Người thực hiện:</b> ${author}\n` +
+            `⚡ <b>Trạng thái:</b> <code>${displayStatus}</code>\n\n`;
+
+  let keyboard;
+  if (isCompleted) {
+    msg += `👉 <i>Code automation đã hoàn thành và sẵn sàng kiểm thử trên Cloud!</i>`;
+    keyboard = {
+      inline_keyboard: [
+        [{ text: `🚀 Chạy CI/CD (${key})`, callback_data: `run_ci:${key}` }],
+        [{ text: '📋 Xem danh sách Ticket', callback_data: 'check_jira' }]
       ]
-    ]
-  };
+    };
+  } else {
+    msg += `👉 <i>Bạn muốn AI viết script mới hay Chạy Regression trên Cloud?</i>`;
+    keyboard = {
+      inline_keyboard: [
+        [
+          { text: `🛠 Viết Code (${key})`, callback_data: `dev:${key}` },
+          { text: `🚀 Chạy CI/CD (${key})`, callback_data: `run_ci:${key}` }
+        ],
+        [
+          { text: '📋 Xem danh sách Ticket', callback_data: 'check_jira' }
+        ]
+      ]
+    };
+  }
 
   await sendTelegramMessage(msg, keyboard);
 }
