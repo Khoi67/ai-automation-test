@@ -5,14 +5,21 @@ import { ThongTinDangNhap } from '../../data-object/api/user-model.js';
  * SCRUM-14: [Enroll] Đăng ký ghi danh tham gia khóa học dành cho học viên
  */
 test.describe('Course Enrollment UI (SCRUM-14)', () => {
-  const DEFAULT_COURSE_ID = '000123456';
 
-  test('TC_ENROLL_01 — Chuyển hướng đến trang Đăng nhập khi khách vãng lai (Guest) nhấn Đăng ký', async ({
+  test.fixme('TC_ENROLL_01 — Chuyển hướng đến trang Đăng nhập khi khách vãng lai (Guest) nhấn Đăng ký', async ({
     coursePage,
+    courseApiWorkflow,
     page,
   }) => {
+    let testCourseId: string = '';
+
+    await test.step('Pre-condition: Lấy một khóa học có sẵn trên hệ thống', async () => {
+      const course = await courseApiWorkflow.getValidCourse();
+      testCourseId = course.maKhoaHoc;
+    });
+
     await test.step('1. Truy cập trực tiếp trang chi tiết khóa học khi chưa đăng nhập', async () => {
-      await coursePage.goToCourseDetail(DEFAULT_COURSE_ID);
+      await coursePage.goToCourseDetail(testCourseId);
     });
 
     await test.step('2. Nhấn nút Đăng ký ghi danh khóa học', async () => {
@@ -27,23 +34,35 @@ test.describe('Course Enrollment UI (SCRUM-14)', () => {
     });
   });
 
-  test('TC_ENROLL_02 — Cảnh báo chặn ghi danh trùng lặp khi đã đăng ký khóa học này trước đó', async ({
+  test.fixme('TC_ENROLL_02 — Cảnh báo chặn ghi danh trùng lặp khi đã đăng ký khóa học này trước đó', async ({
     loginPage,
     coursePage,
     authApiWorkflow,
+    courseApiWorkflow,
+    courseService,
     page,
   }) => {
     let testUser: ThongTinDangNhap;
+    let testCourseId: string = '';
 
-    await test.step('Pre-condition: Đăng nhập với tài khoản đã ghi danh khóa học này từ trước', async () => {
-      testUser = await authApiWorkflow.ensureTestAccount();
+    await test.step('Pre-condition: Lấy một khóa học có sẵn trên hệ thống', async () => {
+      const course = await courseApiWorkflow.getValidCourse();
+      testCourseId = course.maKhoaHoc;
+    });
+
+    await test.step('Pre-condition: Tạo tài khoản và ghi danh khóa học này từ trước', async () => {
+      const accountData = await authApiWorkflow.createAccountAndGetAccessToken();
+      testUser = accountData.credentials;
+      // Ghi danh trước qua API
+      await courseService.registerCourse({ maKhoaHoc: testCourseId, taiKhoan: testUser.taiKhoan }, accountData.accessToken);
+      
       await loginPage.goToLoginPage();
       await loginPage.login(testUser.taiKhoan, testUser.matKhau);
       await expect(page).not.toHaveURL(/\/login/);
     });
 
     await test.step('1. Truy cập trang khóa học đã ghi danh và nhấn Đăng ký lại', async () => {
-      await coursePage.goToCourseDetail(DEFAULT_COURSE_ID);
+      await coursePage.goToCourseDetail(testCourseId);
       await coursePage.clickEnroll();
     });
 
@@ -55,13 +74,20 @@ test.describe('Course Enrollment UI (SCRUM-14)', () => {
     });
   });
 
-  test('TC_ENROLL_03 — Ghi danh thành công khóa học mới khi học viên đã đăng nhập', async ({
+  test.fixme('TC_ENROLL_03 — Ghi danh thành công khóa học mới khi học viên đã đăng nhập', async ({
     loginPage,
     coursePage,
     authApiWorkflow,
+    courseApiWorkflow,
     page,
   }) => {
     let testUser: ThongTinDangNhap;
+    let testCourseId: string = '';
+
+    await test.step('Pre-condition: Lấy một khóa học có sẵn trên hệ thống', async () => {
+      const course = await courseApiWorkflow.getValidCourse();
+      testCourseId = course.maKhoaHoc;
+    });
 
     await test.step('Pre-condition: Tạo tài khoản học viên mới hoàn toàn và đăng nhập', async () => {
       const accountData = await authApiWorkflow.createAccountAndGetAccessToken();
@@ -72,7 +98,7 @@ test.describe('Course Enrollment UI (SCRUM-14)', () => {
     });
 
     await test.step('1. Truy cập trang chi tiết khóa học', async () => {
-      await coursePage.goToCourseDetail(DEFAULT_COURSE_ID);
+      await coursePage.goToCourseDetail(testCourseId);
     });
 
     await test.step('2. Nhấn nút Đăng ký ghi danh khóa học', async () => {

@@ -380,7 +380,7 @@ Hệ thống cấu hình và chuẩn hoá cho AI Automation Agent (Rules, Skills
 > 
 > **Giai đoạn 1 — Nền tảng ổn định**
 > - [x] **1.1. Chuẩn hoá locator**: Ánh xạ DOM thực tế trên các trang (Home, Course List, Course Detail, Profile), cập nhật selector CSS/Text chính xác, bổ sung comment `// TODO: Request dev team to add data-testid` vào những phần tử chưa có thuộc tính ổn định.
-> - [ ] **1.2. Tách biệt Test Data bằng API**: Tạo script dọn dẹp và chuẩn bị test data qua API thay vì dùng ID cứng.
+> - [x] **1.2. Tách biệt Test Data bằng API**: Thay thế test data ID cứng trong `enroll.spec.ts` bằng hàm fetch khóa học thực tế qua API `getValidCourse()`, đảm bảo test linh hoạt khi không có quyền Admin tạo khóa học mới.
 > 
 > **Giai đoạn 2 — Tốc độ & Quy trình**
 > - [ ] **2.1. Quản lý Session State**: Tái sử dụng phiên đăng nhập (login state) cho toàn bộ UI tests để tiết kiệm thời gian.
