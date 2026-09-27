@@ -80,7 +80,15 @@ async function runDelivery() {
       console.log('[LOG] Đã dọn dẹp scratch/push_trigger.txt');
     }
 
-    // 6. Gửi thông báo thành công
+    // 6. Gửi thông báo Bước 6 về Telegram
+    const notifyScript = path.resolve(__dirname, 'notify_step.js');
+    try {
+      execSync(`node "${notifyScript}" --ticket ${ticket} --step 6 --title "Kích Hoạt CI/CD & Báo Cáo Allure" --detail "GitHub Actions đang tự động chạy kiểm thử trên Cloud và cập nhật Allure Report"`, { stdio: 'inherit' });
+    } catch (e) {
+      console.warn('[WARN] Lỗi khi gửi notify step 6:', e.message);
+    }
+
+    // 7. Gửi thông báo hoàn tất bàn giao
     await sendTg(
       `🎉 <b>[HOÀN TẤT BÀN GIAO: ${ticket}]</b>\n\n` +
       `⚡ <b>Trạng thái:</b> <code>Hoàn thành</code>\n` +

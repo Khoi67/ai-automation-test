@@ -47,21 +47,26 @@ async function sendReport() {
             `📁 <b>Mã nguồn cập nhật:</b>\n${fileListStr}\n\n` +
             `⚖️ <b>Chất lượng:</b> ${statusEmoji} ${statusText}\n\n`;
 
+  const buttons = [];
+
   if (isPassed) {
-    msg += `👉 <i>Kết quả kiểm thử đã sẵn sàng. Nhấn nút bên dưới để duyệt và tự động Push code lên GitHub:</i>`;
+    msg += `👉 <i>Toàn bộ kiểm thử đã ĐẠT chuẩn Definition of Done. Nhấn nút bên dưới để duyệt và tự động Push code lên GitHub:</i>`;
+    buttons.push([
+      { text: `🚀 Duyệt & Push Git (${ticket})`, callback_data: `confirm_push:${ticket}` }
+    ]);
   } else {
-    msg += `⚠️ <i>Vẫn còn test case bị lỗi hoặc Bug ứng dụng. Vui lòng cân nhắc kỹ trước khi duyệt Push!</i>`;
+    msg += `🛑 <b>CHẶN PUSH GIT:</b> <i>Kiểm thử chưa đạt chuẩn (có test FAILED hoặc Bug ứng dụng). Hệ thống từ chối đẩy code lên Git để bảo vệ nhánh chính. Hãy kiểm tra và khắc phục lỗi tại local!</i>`;
   }
 
+  buttons.push([
+    { text: `🔄 Chạy lại Test Local (${ticket})`, callback_data: `dev:${ticket}` }
+  ]);
+  buttons.push([
+    { text: `📋 Xem danh sách User Story`, callback_data: `nav_stories` }
+  ]);
+
   const inlineKeyboard = {
-    inline_keyboard: [
-      [
-        { text: `🚀 Duyệt & Push Git (${ticket})`, callback_data: `confirm_push:${ticket}` }
-      ],
-      [
-        { text: `🔄 Chạy lại Test Local`, callback_data: `dev:${ticket}` }
-      ]
-    ]
+    inline_keyboard: buttons
   };
 
   try {

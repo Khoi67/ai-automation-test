@@ -48,17 +48,24 @@ flowchart TD
 ## Các Bước Thực Hiện Chi Tiết
 
 ### Bước 1: Lấy Requirements từ Jira (`/fetch_jira_requirements`)
-0. Gửi thông báo: `node scratch/notify.js "Bắt đầu Bước 1: Kéo Requirement từ Jira cho ticket <JIRA_KEY>"`
-1. Nhận `JIRA_KEY` (ví dụ: `VL-101`) từ người dùng hoặc từ Webhook n8n.
-2. Thực thi script fetcher để lấy requirement format MD.
-3. **Requirement Gate (Validation):**
+0. Gửi thông báo: `node scripts/integrations/notify_step.js --ticket <JIRA_KEY> --step 1 --title "Kéo Requirement từ Jira" --detail "Bắt đầu lấy User Story và tiêu chí chấp nhận"`
+1. Nhận `JIRA_KEY` (ví dụ: `SCRUM-19`) từ người dùng hoặc từ file `trigger.txt`.
+2. **Tự động chuyển trạng thái Ticket trên Jira từ To Do sang In Progress:**
+   ```bash
+   node scripts/integrations/jira/jira_transition.js --issue <JIRA_KEY> --status "In Progress"
+   ```
+3. Thực thi script fetcher để lấy requirement format MD:
+   ```bash
+   node scripts/integrations/jira/jira_fetcher.js --issue <JIRA_KEY>
+   ```
+4. **Requirement Gate (Validation):**
    - Đánh giá xem Requirement đã đủ rõ ràng để viết test chưa? (Có acceptance criteria, có thiết kế không?)
    - Nếu chưa rõ: Trả kết quả báo "Requirement chưa đủ điều kiện, cần bổ sung".
 
 ---
 
 ### Bước 2: Sinh Manual Test Cases (`/generate_testcases_from_requirements`)
-0. Gửi thông báo: `node scratch/notify.js "Bắt đầu Bước 2: Sinh Manual Test Cases cho ticket <JIRA_KEY>"`
+0. Gửi thông báo: `node scripts/integrations/notify_step.js --ticket <JIRA_KEY> --step 2 --title "Sinh Manual Test Cases" --detail "Áp dụng kỹ thuật phân tích biên và phân vùng tương đương"`
 1. Áp dụng kỹ thuật phân tích biên (BVA), phân vùng tương đương (EP), và Field-Level Validation theo skill `rbt_manual_testing`.
 2. Tạo file test cases chuẩn tại `test-cases/<JIRA_KEY>_testcases.md`.
 3. **Test Case Gate (Validation):**
@@ -68,7 +75,7 @@ flowchart TD
 ---
 
 ### Bước 3: Chuyển Test Cases Thành Automation Script (`/generate_automation_from_testcases`)
-0. Gửi thông báo: `node scratch/notify.js "Bắt đầu Bước 3: Sinh Automation Scripts cho ticket <JIRA_KEY>"`
+0. Gửi thông báo: `node scripts/integrations/notify_step.js --ticket <JIRA_KEY> --step 3 --title "Sinh Automation Scripts" --detail "Viết Page Object Model và Test Specs"`
 1. Tuân thủ tuyệt đối quy tắc kiến trúc POM của dự án:
    - **Page Objects (`page-object/*.ts`):** Chỉ chứa Scoped Semantic Locators và User Actions. Không chứa `expect()`.
    - **Test Specs (`tests/ui/*.spec.ts`):** Nhận Page Object từ fixture, thực hiện các bước và Web-First Assertions trực tiếp tại tầng Test.
@@ -77,7 +84,7 @@ flowchart TD
 ---
 
 ### Bước 4: Thực Thi Kiểm Thử & Phân Loại Lỗi (Failure Classification)
-0. Gửi thông báo: `node scratch/notify.js "Bắt đầu Bước 4: Chạy Test & Phân loại lỗi cho ticket <JIRA_KEY>"`
+0. Gửi thông báo: `node scripts/integrations/notify_step.js --ticket <JIRA_KEY> --step 4 --title "Chạy Test & Phân loại lỗi" --detail "Kiểm tra kết quả và phân loại Root Cause"`
 1. Chạy test suite cục bộ: `npm test`
 2. **Failure Classification (CRITICAL):**
    - Thay vì mù quáng "thấy FAIL là tự sửa code test cho đến khi PASS" (gây ra False Healing), phải **phân tích root cause**:
@@ -93,8 +100,15 @@ flowchart TD
            --attachment "auto"
          ```
        - Tuyệt đối không sửa code test để "ép" kết quả thành PASS.
+       - **Đánh dấu `test.fixme()` cho Test Case bị Bug (CI Safety):**
+         - Để bảo vệ CI/CD trên GitHub Actions không bị FAIL mà vẫn lưu giữ được mã nguồn kiểm thử trên Git, Agent **bắt buộc** chuyển `test(...)` thành `test.fixme(...)` cho các test case bị dính Bug kèm chú thích mã Bug:
+           ```typescript
+           // Đánh dấu fixme do Bug <BUG_KEY> trên Jira: <LÝ_DO_NGẮN_GỌN>
+           test.fixme('TC_XXX: <Tên test case>', async ({ page }) => { ... });
+           ```
+         - Nhờ cơ chế `test.fixme()`, Playwright sẽ tự động SKIP test case này khi chạy CI trên Cloud $\rightarrow$ **Pipeline GitHub Actions luôn PASS XANH 100%**, đồng thời code test sẵn sàng chạy lại ngay khi Dev sửa xong Bug.
 3. **Quality Gate:** Code đã clean chưa? Không còn `console.log`, không hard-code credentials, tuân thủ chặt POM.
-4. **Tiêu chuẩn Definition of Done:** Test suite phải **PASS ít nhất 2 lần liên tiếp** trên local (hoặc Failed do Bug app hợp lệ).
+4. **Tiêu chuẩn Definition of Done:** Test suite phải **PASS ít nhất 2 lần liên tiếp** trên local (các test dính Bug đã được đánh dấu `test.fixme()`).
 5. **Báo Cáo Kết Quả Kiểm Thử Về Telegram (Approval Gate):**
    - Agent thực thi script gửi kết quả kiểm thử kèm nút bấm phê duyệt Push:
      ```bash
@@ -126,5 +140,10 @@ flowchart TD
 ---
 
 ### Bước 6: CI/CD & Báo Cáo Tổng Kết
+0. Gửi thông báo: `node scripts/integrations/notify_step.js --ticket <JIRA_KEY> --step 6 --title "Kích Hoạt CI/CD & Báo Cáo Allure" --detail "Kích hoạt kiểm thử tự động trên Cloud & Cập nhật Allure Report"`
 1. GitHub Actions tự động kích hoạt workflow `Playwright Tests` trên Cloud khi có commit mới trên nhánh `main`.
-2. Báo cáo kiểm thử Allure Report được cập nhật lên GitHub Pages.
+2. Báo cáo kiểm thử Allure Report được cập nhật lên GitHub Pages:
+   `https://<GITHUB_OWNER>.github.io/<GITHUB_REPO>/`
+3. **Báo cáo kết quả CI về Telegram Bot:**
+   - GitHub Actions chạy xong step kiểm thử và deploy report sẽ tự động bắn thông báo kết quả (Status PASS/FAIL, Commit message, Link Allure Report, Link GitHub Actions Run) trực tiếp về Telegram Bot.
+

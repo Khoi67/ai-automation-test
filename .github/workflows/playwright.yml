@@ -122,3 +122,43 @@ jobs:
         id: deployment
         uses: actions/deploy-pages@v4
 
+  notify:
+    needs: [test, deploy-report]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send Telegram Notification
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          if [ -n "$TELEGRAM_BOT_TOKEN" ] && [ -n "$TELEGRAM_CHAT_ID" ]; then
+            TEST_RESULT="${{ needs.test.result }}"
+            if [ "$TEST_RESULT" = "success" ]; then
+              STATUS_ICON="✅"
+              STATUS_TEXT="PASS TOÀN BỘ"
+            else
+              STATUS_ICON="❌"
+              STATUS_TEXT="CÓ LỖI (FAIL)"
+            fi
+
+            COMMIT_MSG="${{ github.event.head_commit.message }}"
+            FIRST_LINE=$(echo "$COMMIT_MSG" | head -n 1)
+
+            MSG="🤖 <b>[CI/CD GITHUB ACTIONS HOÀN TẤT]</b>%0A%0A"
+            MSG="${MSG}⚡ <b>Kết quả:</b> ${STATUS_ICON} <code>${STATUS_TEXT}</code>%0A"
+            MSG="${MSG}📌 <b>Nhánh:</b> <code>${{ github.ref_name }}</code>%0A"
+            MSG="${MSG}👤 <b>Tác giả:</b> ${{ github.actor }}%0A"
+            MSG="${MSG}📝 <b>Commit:</b> <code>${FIRST_LINE}</code>%0A"
+            MSG="${MSG}📊 <b>Allure Report:</b> https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/%0A%0A"
+            MSG="${MSG}🔗 <a href=\"https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}\">Xem chi tiết GitHub Actions Run</a>"
+
+            curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+              -d "chat_id=${TELEGRAM_CHAT_ID}" \
+              -d "text=${MSG}" \
+              -d "parse_mode=HTML"
+          else
+            echo "TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID is not configured in secrets. Skipping Telegram notification."
+          fi
+
+

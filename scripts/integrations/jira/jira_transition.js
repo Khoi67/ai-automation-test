@@ -53,13 +53,23 @@ let issueKey = '';
 let targetStatus = '';
 
 for (let i = 0; i < args.length; i++) {
-  if (args[i] === '--issue') issueKey = args[i+1];
-  if (args[i] === '--status') targetStatus = args[i+1];
+  if (args[i] === '--issue') issueKey = (args[i+1] || '').trim();
+  if (args[i] === '--status') {
+    const tokens = [];
+    for (let j = i + 1; j < args.length; j++) {
+      if (args[j].startsWith('--')) break;
+      tokens.push(args[j]);
+    }
+    targetStatus = tokens.join(' ').replace(/^[\\"']+|[\\"']+$/g, '').trim();
+  }
 }
 
-if (!issueKey || !targetStatus) {
-  console.error('Usage: node jira_transition.js --issue <KEY> --status "<STATUS_NAME>"');
-  process.exit(1);
+if (require.main === module) {
+  if (!issueKey || !targetStatus) {
+    console.error('Usage: node jira_transition.js --issue <KEY> --status "<STATUS_NAME>"');
+    process.exit(1);
+  }
+  transitionIssue(issueKey, targetStatus);
 }
 
-transitionIssue(issueKey, targetStatus);
+module.exports = { transitionIssue };

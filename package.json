@@ -16,14 +16,15 @@
     "bot": "node scripts/telegram_bot.js",
     "docker:up": "docker compose up -d",
     "docker:down": "docker compose down",
-    "docker:logs": "docker compose logs -f telegram-bot",
+    "docker:build": "docker compose build --no-cache",
+    "docker:logs": "docker compose logs -f",
+    "docker:logs:bot": "docker compose logs -f telegram-bot",
     "jira:fetch": "node scripts/integrations/jira/jira_fetcher.js"
   },
   "dependencies": {
     "@playwright/test": "^1.49.0",
     "axios": "^1.20.0",
     "dotenv": "^16.4.7",
-    "express": "^5.2.1",
     "node-telegram-bot-api": "^2.1.0"
   },
   "devDependencies": {

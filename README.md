@@ -26,7 +26,7 @@ demo-ai-automation/
 ├── .agent/               # AI QA Automation Rules, Skills & Workflows
 ├── .github/
 │   └── workflows/
-│       └── playwright.yml # CI/CD pipeline GitHub Actions & Allure Pages
+│       └── playwright.yml # CI/CD pipeline GitHub Actions & Allure Pages & Telegram Notify
 ├── constant/             # Các hằng số URL, timeouts, configuration
 ├── core/                 # Core utilities: API client, base fixtures, helper functions
 ├── data-object/          # TypeScript interfaces/models (UI & API request/response)
@@ -36,24 +36,28 @@ demo-ai-automation/
 │   ├── forgot-password-page.ts
 │   ├── home-page.ts
 │   ├── login-page.ts
+│   ├── profile-page.ts   # Trang thông tin cá nhân & tải lên ảnh đại diện
 │   └── register-page.ts
 ├── requirements/         # Tài liệu yêu cầu chi tiết đồng bộ từ Jira
-├── scratch/              # Tệp runtime phục vụ Telegram Bot trigger (notify.js, trigger.txt)
+├── scratch/              # Tệp runtime phục vụ Telegram Bot trigger (trigger.txt, push_trigger.txt)
 ├── scripts/              # Scripts tiện ích: Telegram Bot daemon, Jira integration
-│   ├── integrations/jira/
-│   │   ├── jira_create_bug.js # Tự động tạo Bug trên Jira + gửi Telegram kèm screenshot
-│   │   ├── jira_fetcher.js    # Kéo User Stories/Requirements từ Jira Cloud
-│   │   └── jira_transition.js # Tự động chuyển trạng thái Ticket (In Review)
+│   ├── integrations/
+│   │   ├── git_push_delivery.js # Bàn giao Git & kích hoạt quy trình CI/CD
+│   │   ├── notify_step.js       # Bắn thông báo có dấu chuẩn từng bước về Telegram Bot
+│   │   ├── report_local_test.js # Báo cáo kết quả kiểm thử local kèm nút duyệt Push
+│   │   └── jira/
+│   │       ├── jira_create_bug.js # Tự động tạo Bug trên Jira + gửi Telegram kèm screenshot
+│   │       ├── jira_fetcher.js    # Kéo User Stories/Requirements từ Jira Cloud
+│   │       └── jira_transition.js # Tự động chuyển trạng thái Ticket (In Progress, In Review)
 │   └── telegram_bot.js        # Telegram Assistant Bot (Zero-Config, Long-Polling)
 ├── services/             # API Service wrappers (Auth, User, Course)
-├── test-cases/           # Tài liệu Test Cases chuẩn RBT (SCRUM-2, SCRUM-6,...)
-├── test-data/            # Dữ liệu kiểm thử ngoại vi
+├── test-cases/           # Tài liệu Test Cases chuẩn RBT (SCRUM-2, SCRUM-6, SCRUM-19,...)
+├── test-data/            # Dữ liệu kiểm thử ngoại vi & Fixture files (avatar.png, document.pdf,...)
+│   └── ui/               # Ảnh và tệp đính kèm kiểm thử UI
 ├── tests/                # Test specifications
 │   ├── api/              # API Test specs (auth.spec.ts, course.spec.ts)
-│   └── ui/               # UI Test specs (login.spec.ts, register.spec.ts, forgot-password.spec.ts)
+│   └── ui/               # UI Test specs (login, register, forgot-password, search, profile-avatar, enroll)
 ├── workflow/             # Workflow orchestration (kết hợp Page Objects và API services)
-│   ├── api/              # API flows (auth-workflow.ts, course-workflow.ts)
-│   └── ui/               # UI flows (login-workflow.ts, course-workflow.ts)
 ├── .env.example          # Mẫu cấu hình biến môi trường
 ├── package.json          # Dependencies & npm scripts
 ├── playwright.config.ts  # Cấu hình Playwright (browsers, viewports, reporters)
@@ -299,22 +303,31 @@ AI Agent sẽ tự động đọc `scratch/trigger.txt` và lần lượt thực
    * **Nếu lỗi do automation (locator/timeout):** Tự kích hoạt Self-Healing sửa code cho đến khi PASS ổn định 2 lần liên tiếp.
    * **Nếu lỗi do ứng dụng (Application Bug / Chưa triển khai logic):**
      * Dừng test, đánh dấu FAILED (tuyệt đối không sửa code test để ép PASS).
-     * Tự động lấy ảnh chụp màn hình Playwright vừa chụp tại thời điểm fail (có chứa từ khóa trong ô tìm kiếm).
+     * Tự động chụp ảnh màn hình bằng chứng lỗi tại thời điểm fail.
      * Tự động gọi script `scripts/integrations/jira/jira_create_bug.js`:
        * Tự động đồng bộ 100% Precondition, Steps, Expected Result từ Test Case sang Bug trên Jira.
-       * Upload ảnh bằng chứng lên Jira issue.
+       * Upload ảnh bằng chứng lỗi lên Jira issue.
        * Thiết lập liên kết: Bug ➡️ **blocks** ➡️ User Story.
        * Bắn ảnh chụp bằng chứng lỗi và thông tin chi tiết về Telegram Bot.
+     * **Cơ chế CI Safety (`test.fixme`):** Để giữ trọn vẹn test script trên Git nhưng **không làm FAIL pipeline CI/CD trên Cloud**, Agent tự động gắn cờ `test.fixme(...)` cho test case bị dính bug kèm chú thích mã Bug:
+       ```typescript
+       // Đánh dấu fixme do Bug <BUG_KEY> trên Jira: <LÝ_DO>
+       test.fixme('TC_XXX: <Tên test case>', async ({ page }) => { ... });
+       ```
+   * **Báo cáo kết quả Local & Cổng phê duyệt (Approval Gate):**
+     * Agent chạy `report_local_test.js` gửi tóm tắt PASS / FAIL / BUG về Telegram kèm nút bấm `[🚀 Duyệt & Push Git]`. Agent dừng lại và chờ Tester phê duyệt.
 
-5. **Bước 5: Đẩy Mã Nguồn Lên GitHub (Git Delivery)**
-   * Kiểm tra `git status`, tạo commit chuẩn Conventional Commits.
-   * Tự động `git push origin main` lên GitHub Repository.
-   * Bắn thông báo tiến độ về Telegram Bot.
+5. **Bước 5: Phê Duyệt & Đẩy Mã Nguồn Lên GitHub (Git Delivery)**
+   * Khi Tester bấm nút duyệt trên Telegram hoặc xác nhận trên IDE:
+   * Script `git_push_delivery.js` tự động stage, commit chuẩn Conventional Commits và push lên nhánh `main`.
+   * Chuyển trạng thái Ticket trên Jira sang **`In Review`** qua `jira_transition.js`.
+   * Bắn thông báo xác nhận bàn giao về Telegram Bot.
 
-6. **Bước 6: Chuyển Trạng Thái Jira & Báo Cáo Hoàn Tất**
-   * Tự động chuyển trạng thái Ticket trên Jira sang **`In Review`** qua script `jira_transition.js`.
-   * GitHub Actions CI tự động kích hoạt chạy test suite trên Cloud và cập nhật Allure Report lên GitHub Pages.
-   * Bắn thông báo tổng kết cuối cùng về Telegram Bot.
+6. **Bước 6: Kích Hoạt CI/CD & Báo Cáo Kết Quả Tự Động**
+   * Bắn thông báo tiến độ Bước 6 về Telegram Bot.
+   * GitHub Actions tự động kích hoạt workflow kiểm thử trên Cloud (Ubuntu runner, headless mode).
+   * Biên dịch Allure Report và tự động xuất bản lên **GitHub Pages**.
+   * **Thông báo kết quả CI về Telegram Bot:** Job `notify` trên GitHub Actions tự động gửi tin nhắn báo cáo kết quả (Trạng thái PASS/FAIL, Người commit, Mã commit, Link Allure Report, Link GitHub Actions Run) trực tiếp về Telegram Bot.
 
 ---
 
@@ -325,12 +338,15 @@ Dự án đã được cấu hình CI/CD hoàn chỉnh trong `.github/workflows/
 - **Kích hoạt tự động**: Khi có `push` hoặc `pull_request` vào nhánh `main` / `master`.
 - **Hỗ trợ chạy thủ công (`workflow_dispatch`)**: Cho phép chọn chạy toàn bộ (`all`), chỉ UI (`ui`), hoặc chỉ API (`api`).
 - **Tự động xuất bản Báo cáo**: Sau khi test xong, GitHub Actions sẽ tự động biên dịch Allure Report và deploy lên **GitHub Pages**.
-- **Cấu hình GitHub Secrets cần thiết trong Repository Settings**:
-  - `UI_BASE_URL`
-  - `API_BASE_URL`
-  - `TOKEN_CYBERSOFT`
-  - `TEST_USERNAME`
-  - `TEST_PASSWORD`
+- **Tự động thông báo về Telegram Bot**: Gửi ngay kết quả kiểm thử trên Cloud và đường dẫn Allure Report về nhóm chat/kênh Telegram của bạn.
+- **Cấu hình GitHub Secrets cần thiết trong Repository Settings (Settings ➔ Secrets and variables ➔ Actions)**:
+  - `UI_BASE_URL`: URL trang web kiểm thử (`https://demo2.cybersoft.edu.vn`)
+  - `API_BASE_URL`: URL hệ thống API (`https://elearningnew.cybersoft.edu.vn`)
+  - `TOKEN_CYBERSOFT`: Token xác thực CyberSoft
+  - `TEST_USERNAME`: Tài khoản test đăng nhập
+  - `TEST_PASSWORD`: Mật khẩu tài khoản test
+  - `TELEGRAM_BOT_TOKEN`: Token của Telegram Bot
+  - `TELEGRAM_CHAT_ID`: ID chat cá nhân hoặc nhóm nhận thông báo
 
 ---
 

@@ -1,0 +1,77 @@
+{
+  "fetchedAt": "2026-09-26T09:44:22.969Z",
+  "mode": "single",
+  "ticketKey": "SCRUM-19",
+  "total": 1,
+  "issues": [
+    {
+      "key": "SCRUM-19",
+      "id": "10018",
+      "summary": "[Profile] Đổi ảnh đại diện học viên (Upload Profile Avatar)",
+      "description": {
+        "type": "doc",
+        "version": 1,
+        "content": [
+          {
+            "type": "paragraph",
+            "content": [
+              {
+                "type": "text",
+                "text": "Là học viên, tôi muốn truy cập trang Thông tin cá nhân ("
+              },
+              {
+                "type": "text",
+                "text": "/thongtincanhan",
+                "marks": [
+                  {
+                    "type": "code"
+                  }
+                ]
+              },
+              {
+                "type": "text",
+                "text": "), bấm vào avatar để tải lên file ảnh "
+              },
+              {
+                "type": "text",
+                "text": "avatar.png",
+                "marks": [
+                  {
+                    "type": "code"
+                  }
+                ]
+              },
+              {
+                "type": "text",
+                "text": " (< 2MB) và thấy ảnh đại diện mới được cập nhật ngay trên Header."
+              }
+            ],
+            "attrs": {
+              "localId": "8e55a95b2bcc"
+            }
+          }
+        ]
+      },
+      "status": "In Progress",
+      "priority": "Medium",
+      "issueType": "Story",
+      "assignee": "Unassigned",
+      "reporter": "Nguyên Khôi",
+      "created": "2026-09-26T16:28:13.883+0700",
+      "updated": "2026-09-26T16:43:42.820+0700",
+      "labels": [],
+      "components": [],
+      "acceptanceCriteria": [
+        {
+          "id": 2,
+          "name": "SCRUM Sprint 0",
+          "state": "active",
+          "boardId": 1,
+          "startDate": "2026-09-23T14:22:54.610Z",
+          "endDate": "2026-10-07T14:22:54.610Z"
+        }
+      ],
+      "attachments": []
+    }
+  ]
+}

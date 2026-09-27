@@ -6,12 +6,12 @@ test.describe('SCRUM-7: Course Search', () => {
     await homePage.goToHomePage();
   });
 
-  test('TC_SEARCH_01: Tìm kiếm có kết quả phù hợp (Happy Path)', async ({ homePage }) => {
+  test('TC_SEARCH_01: Tìm kiếm có kết quả phù hợp (Happy Path)', async ({ homePage, page }) => {
     const keyword = 'React';
     await homePage.searchCourse(keyword);
 
     // Chờ 1 chút để DOM cập nhật nếu client-side filtering hoặc API
-    await homePage.page.waitForTimeout(2000);
+    await page.waitForTimeout(2000);
     // Kiểm tra danh sách hiển thị
     const count = await homePage.getCourseCardCount();
     expect(count).toBeGreaterThan(0);
@@ -24,13 +24,13 @@ test.describe('SCRUM-7: Course Search', () => {
   });
 
   // Đánh dấu fixme do Bug SCRUM-8 trên Jira: Tìm kiếm từ khóa lạ vẫn trả về danh sách khóa học
-  test.fixme('TC_SEARCH_02: Tìm kiếm không có kết quả', async ({ homePage }) => {
+  test.fixme('TC_SEARCH_02: Tìm kiếm không có kết quả', async ({ homePage, page }) => {
     const keyword = 'xyz123randomnotfound';
     await homePage.searchCourse(keyword);
 
-    await homePage.page.waitForTimeout(2000);
+    await page.waitForTimeout(2000);
     // Kiểm tra thông báo không tìm thấy kết quả từ hệ thống
-    await expect(homePage.page.getByText('Không tìm thấy khóa học nào phù hợp')).toBeVisible();
+    await expect(page.getByText('Không tìm thấy khóa học nào phù hợp')).toBeVisible();
   });
 
   test('TC_SEARCH_03: Tìm kiếm với chuỗi rỗng', async ({ homePage }) => {

@@ -5,8 +5,7 @@ import { test, expect } from '../../fixture/page-fixture.js';
  *
  * Test suite mapped directly to test-cases/SCRUM-6_testcases.md
  */
-// Skip toàn bộ suite do Bug SCRUM-15 trên Jira: Click "Quên mật khẩu?" trên trang Đăng nhập không mở form nhập email
-test.describe.skip('SCRUM-6: Chức năng Quên mật khẩu (UI) [Skipped: Bug SCRUM-15]', () => {
+test.describe('SCRUM-6: Chức năng Quên mật khẩu (UI)', () => {
 
   test.beforeEach(async ({ forgotPasswordPage }) => {
     await forgotPasswordPage.goToLoginPage();
@@ -17,7 +16,8 @@ test.describe.skip('SCRUM-6: Chức năng Quên mật khẩu (UI) [Skipped: Bug 
     ).toBeVisible({ timeout: 5000 });
   });
 
-  test('TC_FORGOT_01: Yêu cầu khôi phục mật khẩu thành công với Email hợp lệ (Happy Path)', async ({
+  // Đánh dấu fixme do Bug SCRUM-15 trên Jira: Click "Quên mật khẩu?" trên trang Đăng nhập không mở form nhập email
+  test.fixme('TC_FORGOT_01: Yêu cầu khôi phục mật khẩu thành công với Email hợp lệ (Happy Path)', async ({
     forgotPasswordPage,
   }) => {
     // 1. Nhập email hợp lệ và submit
@@ -31,7 +31,8 @@ test.describe.skip('SCRUM-6: Chức năng Quên mật khẩu (UI) [Skipped: Bug 
     ).toBeVisible();
   });
 
-  test('TC_FORGOT_02: Yêu cầu khôi phục mật khẩu với Email không tồn tại (Negative Path)', async ({
+  // Đánh dấu fixme do Bug SCRUM-15 trên Jira: Click "Quên mật khẩu?" trên trang Đăng nhập không mở form nhập email
+  test.fixme('TC_FORGOT_02: Yêu cầu khôi phục mật khẩu với Email không tồn tại (Negative Path)', async ({
     forgotPasswordPage,
   }) => {
     const nonExistentEmail = `nonexistent_user_${Date.now()}@auto.test`;
@@ -44,7 +45,8 @@ test.describe.skip('SCRUM-6: Chức năng Quên mật khẩu (UI) [Skipped: Bug 
     ).toBeVisible();
   });
 
-  test('TC_FORGOT_03: Validation khi để trống trường Email (Empty Field)', async ({
+  // Đánh dấu fixme do Bug SCRUM-15 trên Jira: Click "Quên mật khẩu?" trên trang Đăng nhập không mở form nhập email
+  test.fixme('TC_FORGOT_03: Validation khi để trống trường Email (Empty Field)', async ({
     forgotPasswordPage,
   }) => {
     // Để trống và submit
@@ -57,7 +59,8 @@ test.describe.skip('SCRUM-6: Chức năng Quên mật khẩu (UI) [Skipped: Bug 
     ).toBeVisible();
   });
 
-  test('TC_FORGOT_04: Validation khi nhập Email sai định dạng (Invalid Format)', async ({
+  // Đánh dấu fixme do Bug SCRUM-15 trên Jira: Click "Quên mật khẩu?" trên trang Đăng nhập không mở form nhập email
+  test.fixme('TC_FORGOT_04: Validation khi nhập Email sai định dạng (Invalid Format)', async ({
     forgotPasswordPage,
   }) => {
     await forgotPasswordPage.requestPasswordReset('invalid_email_format');

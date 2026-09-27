@@ -318,6 +318,7 @@ async function sendNotification(key, summary, author, statusName) {
 
 // Delegate E2E Automation to IDE Agent via trigger file
 const TRIGGER_FILE = path.resolve(__dirname, '../scratch/trigger.txt');
+const { transitionIssue } = require('./integrations/jira/jira_transition');
 
 async function executeDevAutomation(ticketKey) {
   if (isExecutingTask) {
@@ -328,28 +329,40 @@ async function executeDevAutomation(ticketKey) {
   isExecutingTask = true;
 
   try {
+    // 1. Tự động chuyển trạng thái Ticket trên Jira từ To Do sang In Progress
+    try {
+      console.log(`[JIRA] Đang chuyển ${ticketKey} sang trạng thái In Progress...`);
+      await transitionIssue(ticketKey, 'In Progress');
+    } catch (transErr) {
+      console.warn(`[JIRA WARN] Không thể chuyển ${ticketKey} sang In Progress:`, transErr.message);
+    }
+
+    // 2. Ghi mã ticket vào file trigger cho IDE Agent
     const dir = path.dirname(TRIGGER_FILE);
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
     fs.writeFileSync(TRIGGER_FILE, ticketKey, 'utf8');
     console.log(`[TRIGGER] Đã ghi ${ticketKey} vào trigger.txt cho IDE Agent.`);
 
     await sendTelegramMessage(
-      `🤖 <b>[LUỒNG DEV: ĐÃ CHUYỂN LỆNH CHO AI AGENT]</b>\n\n` +
-      `🎯 Ticket: <code>${ticketKey}</code>\n\n` +
-      `AI Agent trên IDE đang tiếp nhận và sẽ tự động thực thi quy trình:\n` +
-      `1️⃣ Kéo Requirement\n` +
-      `2️⃣ Sinh Test Cases\n` +
+      `🤖 <b>[LUỒNG DEV: ĐÃ KÍCH HOẠT TRIGGER TỰ ĐỘNG HÓA]</b>\n\n` +
+      `🎯 Ticket: <code>${ticketKey}</code>\n` +
+      `⚡ Trạng thái Jira: 🟡 <b>In Progress</b> (Đang thực hiện)\n\n` +
+      `Đã ghi nhận yêu cầu vào <code>scratch/trigger.txt</code>.\n\n` +
+      `👉 <b>Trên Antigravity IDE, bạn hãy gõ lệnh:</b>\n` +
+      `<code>/e2e_jira_to_automation trigger.txt</code>\n\n` +
+      `<i>Agent trong IDE sẽ tự động:</i>\n` +
+      `1️⃣ Kéo Requirement từ Jira\n` +
+      `2️⃣ AI sinh Test Cases (RBT)\n` +
       `3️⃣ Viết Automation Scripts (POM + Spec)\n` +
-      `4️⃣ Chạy Test Local\n` +
-      `5️⃣ Push Code lên GitHub\n\n` +
-      `⏳ Bạn có thể kích hoạt bằng lệnh: <code>/e2e_jira_to_automation trigger.txt</code> trên IDE.`
+      `4️⃣ Chạy Test trên UI thật & Tự sửa lỗi (Self-Healing)\n` +
+      `5️⃣ Push Git & Báo cáo kết quả`
     );
   } catch (err) {
     console.error('[TRIGGER ERROR]', err.message);
-    await sendTelegramMessage(`❌ Lỗi khi ghi trigger file: ${err.message}`);
+    await sendTelegramMessage(`❌ Lỗi khi kích hoạt automation: ${err.message}`);
   }
 
-  setTimeout(() => { isExecutingTask = false; }, 5000);
+  setTimeout(() => { isExecutingTask = false; }, 3000);
 }
 
 // Xử lý khi người dùng phê duyệt Push Git
