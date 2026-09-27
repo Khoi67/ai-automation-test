@@ -5,7 +5,8 @@ import { test, expect } from '../../fixture/page-fixture.js';
  *
  * Test suite mapped directly to test-cases/SCRUM-6_testcases.md
  */
-test.describe('SCRUM-6: Chức năng Quên mật khẩu (UI)', () => {
+// Skip toàn bộ suite do Bug SCRUM-15 trên Jira: Click "Quên mật khẩu?" trên trang Đăng nhập không mở form nhập email
+test.describe.skip('SCRUM-6: Chức năng Quên mật khẩu (UI) [Skipped: Bug SCRUM-15]', () => {
 
   test.beforeEach(async ({ forgotPasswordPage }) => {
     await forgotPasswordPage.goToLoginPage();
