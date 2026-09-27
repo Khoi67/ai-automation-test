@@ -18,13 +18,21 @@ export class ProfilePage extends BasePage {
 
   constructor(page: Page) {
     super(page);
+    // TODO: Request dev team to add data-testid="profile-avatar-container"
     this.avatarContainer = page.locator('.avatar, .profile-avatar, .img-avatar').first();
+    // TODO: Request dev team to add data-testid="profile-avatar-img"
     this.avatarImg = page.locator('.avatar img, .profile-avatar img, img[alt*="avatar"]').first();
+    // TODO: Request dev team to add data-testid="profile-avatar-upload"
     this.fileInput = page.locator('input[type="file"]');
+    // TODO: Request dev team to add data-testid="btn-upload-avatar"
     this.btnUploadTrigger = page.locator('button, [role="button"], label').filter({ hasText: /đổi ảnh|tải ảnh|upload|avatar/i }).first();
+    // TODO: Request dev team to add data-testid="btn-update-profile"
     this.btnUpdateProfile = page.getByRole('button', { name: /cập nhật/i });
+    // TODO: Request dev team to add data-testid="alert-success"
     this.alertSuccess = page.locator('.swal2-success, .alert-success, .toast-success');
+    // TODO: Request dev team to add data-testid="alert-error"
     this.alertError = page.locator('.swal2-error, .alert-danger, .toast-error');
+    // TODO: Request dev team to add data-testid="header-avatar"
     this.headerAvatar = page.locator('header img[alt*="avatar"], .header img, header .avatar').first();
   }
 

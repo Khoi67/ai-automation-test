@@ -372,6 +372,21 @@ Hệ thống cấu hình và chuẩn hoá cho AI Automation Agent (Rules, Skills
 - **`.agent/skills/`**: Các bộ kỹ năng chuyên sâu cho AI Agent (QA Automation Engineer, UI Debug, Smart Locator, Locator Healer, Flaky Test Analyzer, Test Data Generator).
 - **`.agent/workflows/`**: Quy trình chuẩn hóa thực thi tự động (Phân tích Requirement từ Jira/Website, AI-RBT Manual Testing 6 bước, sinh Test Cases, chuyển đổi sang Automation Script E2E).
 
-> 🌟 **Nguồn tham khảo / Credits:**  
 > Toàn bộ tài nguyên, quy chuẩn và kiến trúc `.agent` được tham khảo và phát triển dựa trên chia sẻ từ **[Anh Tester](https://anhtester.com)** — Nền tảng & cộng đồng đào tạo kiểm thử phần mềm tự động (Software Testing & Automation) hàng đầu tại Việt Nam.
+> 
+> ---
+> 
+> ## 🗺️ Tiến độ Phát triển (Roadmap)
+> 
+> **Giai đoạn 1 — Nền tảng ổn định**
+> - [x] **1.1. Chuẩn hoá locator**: Ánh xạ DOM thực tế trên các trang (Home, Course List, Course Detail, Profile), cập nhật selector CSS/Text chính xác, bổ sung comment `// TODO: Request dev team to add data-testid` vào những phần tử chưa có thuộc tính ổn định.
+> - [ ] **1.2. Tách biệt Test Data bằng API**: Tạo script dọn dẹp và chuẩn bị test data qua API thay vì dùng ID cứng.
+> 
+> **Giai đoạn 2 — Tốc độ & Quy trình**
+> - [ ] **2.1. Quản lý Session State**: Tái sử dụng phiên đăng nhập (login state) cho toàn bộ UI tests để tiết kiệm thời gian.
+> - [ ] **2.2. Nâng cấp Git Delivery**: Chuyển từ push trực tiếp sang tạo Pull Request (PR) qua GitHub CLI.
+> 
+> **Giai đoạn 3 — Chiều sâu kỹ thuật**
+> - [ ] **3.1. API Validation với Zod**: Kiểm tra cấu trúc hợp đồng dữ liệu trả về từ API.
+> - [ ] **3.2. Code Cleanup**: Xoá bỏ code thừa, refactor lại kiến trúc cốt lõi nếu cần thiết.
 

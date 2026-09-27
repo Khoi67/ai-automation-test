@@ -15,11 +15,19 @@ export class HomePage extends BasePage {
 
   constructor(page: import('@playwright/test').Page) {
     super(page);
-    this.heroSection = page.locator('.carousel, .hero, .banner').first();
-    this.courseCards = page.locator('.courseSearchResult .myCourseItem, .myCourseItem');
-    this.courseCardTitle = page.locator('.courseSearchResult .myCourseItem h6, .myCourseItem h6, .card-title, .course-title');
+    // TODO: Request dev team to add data-testid="hero-section"
+    this.heroSection = page.locator('.sliderHome').first();
+    
+    // TODO: Request dev team to add data-testid="course-card"
+    this.courseCards = page.locator('.cardGlobal, .myCourseItem');
+    
+    // TODO: Request dev team to add data-testid="course-title"
+    this.courseCardTitle = page.locator('.cardGlobal h6, .myCourseItem h6');
+    
     this.searchInput = page.getByPlaceholder(/Tìm kiếm/i).first();
-    this.btnViewAll = page.getByText('Xem thêm');
+    
+    // TODO: Request dev team to add data-testid="btn-view-all"
+    this.btnViewAll = page.getByRole('button', { name: 'Xem thêm' }).or(page.getByText('Xem thêm'));
   }
 
   /** Navigate to home page */

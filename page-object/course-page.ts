@@ -31,20 +31,29 @@ export class CoursePage extends BasePage {
     super(page);
 
     // Listing
-    this.courseList = page.locator('.course-list, .courses-container, [class*="course"]').first();
-    this.courseCards = page.locator('.card, .course-card, [class*="course-item"]');
-    this.courseCardTitle = page.locator('.card-title, .course-title');
-    this.courseCardImage = page.locator('.card-img-top, .course-image img');
-    this.categoryFilter = page.locator('.category-filter, select[name="category"]');
-    this.paginationNext = page.locator('.pagination .next, [aria-label="Next"]');
-    this.paginationPrev = page.locator('.pagination .prev, [aria-label="Previous"]');
+    // TODO: Request dev team to add data-testid="course-list"
+    this.courseList = page.locator('.courseListPage').first();
+    // TODO: Request dev team to add data-testid="course-card"
+    this.courseCards = page.locator('.cardGlobal');
+    // TODO: Request dev team to add data-testid="course-card-title"
+    this.courseCardTitle = page.locator('.cardGlobal h6');
+    // TODO: Request dev team to add data-testid="course-card-image"
+    this.courseCardImage = page.locator('.cardGlobal img');
+    // TODO: Request dev team to add data-testid="category-filter"
+    this.categoryFilter = page.locator('.courseCateList').first(); // Current DOM uses ul/li, not select
+    this.paginationNext = page.locator('.paginationPages a').filter({ hasText: 'Sau' });
+    this.paginationPrev = page.locator('.paginationPages a').filter({ hasText: 'Trước' });
 
     // Detail
-    this.courseTitle = page.locator('h1, h2, h4, .course-detail-title').first();
-    this.courseDescription = page.locator('.course-description, .course-detail p');
-    this.courseImage = page.locator('.course-detail img, .course-image img').first();
-    this.btnEnroll = page.getByRole('button', { name: /đăng ký|ghi danh|enroll/i }).first();
-    this.courseViewCount = page.locator('.view-count, [class*="luot-xem"]');
+    // TODO: Request dev team to add data-testid="course-detail-title"
+    this.courseTitle = page.locator('h4.titleDetailCourse').first();
+    // TODO: Request dev team to add data-testid="course-description"
+    this.courseDescription = page.locator('.textDiscripts').first();
+    // TODO: Request dev team to add data-testid="course-image"
+    this.courseImage = page.locator('.sideBarCourseDetail img').first();
+    this.btnEnroll = page.getByRole('button', { name: /đăng ký/i }).first();
+    // TODO: Request dev team to add data-testid="course-enroll-count"
+    this.courseViewCount = page.locator('.sideBarDetailContent li').filter({ hasText: 'Ghi danh' });
 
     // SweetAlert modal
     this.alertModal = page.locator('.swal-modal, .swal2-modal, [role="dialog"]');
