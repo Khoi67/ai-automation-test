@@ -21,6 +21,7 @@ export class ProfilePage extends BasePage {
   readonly sweetAlertConfirm: Locator;
   readonly sweetAlertCancel: Locator;
   readonly tabKhoaHoc: Locator;
+  readonly profileModal: Locator;
 
   constructor(page: Page) {
     super(page);
@@ -46,6 +47,7 @@ export class ProfilePage extends BasePage {
     this.sweetAlertConfirm = page.locator('.swal2-confirm, button:has-text("Đồng ý"), button:has-text("OK")');
     this.sweetAlertCancel = page.locator('.swal2-cancel, button:has-text("Hủy")');
     this.tabKhoaHoc = page.getByRole('button', { name: /^Khóa học$/i });
+    this.profileModal = page.locator('.modal, [role="dialog"], .popup').first();
   }
 
   /** Navigate to Profile Page */
@@ -110,5 +112,36 @@ export class ProfilePage extends BasePage {
     await test.step('Cancel SweetAlert dialog', async () => {
       await this.sweetAlertCancel.click();
     });
+  }
+
+  /** Open Profile modal */
+  async openProfileModal(): Promise<void> {
+    await test.step('Open Profile modal', async () => {
+      if (await this.btnUploadTrigger.count() > 0) {
+        await this.btnUploadTrigger.first().click().catch(() => {});
+      }
+    });
+  }
+
+  /** Save Profile */
+  async saveProfile(): Promise<void> {
+    await test.step('Save Profile', async () => {
+      await this.btnUpdateProfile.click();
+    });
+  }
+
+  /** Close Profile modal */
+  async closeProfileModal(): Promise<void> {
+    await test.step('Close Profile modal', async () => {
+      const closeBtn = this.profileModal.locator('button.close, [aria-label="Close"], button:has-text("Đóng"), button:has-text("Hủy")').first();
+      if (await closeBtn.isVisible().catch(() => false)) {
+        await closeBtn.click();
+      }
+    });
+  }
+
+  /** Get error message locator */
+  getErrorMessageLocator(): Locator {
+    return this.alertError;
   }
 }

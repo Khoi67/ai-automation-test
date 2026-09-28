@@ -106,9 +106,18 @@ flowchart TD
    - **Tầng 5 - Integration Scripts (`scripts/utils/`):**
      - Khi gọi thông báo hoặc API tích hợp, **BẮT BUỘC** import từ `scripts/utils` (`telegram_api.js`, `telegram_ui.js`, `jira_api.js`, `cli.js`), không viết lại logic gọi Telegram/Jira hay load `.env` riêng rẽ.
 
-2. **Tuân thủ quy chuẩn Page Object Model (POM):**
+2. **Tuân thủ quy chuẩn Page Object Model (POM) & Tổ Chức File Test:**
    - **Page Objects (`page-object/*.ts`):** Chỉ chứa Scoped Semantic Locators và User Actions. Không chứa `expect()` hay test assertions.
-   - **Test Specs (`tests/ui/*.spec.ts`):** Nhận Page Object từ fixture, thực hiện các bước và Web-First Assertions (`await expect(locator).toBeVisible()`).
+   - **Cấu trúc thư mục Test Specs (`tests/ui/<module>/<feature>.spec.ts`):**
+     - Bắt buộc lưu test vào thư mục con theo module: `tests/ui/auth/`, `tests/ui/cart/`, `tests/ui/course/`, `tests/ui/profile/`, v.v.
+     - **TUYỆT ĐỐI CẤM** đặt tên file theo mã ticket Jira như `tests/ui/<JIRA_KEY>.spec.ts`.
+     - **Trùng Module:** Nếu trong module đã có file spec tương ứng (ví dụ `tests/ui/cart/cart.spec.ts`), **BẮT BUỘC mở rộng và viết thêm test cases vào file đó**, không tạo file spec trùng lặp.
+   - **Traceability qua Playwright Tags (BẮT BUỘC):**
+     - Đưa mã ticket Jira vào tag của test:
+       ```typescript
+       test.describe('SCRUM-18: [Cart] Thêm khóa học vào Giỏ hàng', { tag: ['@SCRUM-18', '@cart'] }, () => { ... });
+       ```
+   - **Test Specs:** Nhận Page Object từ fixture, thực hiện các bước và Web-First Assertions (`await expect(locator).toBeVisible()`).
    - Tuyệt đối không dùng hard sleep (`waitForTimeout`, `sleep`).
 
 ---
@@ -139,6 +148,8 @@ flowchart TD
          - Nhờ cơ chế `test.fixme()`, Playwright sẽ tự động SKIP test case này khi chạy CI trên Cloud $\rightarrow$ **Pipeline GitHub Actions luôn PASS XANH 100%**, đồng thời code test sẵn sàng chạy lại ngay khi Dev sửa xong Bug.
 3. **Quality Gate G3 (DRY & Clean Code Checklist):**
    Trước khi hoàn tất kiểm thử, Agent phải tự động đối chiếu checklist sau:
+   - [ ] **Module Folder Structure:** Test file nằm đúng trong `tests/ui/<module>/<feature>.spec.ts` (CẤM đặt tên file theo mã Jira Ticket).
+   - [ ] **Jira Tagging:** Đã gắn tag `@<JIRA_KEY>` vào test specs để phục vụ truy vết (`{ tag: ['@<JIRA_KEY>', '@module'] }`).
    - [ ] **DRY Locators:** Không có locator nào bị khai báo lặp lại giữa các file hoặc viết inline `page.locator(...)` trong file spec.
    - [ ] **DRY Page Objects:** Không có file Page Object nào bị trùng tính năng với Page Object đã tồn tại.
    - [ ] **DRY Test Data:** Sử dụng hàm helper `generateUsername()`, `generateRandomEmail()` và file fixture `test-data/` có sẵn.

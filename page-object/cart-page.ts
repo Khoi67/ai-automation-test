@@ -35,4 +35,12 @@ export class CartPage extends BasePage {
       await this.btnApplyCoupon.click();
     });
   }
+
+  getAlertModalLocator(): Locator {
+    return this.page.locator('.swal2-popup, .modal, [role="dialog"]').first();
+  }
+
+  getAlertTextLocator(): Locator {
+    return this.page.locator('.swal2-title, .swal2-html-container, .alert, .toast').first();
+  }
 }

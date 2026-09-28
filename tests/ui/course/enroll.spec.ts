@@ -1,10 +1,10 @@
-import { test, expect } from '../../fixture/page-fixture.js';
-import { ThongTinDangNhap } from '../../data-object/api/user-model.js';
+import { test, expect } from '../../../fixture/page-fixture.js';
+import { ThongTinDangNhap } from '../../../data-object/api/user-model.js';
 
 /**
  * SCRUM-14: [Enroll] Đăng ký ghi danh tham gia khóa học dành cho học viên
  */
-test.describe('Course Enrollment UI (SCRUM-14)', () => {
+test.describe('Course Enrollment UI (SCRUM-14)', { tag: ['@SCRUM-14', '@course', '@enroll'] }, () => {
 
   test.fixme('TC_ENROLL_01 — Chuyển hướng đến trang Đăng nhập khi khách vãng lai (Guest) nhấn Đăng ký', async ({
     coursePage,
@@ -18,23 +18,23 @@ test.describe('Course Enrollment UI (SCRUM-14)', () => {
       testCourseId = course.maKhoaHoc;
     });
 
-    await test.step('1. Truy cập trực tiếp trang chi tiết khóa học khi chưa đăng nhập', async () => {
+    await test.step('1. Truy cập trang chi tiết khóa học khi chưa đăng nhập', async () => {
       await coursePage.goToCourseDetail(testCourseId);
     });
 
-    await test.step('2. Nhấn nút Đăng ký ghi danh khóa học', async () => {
+    await test.step('2. Nhấn nút Đăng ký ghi danh', async () => {
       await coursePage.clickEnroll();
     });
 
-    await test.step('3. Xác nhận hệ thống chuyển hướng người dùng đến trang /login', async () => {
+    await test.step('3. Xác nhận hệ thống chuyển hướng về trang /login', async () => {
       await expect(
         page,
-        'Khách chưa đăng nhập bấm Đăng ký phải bị chuyển hướng đến /login',
+        'Chưa đăng nhập mà nhấn Đăng ký phải bị chuyển hướng đến /login',
       ).toHaveURL(/\/login/);
     });
   });
 
-  test.fixme('TC_ENROLL_02 — Cảnh báo chặn ghi danh trùng lặp khi đã đăng ký khóa học này trước đó', async ({
+  test.fixme('TC_ENROLL_02 — Cảnh báo khi học viên nhấn Đăng ký lại khóa học đã ghi danh trước đó', async ({
     loginPage,
     coursePage,
     authApiWorkflow,
@@ -44,18 +44,25 @@ test.describe('Course Enrollment UI (SCRUM-14)', () => {
   }) => {
     let testUser: ThongTinDangNhap;
     let testCourseId: string = '';
+    let accessToken: string = '';
 
     await test.step('Pre-condition: Lấy một khóa học có sẵn trên hệ thống', async () => {
       const course = await courseApiWorkflow.getValidCourse();
       testCourseId = course.maKhoaHoc;
     });
 
-    await test.step('Pre-condition: Tạo tài khoản và ghi danh khóa học này từ trước', async () => {
+    await test.step('Pre-condition: Tạo tài khoản học viên mới và ghi danh khóa học qua API', async () => {
       const accountData = await authApiWorkflow.createAccountAndGetAccessToken();
       testUser = accountData.credentials;
-      // Ghi danh trước qua API
-      await courseService.registerCourse({ maKhoaHoc: testCourseId, taiKhoan: testUser.taiKhoan }, accountData.accessToken);
-      
+      accessToken = accountData.accessToken;
+
+      await courseService.registerCourse(
+        { maKhoaHoc: testCourseId, taiKhoan: testUser.taiKhoan },
+        accessToken,
+      );
+    });
+
+    await test.step('Pre-condition: Đăng nhập vào hệ thống', async () => {
       await loginPage.goToLoginPage();
       await loginPage.login(testUser.taiKhoan, testUser.matKhau);
       await expect(page).not.toHaveURL(/\/login/);

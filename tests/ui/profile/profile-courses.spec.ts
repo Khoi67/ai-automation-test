@@ -1,7 +1,6 @@
-import { test, expect } from '../../fixture/page-fixture.js';
-import { generateRandomEmail, generateUsername } from '../../core/utils/string.js';
+import { test, expect } from '../../../fixture/page-fixture.js';
 
-test.describe('SCRUM-17: [Profile] Xem danh sách khóa học đã ghi danh và Hủy ghi danh', () => {
+test.describe('SCRUM-17: [Profile] Xem danh sách khóa học đã ghi danh và Hủy ghi danh', { tag: ['@SCRUM-17', '@profile', '@courses'] }, () => {
   let maKhoaHoc: string;
 
   test.beforeEach(async ({ courseApiWorkflow, courseService, authService }) => {
@@ -28,11 +27,6 @@ test.describe('SCRUM-17: [Profile] Xem danh sách khóa học đã ghi danh và 
     // Wait for courses to load, check if at least one is visible
     const unenrollBtn = page.getByRole('button', { name: /Hủy (khóa học|ghi danh)/i }).first();
     await expect(unenrollBtn).toBeVisible({ timeout: 15000 });
-    
-    // We assume the button is inside a course card, which should also have an image (or at least text)
-    // Actually the DOM dump doesn't show an img tag for courses on this page! It only shows heading, paragraph, and button.
-    // So we just assert the heading is visible.
-    // In playwright, the heading is a sibling or inside a parent. We can just assert the button exists.
   });
 
   // Đánh dấu fixme do Bug SCRUM-22 trên Jira: Không hiển thị hộp thoại xác nhận (SweetAlert) khi nhấn Hủy khóa học

@@ -1,11 +1,11 @@
-import { test, expect } from '../../fixture/page-fixture.js';
+import { test, expect } from '../../../fixture/page-fixture.js';
 
 /**
  * SCRUM-6: [Auth] Chức năng Quên mật khẩu và Khôi phục quyền truy cập tài khoản
  *
  * Test suite mapped directly to test-cases/SCRUM-6_testcases.md
  */
-test.describe('SCRUM-6: Chức năng Quên mật khẩu (UI)', () => {
+test.describe('SCRUM-6: Chức năng Quên mật khẩu (UI)', { tag: ['@SCRUM-6', '@auth', '@forgot-password'] }, () => {
 
   test.beforeEach(async ({ forgotPasswordPage }) => {
     await forgotPasswordPage.goToLoginPage();
@@ -60,15 +60,16 @@ test.describe('SCRUM-6: Chức năng Quên mật khẩu (UI)', () => {
   });
 
   // Đánh dấu fixme do Bug SCRUM-15 trên Jira: Click "Quên mật khẩu?" trên trang Đăng nhập không mở form nhập email
-  test.fixme('TC_FORGOT_04: Validation khi nhập Email sai định dạng (Invalid Format)', async ({
+  test.fixme('TC_FORGOT_04: Validation khi nhập sai định dạng Email (Invalid Format)', async ({
     forgotPasswordPage,
   }) => {
-    await forgotPasswordPage.requestPasswordReset('invalid_email_format');
+    // Nhập email sai định dạng
+    await forgotPasswordPage.requestPasswordReset('invalid-email-format');
 
     // Kiểm tra thông báo lỗi định dạng
     await expect(
       forgotPasswordPage.errorMsgInvalidFormat,
-      'Phải có thông báo lỗi email không hợp lệ'
+      'Phải có thông báo lỗi định dạng email không hợp lệ'
     ).toBeVisible();
   });
 });

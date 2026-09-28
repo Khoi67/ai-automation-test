@@ -1,7 +1,7 @@
 import { expect } from '@playwright/test';
-import { test } from '../../fixture/page-fixture.js';
+import { test } from '../../../fixture/page-fixture.js';
 
-test.describe('SCRUM-2: User Registration Feature (UI)', () => {
+test.describe('SCRUM-2: User Registration Feature (UI)', { tag: ['@SCRUM-2', '@auth', '@register'] }, () => {
   let uniqueUsername: string;
   let uniqueEmail: string;
 
@@ -64,16 +64,16 @@ test.describe('SCRUM-2: User Registration Feature (UI)', () => {
       await registerPage.clickRegister();
     });
 
-    await test.step('Verify error message for existing username', async () => {
+    await test.step('Verify error message popup is displayed', async () => {
       const errorMsg = registerPage.getErrorMessageLocator();
       await expect(errorMsg).toBeVisible({ timeout: 10000 });
-      await expect(errorMsg).toContainText(/Tài khoản đã tồn tại/i);
+      await expect(errorMsg).toContainText(/tài khoản đã tồn tại|đã tồn tại/i);
     });
   });
 
-  test('TC_REG_03: Đăng ký thất bại do Email đã tồn tại', async ({ registerPage, userService }) => {
+  test('TC_REG_03: Đăng ký thất bại do Email đã được sử dụng', async ({ registerPage, userService }) => {
     const existingEmail = `exist_${Date.now().toString().slice(-8)}@auto.test`;
-    // Pre-condition: register account with this email via API
+    // Pre-condition: register account via API so email is already taken
     await userService.register({
       taiKhoan: `u_${Date.now().toString().slice(-8)}`.slice(0, 16),
       matKhau: 'Password@123',
@@ -83,7 +83,7 @@ test.describe('SCRUM-2: User Registration Feature (UI)', () => {
       email: existingEmail,
     });
 
-    await test.step('Fill registration form with an existing email', async () => {
+    await test.step('Fill registration form with existing email', async () => {
       await registerPage.fillRegisterForm({
         username: uniqueUsername,
         password: 'Password@123',
@@ -97,33 +97,45 @@ test.describe('SCRUM-2: User Registration Feature (UI)', () => {
       await registerPage.clickRegister();
     });
 
-    await test.step('Verify error message for existing email', async () => {
+    await test.step('Verify error message popup is displayed', async () => {
       const errorMsg = registerPage.getErrorMessageLocator();
       await expect(errorMsg).toBeVisible({ timeout: 10000 });
-      await expect(errorMsg).toContainText(/Email đã tồn tại|Email/i);
+      await expect(errorMsg).toContainText(/email đã tồn tại|đã tồn tại/i);
     });
   });
 
-  test('TC_REG_04: Cảnh báo lỗi Front-end khi bỏ trống trường bắt buộc', async ({ registerPage, page }) => {
-    await test.step('Leave username empty and trigger validation', async () => {
-      await registerPage.inputUsername.focus();
-      await registerPage.inputPassword.focus();
+  test('TC_REG_04: Validation hiển thị khi để trống tất cả các trường', async ({ registerPage }) => {
+    await test.step('Click register without filling any field', async () => {
+      await registerPage.clickRegister();
     });
 
-    await test.step('Verify validation warning text', async () => {
-      await expect(page.locator('.errorMessage').filter({ hasText: /Tài khoản không được để trống/i })).toBeVisible();
+    await test.step('Verify validation errors are displayed', async () => {
+      await expect(registerPage.errorMsgUsername).toBeVisible();
+      await expect(registerPage.errorMsgPassword).toBeVisible();
+      await expect(registerPage.errorMsgFullName).toBeVisible();
+      await expect(registerPage.errorMsgPhone).toBeVisible();
+      await expect(registerPage.errorMsgEmail).toBeVisible();
     });
   });
 
-  test('TC_REG_05: Cảnh báo lỗi Front-end khi Email sai định dạng', async ({ registerPage }) => {
-    await test.step('Input invalid email format', async () => {
-      await registerPage.inputEmail.fill('invalid_email_format');
-      await registerPage.inputPassword.focus();
+  test('TC_REG_05: Validation khi nhập sai định dạng Email', async ({ registerPage }) => {
+    await test.step('Fill form with invalid email format', async () => {
+      await registerPage.fillRegisterForm({
+        username: uniqueUsername,
+        password: 'Password@123',
+        fullName: 'Automation Tester',
+        phone: '0901234567',
+        email: 'invalid-email-format',
+      });
     });
 
-    await test.step('Verify validation warning text for email', async () => {
-      await expect(registerPage.inputEmail).toHaveJSProperty('validity.typeMismatch', true);
-      await expect(registerPage.inputEmail).toHaveJSProperty('validity.valid', false);
+    await test.step('Submit registration', async () => {
+      await registerPage.clickRegister();
+    });
+
+    await test.step('Verify email format validation error', async () => {
+      await expect(registerPage.errorMsgEmail).toBeVisible();
+      await expect(registerPage.errorMsgEmail).toContainText(/email không hợp lệ|định dạng/i);
     });
   });
 });

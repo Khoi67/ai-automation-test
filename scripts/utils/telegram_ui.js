@@ -22,11 +22,12 @@ function getStandardNavigationButtons() {
 function getActionButtons(ticket, isPassed = false, isRetest = false) {
   const actionButtons = [];
   
-  if (isPassed) {
-    actionButtons.push([
-      { text: `🚀 Duyệt & Push Git (${ticket})`, callback_data: `confirm_push:${ticket}` }
-    ]);
-  }
+  // Removed the manual "Duyệt & Push Git" button as the pipeline automatically handles it
+  // if (isPassed) {
+  //   actionButtons.push([
+  //     { text: `🚀 Duyệt & Push Git (${ticket})`, callback_data: `confirm_push:${ticket}` }
+  //   ]);
+  // }
   
   const retestAction = isRetest ? `retest:${ticket}` : `dev:${ticket}`;
   const retestText = isRetest ? `🔄 Test Lại (${ticket})` : `🔄 Chạy lại Test Local (${ticket})`;

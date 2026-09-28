@@ -1,5 +1,5 @@
-import { test, expect } from '../../fixture/page-fixture.js';
-import { ThongTinDangNhap } from '../../data-object/api/user-model.js';
+import { test, expect } from '../../../fixture/page-fixture.js';
+import { ThongTinDangNhap } from '../../../data-object/api/user-model.js';
 
 /**
  * Login UI Tests — V Learning
@@ -10,7 +10,7 @@ import { ThongTinDangNhap } from '../../data-object/api/user-model.js';
  * NOTE: Locators are skeleton and need DOM verification.
  * Run `npx playwright codegen <URL>` to inspect actual selectors.
  */
-test.describe('Login UI', () => {
+test.describe('Login UI', { tag: ['@auth', '@login'] }, () => {
   let validUser: ThongTinDangNhap;
 
   test.beforeEach(async ({ loginPage, authApiWorkflow }) => {
@@ -54,4 +54,3 @@ test.describe('Login UI', () => {
     });
   });
 });
-

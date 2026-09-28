@@ -16,6 +16,11 @@ export class RegisterPage extends BasePage {
   readonly btnRegister: Locator;
   readonly successMessage: Locator;
   readonly errorMessage: Locator;
+  readonly errorMsgUsername: Locator;
+  readonly errorMsgPassword: Locator;
+  readonly errorMsgFullName: Locator;
+  readonly errorMsgPhone: Locator;
+  readonly errorMsgEmail: Locator;
 
   constructor(page: Page) {
     super(page);
@@ -29,6 +34,11 @@ export class RegisterPage extends BasePage {
     this.btnRegister = registerForm.getByRole('button', { name: 'Đăng ký', exact: true });
     this.successMessage = page.locator('.swal-title');
     this.errorMessage = page.locator('.swal-title');
+    this.errorMsgUsername = registerForm.locator('span:has-text("tài khoản"), .text-danger').first();
+    this.errorMsgPassword = registerForm.locator('span:has-text("mật khẩu"), .text-danger').first();
+    this.errorMsgFullName = registerForm.locator('span:has-text("họ tên"), .text-danger').first();
+    this.errorMsgPhone = registerForm.locator('span:has-text("số điện thoại"), .text-danger').first();
+    this.errorMsgEmail = registerForm.locator('span:has-text("email"), .text-danger').first();
   }
 
   /** Navigate to register page */

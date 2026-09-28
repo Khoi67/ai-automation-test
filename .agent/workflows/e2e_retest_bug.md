@@ -44,9 +44,10 @@ skills:
    ```bash
    node scripts/integrations/notify_step.js --ticket <JIRA_KEY> --step 3 --title "Thực thi kiểm thử lại (Retest)" --detail "Chạy kiểm thử trên UI thật (headed mode 1920x1080) để xác nhận fix"
    ```
-1. Chạy lệnh Playwright chỉ định đích danh file kiểm thử vừa sửa (bắt buộc `--headed` theo `playwright_rules.md`):
+1. Chạy lệnh Playwright chỉ định đích danh file kiểm thử vừa sửa hoặc chạy theo tag của ticket (bắt buộc `--headed` theo `playwright_rules.md`):
    ```bash
-   npx.cmd playwright test <path/to/test-file.spec.ts> --headed
+   npx.cmd playwright test --grep @<JIRA_KEY> --headed
+   # Hoặc: npx.cmd playwright test <path/to/test-file.spec.ts> --headed
    ```
 2. **Kiểm tra kết quả & Báo cáo:**
    - **Nếu PASS:** Tuyệt vời, Bug đã thực sự được Dev xử lý tận gốc! Gửi báo cáo kết quả local:

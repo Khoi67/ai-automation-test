@@ -1,6 +1,6 @@
-import { expect, test } from '../../fixture/page-fixture.js';
+import { expect, test } from '../../../fixture/page-fixture.js';
 
-test.describe('SCRUM-18: [Cart] Thêm khóa học vào Giỏ hàng & Áp dụng mã giảm giá', () => {
+test.describe('SCRUM-18: [Cart] Thêm khóa học vào Giỏ hàng & Áp dụng mã giảm giá', { tag: ['@SCRUM-18', '@cart'] }, () => {
   // Use fixme to protect CI if this feature is not yet fully implemented or has bugs
   // as the requirement doesn't exist in the current CyberSoft system, so UI might not have these elements
   // The test acts as a scaffold according to the standard and workflow.

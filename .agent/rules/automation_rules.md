@@ -31,11 +31,25 @@
   - Xóa code bị comment (`//`, `/* */`)
   - Xóa locator / biến không sử dụng (unused code)
 
-## 4. Quản Lý File & Thư Mục
+## 4. Quản Lý File & Thư Mục (Test Organization)
 
+- **Cấu trúc thư mục theo Module (BẮT BUỘC):**
+  - Mọi test UI phải được tổ chức trong thư mục con tương ứng với module chức năng: `tests/ui/<module>/<feature>.spec.ts`
+  - Ví dụ:
+    - `tests/ui/auth/login.spec.ts`, `tests/ui/auth/register.spec.ts`
+    - `tests/ui/cart/cart.spec.ts`
+    - `tests/ui/course/enroll.spec.ts`, `tests/ui/course/search.spec.ts`
+    - `tests/ui/profile/profile-avatar.spec.ts`, `tests/ui/profile/profile-courses.spec.ts`
+- **CẤM đặt tên file test theo mã ticket Jira** (ví dụ: TUYỆT ĐỐI KHÔNG tạo `tests/ui/SCRUM-18.spec.ts`):
+  - Tên file test phải mang tính bền vững theo nghiệp vụ hệ thống.
+  - Khi có ticket Jira mới cùng module (ví dụ ticket mới về Cart), **BẮT BUỘC mở rộng file spec hiện có của module đó** hoặc tạo file feature tương ứng bên trong folder module, KHÔNG tạo file riêng theo mã ticket.
+- **Traceability qua Playwright Tags:**
+  - Liên kết mã ticket Jira thông qua tag trong `test.describe` hoặc `test`:
+    ```typescript
+    test.describe('Chức năng Giỏ hàng', { tag: ['@SCRUM-18', '@cart'] }, () => { ... });
+    ```
 - KHÔNG tự động xóa file source khi chưa xác nhận với user.
 - Kiểm tra cấu trúc thư mục hiện có trước khi tạo file mới — tránh duplicate.
-- Đặt file đúng thư mục theo kiến trúc project (xem `plan/automation/0_project_architecture`).
 
 ## 5. Quy Tắc Đặt Tên
 
@@ -53,8 +67,10 @@
 
 | Thành phần | Quy tắc | Ví dụ |
 |---|---|---|
+| Thư mục test | kebab-case theo module | `tests/ui/auth/`, `tests/ui/cart/` |
 | Page class | PascalCase + hậu tố `Page` | `LoginPage.ts`, `CartPage.ts` |
-| Test file | kebab-case + `.spec.ts` | `login.spec.ts`, `cart.spec.ts` |
+| Test file | kebab-case + `.spec.ts` | `auth/login.spec.ts`, `cart/cart.spec.ts` |
+| Jira Tag | `@<JIRA_KEY>` trong options tag | `{ tag: ['@SCRUM-18', '@cart'] }` |
 | Test block | `test('mô tả hành vi')` | `test('đăng nhập thành công')` |
 | Locator biến | lowerCamelCase hoặc readonly | `readonly loginButton` |
 | Utils | PascalCase hoặc kebab-case | `DataGenerator.ts`, `data-generator.ts` |

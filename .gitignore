@@ -53,3 +53,6 @@ artifacts/
 .appium-mcp/
 .claude/
 CLAUDE.md
+scratch/*.html
+scratch/inspect_*.js
+scratch/check_*.js

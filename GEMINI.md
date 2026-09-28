@@ -83,6 +83,8 @@ Test chỉ được coi là **hoàn thành** khi đáp ứng **toàn bộ** các
 #### 🏗️ Cấu trúc & POM
 
 - [ ] Tuân thủ mô hình **Page Object Model** — tách biệt Page class, Test class, Utils
+- [ ] Test UI tổ chức theo module folder: `tests/ui/<module>/<feature>.spec.ts` (**CẤM đặt file theo tên `SCRUM-X.spec.ts`**)
+- [ ] Gắn Jira Tag `@<JIRA_KEY>` trong options tag của test để phục vụ truy vết (`{ tag: ['@SCRUM-X', '@module'] }`)
 - [ ] Locator được định nghĩa trong Page class, không viết inline trong test
 - [ ] Tên file, class, method đặt theo convention rõ ràng và nhất quán
 - [ ] Import không còn thừa (unused imports)
@@ -207,6 +209,7 @@ code:     TC_LOGIN_1712049200
 | ------------------------------------------------- | ---------------------------------------------- |
 | Guess selector / đoán locator                   | Inspect DOM thực tế trước khi code         |
 | Hard sleep (`waitForTimeout`, `Thread.sleep`) | Smart waits (`expect()`, `WebDriverWait`)  |
+| Đặt file test theo mã ticket (`tests/ui/SCRUM-X.spec.ts`) | Phân chia thư mục theo module: `tests/ui/<module>/<feature>.spec.ts` và dùng tag `@SCRUM-X` |
 | Copy selector từ code cũ không verify          | Luôn verify selector trên browser hiện tại |
 | Viết test không chạy ngay                      | Chạy test ngay sau khi implement              |
 | Commit test FAIL                                  | Chỉ commit khi test PASS ổn định           |

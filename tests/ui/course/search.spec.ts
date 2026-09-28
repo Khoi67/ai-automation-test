@@ -1,6 +1,6 @@
-import { test, expect } from '../../fixture/page-fixture.js';
+import { test, expect } from '../../../fixture/page-fixture.js';
 
-test.describe('SCRUM-7: Course Search', () => {
+test.describe('SCRUM-7: Course Search', { tag: ['@SCRUM-7', '@course', '@search'] }, () => {
   test.beforeEach(async ({ homePage }) => {
     // Điều hướng tới trang chủ
     await homePage.goToHomePage();

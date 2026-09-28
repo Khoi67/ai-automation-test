@@ -34,11 +34,29 @@ async function checkTicketBugs(ticketKey) {
 
   // 1. Kiểm tra trong mã nguồn test spec xem có cờ test.fixme() hay không
   try {
-    const specFile = path.resolve(__dirname, `../../tests/ui/${ticketKey}.spec.ts`);
-    if (fs.existsSync(specFile)) {
-      const content = fs.readFileSync(specFile, 'utf8');
-      if (content.includes('test.fixme(')) {
+    const testsDir = path.resolve(__dirname, '../../tests');
+    function findSpecFiles(dir) {
+      let results = [];
+      if (!fs.existsSync(dir)) return results;
+      const list = fs.readdirSync(dir);
+      for (const file of list) {
+        const fullPath = path.join(dir, file);
+        const stat = fs.statSync(fullPath);
+        if (stat.isDirectory()) {
+          results = results.concat(findSpecFiles(fullPath));
+        } else if (file.endsWith('.spec.ts')) {
+          results.push(fullPath);
+        }
+      }
+      return results;
+    }
+
+    const allSpecs = findSpecFiles(testsDir);
+    for (const file of allSpecs) {
+      const content = fs.readFileSync(file, 'utf8');
+      if (content.includes(ticketKey) && content.includes('test.fixme(')) {
         hasBugs = true;
+        break;
       }
     }
   } catch (e) {}
