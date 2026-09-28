@@ -15,6 +15,12 @@ export class ProfilePage extends BasePage {
   readonly alertSuccess: Locator;
   readonly alertError: Locator;
   readonly headerAvatar: Locator;
+  
+  // SCRUM-17: Enrolled Courses Locators
+  readonly enrolledCourses: Locator;
+  readonly sweetAlertConfirm: Locator;
+  readonly sweetAlertCancel: Locator;
+  readonly tabKhoaHoc: Locator;
 
   constructor(page: Page) {
     super(page);
@@ -34,6 +40,12 @@ export class ProfilePage extends BasePage {
     this.alertError = page.locator('.swal2-error, .alert-danger, .toast-error');
     // TODO: Request dev team to add data-testid="header-avatar"
     this.headerAvatar = page.locator('header img[alt*="avatar"], .header img, header .avatar').first();
+
+    // SCRUM-17: Enrolled Courses Locators
+    this.enrolledCourses = page.locator('.course-item, .card, .course-card, .item');
+    this.sweetAlertConfirm = page.locator('.swal2-confirm, button:has-text("Đồng ý"), button:has-text("OK")');
+    this.sweetAlertCancel = page.locator('.swal2-cancel, button:has-text("Hủy")');
+    this.tabKhoaHoc = page.getByRole('button', { name: /^Khóa học$/i });
   }
 
   /** Navigate to Profile Page */
@@ -41,6 +53,13 @@ export class ProfilePage extends BasePage {
     await test.step('Navigate to Profile Page (/thongtincanhan)', async () => {
       await this.navigate('/thongtincanhan');
       await this.page.waitForLoadState('domcontentloaded');
+    });
+  }
+
+  /** Open Enrolled Courses tab */
+  async openKhoaHocTab(): Promise<void> {
+    await test.step('Open Khóa học tab', async () => {
+      await this.tabKhoaHoc.click();
     });
   }
 
@@ -62,6 +81,34 @@ export class ProfilePage extends BasePage {
   async clickUpdate(): Promise<void> {
     await test.step('Click Update Profile button', async () => {
       await this.btnUpdateProfile.click();
+    });
+  }
+
+  /** Get specific course card locator by course name */
+  getCourseCard(courseName: string): Locator {
+    return this.enrolledCourses.filter({ hasText: courseName }).first();
+  }
+
+  /** Click Unenroll button for a specific course */
+  async clickUnenroll(courseName: string): Promise<void> {
+    await test.step(`Click Unenroll button for course: ${courseName}`, async () => {
+      const courseCard = this.getCourseCard(courseName);
+      const btnUnenroll = courseCard.locator('button').filter({ hasText: /Hủy ghi danh|Hủy đăng ký|Unenroll/i }).first();
+      await btnUnenroll.click();
+    });
+  }
+
+  /** Confirm SweetAlert dialog */
+  async confirmSweetAlert(): Promise<void> {
+    await test.step('Confirm SweetAlert dialog', async () => {
+      await this.sweetAlertConfirm.click();
+    });
+  }
+
+  /** Cancel SweetAlert dialog */
+  async cancelSweetAlert(): Promise<void> {
+    await test.step('Cancel SweetAlert dialog', async () => {
+      await this.sweetAlertCancel.click();
     });
   }
 }

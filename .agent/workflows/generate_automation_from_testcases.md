@@ -1,5 +1,9 @@
 ---
 description: Convert manual test cases into automation scripts autonomously using the 6-step AI-RBT Framework via Antigravity Capabilities.
+rules:
+  - .agent/rules/automation_rules.md
+  - .agent/rules/playwright_rules.md
+  - .agent/rules/locator_strategy.md
 skills:
   - qa_automation_engineer
   - ui_debug_agent
@@ -9,7 +13,14 @@ skills:
 
 # Workflow: Sinh Automation Scripts từ Manual Test Cases
 
-> **BẮT BUỘC (MANDATORY SKILLS):** Bạn PHẢI nạp và đọc kỹ nội dung các skills sau trước khi bắt đầu:
+> **BẮT BUỘC (MANDATORY RULES & SKILLS):** Bạn PHẢI nạp và đọc kỹ nội dung các rules và skills sau trước khi bắt đầu:
+> 
+> **Rules bắt buộc tuân thủ:**
+> - **`automation_rules.md`** (`.agent/rules/automation_rules.md`) — Chuẩn POM, Naming convention, Clean Code, Test Independence
+> - **`playwright_rules.md`** (`.agent/rules/playwright_rules.md`) — Viewport 1920x1080, Headed mode debug, Semantic locators, Smart waits
+> - **`locator_strategy.md`** (`.agent/rules/locator_strategy.md`) — 4-Tier Locator Priority map, cấm absolute XPath và dynamic IDs
+> 
+> **Skills bắt buộc nạp:**
 > - **`qa_automation_engineer`** (`.agent/skills/qa_automation_engineer/SKILL.md`) — Quy tắc automation chung + workflow routing
 > - **`ui_debug_agent`** (`.agent/skills/ui_debug_agent/SKILL.md`) — Inspect DOM, thu thập locators
 > - **`smart_locator_agent`** (`.agent/skills/smart_locator_agent/SKILL.md`) — Sinh locator ổn định
@@ -145,10 +156,11 @@ Nếu user chưa cung cấp đủ → hỏi trước khi bắt đầu.
    - Locator lấy từ Bước 2 (đã verify) — KHÔNG ĐOÁN
    - Return `this` hoặc next page object cho method chaining (nếu phù hợp)
 
-3. **Kiểm tra project structure hiện tại:**
-   - Nếu project đã có pages/ → sinh file vào đúng thư mục
-   - Nếu project mới → tạo structure theo skill `framework_architect`
-   - Không tạo duplicate — kiểm tra page đã tồn tại chưa trước khi tạo mới
+3. **Kiểm tra project structure hiện tại & Tuân thủ DRY (Reusability First):**
+   - **Rà soát Page Objects:** Kiểm tra thư mục `page-object/` trước khi tạo mới. Nếu màn hình/chức năng đã có Page Object (ví dụ: `ProfilePage`), **BẮT BUỘC tái sử dụng và mở rộng (extend)** thêm locator/action method vào file hiện có, **tuyệt đối không tạo file trùng lặp** (ví dụ: không tạo `profile-avatar-page.ts` khi đã có `profile-page.ts`).
+   - **Tách Component dùng chung:** Các thành phần xuất hiện trên nhiều trang (Header, Footer, Navbar, Modals) đưa vào `page-object/components/` và tích hợp qua composition (`this.header = new HeaderComponent(page)`).
+   - **Tái sử dụng Fixture:** Đăng ký Page Object vào fixture (`fixture/index.ts`) để inject vào test spec thay vì `new Class(page)` thủ công.
+   - **Tái sử dụng Test Data & Utils:** Sử dụng helper có sẵn trong `core/utils/string.ts` (`generateUsername`, `generateRandomEmail`), constants trong `constant/` và assets trong `test-data/ui/`.
 
 ### Bước 4: Chuẩn bị Dữ liệu (Test Data Strategy)
 

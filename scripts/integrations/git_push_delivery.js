@@ -1,18 +1,15 @@
+/**
+ * Git Push & CI/CD Delivery Script
+ * Tự động commit, push code lên main, transition Jira ticket và thông báo Telegram.
+ */
+
 const { execSync } = require('child_process');
 const path = require('path');
 const fs = require('fs');
-const axios = require('axios');
-require('dotenv').config({ path: path.resolve(__dirname, '../../.env') });
+const { parseArgs, sendTelegramMessage, buildInlineKeyboard } = require('../utils');
 
-const TG_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
-const TG_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
-
-// Parse args
-const args = process.argv.slice(2);
-let ticket = '';
-for (let i = 0; i < args.length; i++) {
-  if (args[i] === '--ticket') ticket = args[i + 1];
-}
+const argv = parseArgs(process.argv.slice(2));
+let ticket = argv.ticket || '';
 
 // Fallback to push_trigger.txt if no arg provided
 const PUSH_TRIGGER_FILE = path.resolve(__dirname, '../../scratch/push_trigger.txt');
@@ -25,28 +22,20 @@ if (!ticket) {
   process.exit(1);
 }
 
-async function sendTg(msg, replyMarkup = null) {
-  if (!TG_BOT_TOKEN || !TG_CHAT_ID) return;
-  try {
-    const payload = {
-      chat_id: TG_CHAT_ID,
-      text: msg,
-      parse_mode: 'HTML'
-    };
-    if (replyMarkup) {
-      payload.reply_markup = replyMarkup;
-    }
-    await axios.post(`https://api.telegram.org/bot${TG_BOT_TOKEN}/sendMessage`, payload);
-  } catch (e) {
-    console.error('[TG ERROR]', e.message);
-  }
-}
+const startStep = parseInt(argv['start-step'] || argv.startStep, 10) || 1;
 
 async function runDelivery() {
   console.log(`[GIT DELIVERY] Bắt đầu bàn giao Git cho ticket: ${ticket}...`);
-  await sendTg(`🚀 <b>[BẮT ĐẦU GIT DELIVERY: ${ticket}]</b>\nĐang tiến hành commit & push code lên GitHub...`);
+  const notifyScript = path.resolve(__dirname, 'notify_step.js');
 
   try {
+    // Bước 1: Git Commit & Push lên main
+    try {
+      execSync(`node "${notifyScript}" --ticket ${ticket} --step ${startStep} --title "Git Commit & Push lên main" --detail "Đang commit và đẩy mã nguồn kiểm thử lên nhánh main"`, { stdio: 'inherit' });
+    } catch (e) {
+      console.warn('[WARN] Lỗi khi gửi notify step 1:', e.message);
+    }
+
     // 1. Git add
     console.log('[LOG] Chạy git add .');
     execSync('git add .', { stdio: 'inherit' });
@@ -65,7 +54,13 @@ async function runDelivery() {
     execSync('git push origin main', { stdio: 'inherit' });
     console.log('[LOG] Đã push code lên GitHub thành công.');
 
-    // 4. Jira transition to "In Review"
+    // Bước 2: Chuyển Jira sang In Review
+    try {
+      execSync(`node "${notifyScript}" --ticket ${ticket} --step ${startStep + 1} --title "Chuyển Jira sang In Review" --detail "Cập nhật trạng thái ticket trên Jira sang In Review"`, { stdio: 'inherit' });
+    } catch (e) {
+      console.warn('[WARN] Lỗi khi gửi notify step 2:', e.message);
+    }
+
     console.log(`[LOG] Đổi trạng thái Jira ${ticket} sang "In Review"...`);
     const transScript = path.resolve(__dirname, 'jira/jira_transition.js');
     try {
@@ -80,35 +75,38 @@ async function runDelivery() {
       console.log('[LOG] Đã dọn dẹp scratch/push_trigger.txt');
     }
 
-    // 6. Gửi thông báo Bước 6 về Telegram
-    const notifyScript = path.resolve(__dirname, 'notify_step.js');
+    // Bước 3: Kích Hoạt CI/CD Pipeline
     try {
-      execSync(`node "${notifyScript}" --ticket ${ticket} --step 6 --title "Kích Hoạt CI/CD & Báo Cáo Allure" --detail "GitHub Actions đang tự động chạy kiểm thử trên Cloud và cập nhật Allure Report"`, { stdio: 'inherit' });
+      execSync(`node "${notifyScript}" --ticket ${ticket} --step ${startStep + 2} --title "Kích Hoạt CI/CD Pipeline" --detail "GitHub Actions đang tự động chạy kiểm thử trên Cloud và cập nhật Allure Report"`, { stdio: 'inherit' });
     } catch (e) {
-      console.warn('[WARN] Lỗi khi gửi notify step 6:', e.message);
+      console.warn('[WARN] Lỗi khi gửi notify step 3:', e.message);
     }
 
-    // 7. Gửi thông báo hoàn tất bàn giao
-    await sendTg(
+    // 7. Gửi thông báo hoàn tất bàn giao kèm action buttons
+    const completeButtons = [
+      [{ text: `🚀 Chạy CI/CD (${ticket})`, callback_data: `run_ci:${ticket}` }]
+    ];
+    const inlineKeyboard = buildInlineKeyboard(completeButtons);
+
+    await sendTelegramMessage(
       `🎉 <b>[HOÀN TẤT BÀN GIAO: ${ticket}]</b>\n\n` +
       `⚡ <b>Trạng thái:</b> <code>Hoàn thành</code>\n` +
       `✅ <b>Code:</b> Đã push thành công lên nhánh <code>main</code>\n` +
       `✅ <b>Jira:</b> Đã chuyển trạng thái sang <b>In Review</b>\n` +
       `⚡ <b>CI/CD:</b> GitHub Actions đang tự động kích hoạt workflow kiểm thử trên Cloud.\n\n` +
       `👏 Chúc mừng! Quy trình hoàn thành xuất sắc.`,
-      {
-        inline_keyboard: [
-          [{ text: `🚀 Chạy CI/CD (${ticket})`, callback_data: `run_ci:${ticket}` }],
-          [{ text: '📋 Xem danh sách Ticket', callback_data: 'check_jira' }]
-        ]
-      }
+      inlineKeyboard
     );
     console.log(`[GIT DELIVERY] Hoàn tất thành công cho ${ticket}!`);
   } catch (err) {
     console.error('[GIT DELIVERY ERROR]', err.message);
-    await sendTg(`❌ <b>[LỖI GIT DELIVERY: ${ticket}]</b>\nChi tiết: <code>${err.message}</code>`);
+    await sendTelegramMessage(`❌ <b>[LỖI GIT DELIVERY: ${ticket}]</b>\nChi tiết: <code>${err.message}</code>`);
     process.exit(1);
   }
 }
 
-runDelivery();
+if (require.main === module) {
+  runDelivery();
+}
+
+module.exports = { runDelivery };

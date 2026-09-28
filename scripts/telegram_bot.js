@@ -2,16 +2,22 @@ const path = require('path');
 const fs = require('fs');
 const { exec } = require('child_process');
 const axios = require('axios');
+const {
+  sendTelegramMessage,
+  answerCallbackQuery,
+  getStandardNavigationButtons,
+  buildInlineKeyboard,
+  getTelegramConfig,
+  getJiraConfig,
+  getJiraHeaders,
+  extractLinkedBugs
+} = require('./utils');
 
 // Load environment variables
 require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
 
-const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
-const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
-const JIRA_BASE_URL = (process.env.JIRA_BASE_URL || '').replace(/\/+$/, '');
-const JIRA_EMAIL = process.env.JIRA_EMAIL;
-const JIRA_API_TOKEN = process.env.JIRA_API_TOKEN;
-const JIRA_PROJECT_KEY = process.env.JIRA_PROJECT_KEY || 'SCRUM';
+const { botToken: TELEGRAM_BOT_TOKEN, chatId: TELEGRAM_CHAT_ID } = getTelegramConfig();
+const { baseUrl: JIRA_BASE_URL, email: JIRA_EMAIL, apiToken: JIRA_API_TOKEN, projectKey: JIRA_PROJECT_KEY } = getJiraConfig();
 
 // GitHub CI/CD env
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
@@ -59,53 +65,9 @@ function saveCache() {
 
 loadCache();
 
-// Helper: send Telegram Message (Uses HTML format to avoid markdown parse errors)
-async function sendTelegramMessage(text, replyMarkup = null) {
-  try {
-    const payload = {
-      chat_id: TELEGRAM_CHAT_ID,
-      text: text,
-      parse_mode: 'HTML',
-    };
-    if (replyMarkup) {
-      payload.reply_markup = replyMarkup;
-    }
-    const res = await axios.post(`${TG_API}/sendMessage`, payload, { timeout: 10000 });
-    return res.data;
-  } catch (err) {
-    console.error('[TG ERROR]', err.response?.data || err.message);
-  }
-}
-
-// Helper: answer callback query
-async function answerCallbackQuery(callbackQueryId, text = '') {
-  try {
-    await axios.post(`${TG_API}/answerCallbackQuery`, {
-      callback_query_id: callbackQueryId,
-      text: text,
-    }, { timeout: 5000 });
-  } catch (e) {}
-}
-
-// Jira API Helper
-function getJiraHeaders() {
-  const auth = Buffer.from(`${JIRA_EMAIL}:${JIRA_API_TOKEN}`).toString('base64');
-  return {
-    Authorization: `Basic ${auth}`,
-    Accept: 'application/json',
-    'Content-Type': 'application/json',
-  };
-}
-
 // Navigation Menu Buttons Helper
 function getNavigationButtons() {
-  return [
-    [{ text: '🔍 Quét User Story mới', callback_data: 'view_new_stories' }],
-    [
-      { text: '📋 Tất cả User Stories', callback_data: 'view_all_stories' },
-      { text: '🐞 Danh sách Bug', callback_data: 'view_all_bugs' }
-    ]
-  ];
+  return getStandardNavigationButtons();
 }
 
 // 1. Quét User Story mới (To Do & In Progress)
@@ -115,7 +77,7 @@ async function showNewStories() {
     const jql = `project = "${JIRA_PROJECT_KEY}" AND issuetype = Story AND status in ("To Do", "In Progress") ORDER BY updated DESC`;
     const res = await axios.get(`${JIRA_BASE_URL}/rest/api/3/search/jql`, {
       headers: getJiraHeaders(),
-      params: { jql, maxResults: 10, fields: 'summary,updated,status,creator' },
+      params: { jql, maxResults: 10, fields: 'summary,updated,status,creator,issuelinks' },
       timeout: 15000,
     });
     const issues = res.data.issues || [];
@@ -140,10 +102,20 @@ async function showNewStories() {
       const author = issue.fields.creator?.displayName || 'Team';
       const status = issue.fields.status?.name || 'To Do';
 
-      msg += `${idx + 1}️⃣ <b>[${key}]</b> ${summary}\n` +
-             `   👤 Tác giả: ${author} | 📌 Trạng thái: <code>${status}</code>\n\n`;
+      let bugInfo = '';
+      let btnText = `🛠 Viết Code (${key})`;
+      let callbackAction = `dev:${key}`;
+      const linkedBugs = extractLinkedBugs(issue);
+      if (linkedBugs.length > 0) {
+        bugInfo = ` | 🐞 Bugs: <b>${linkedBugs.join(', ')}</b>`;
+        btnText = `🔄 Test Lại (${key})`;
+        callbackAction = `retest:${key}`;
+      }
 
-      buttons.push([{ text: `🛠 Viết Code (${key})`, callback_data: `dev:${key}` }]);
+      msg += `${idx + 1}️⃣ <b>[${key}]</b> ${summary}\n` +
+             `   👤 Tác giả: ${author} | 📌 Trạng thái: <code>${status}</code>${bugInfo}\n\n`;
+
+      buttons.push([{ text: btnText, callback_data: callbackAction }]);
     });
 
     msg += `👇 <i>Bấm nút bên dưới để chọn hành động:</i>`;
@@ -164,7 +136,7 @@ async function showAllStories() {
     const jql = `project = "${JIRA_PROJECT_KEY}" AND issuetype = Story ORDER BY updated DESC`;
     const res = await axios.get(`${JIRA_BASE_URL}/rest/api/3/search/jql`, {
       headers: getJiraHeaders(),
-      params: { jql, maxResults: 15, fields: 'summary,updated,status,creator' },
+      params: { jql, maxResults: 15, fields: 'summary,updated,status,creator,issuelinks' },
       timeout: 15000,
     });
     const issues = res.data.issues || [];
@@ -189,11 +161,21 @@ async function showAllStories() {
                           status.toLowerCase().includes('hoàn thành');
       const displayStatus = isCompleted ? 'Hoàn thành' : status;
 
+      let bugInfo = '';
+      let btnText = `🛠 Viết Code (${key})`;
+      let callbackAction = `dev:${key}`;
+      const linkedBugs = extractLinkedBugs(issue);
+      if (linkedBugs.length > 0) {
+        bugInfo = ` | 🐞 Bugs: <b>${linkedBugs.join(', ')}</b>`;
+        btnText = `🔄 Test Lại (${key})`;
+        callbackAction = `retest:${key}`;
+      }
+
       msg += `${idx + 1}️⃣ <b>[${key}]</b> ${summary}\n` +
-             `   👤 Tác giả: ${author} | 📌 Trạng thái: <code>${displayStatus}</code>\n\n`;
+             `   👤 Tác giả: ${author} | 📌 Trạng thái: <code>${displayStatus}</code>${bugInfo}\n\n`;
 
       if (!isCompleted) {
-        buttons.push([{ text: `🛠 Viết Code (${key})`, callback_data: `dev:${key}` }]);
+        buttons.push([{ text: btnText, callback_data: callbackAction }]);
       }
     });
 
@@ -292,6 +274,11 @@ async function pollJiraChanges() {
 }
 
 async function sendNotification(key, summary, author, statusName) {
+  // Bỏ qua thông báo khi đang In Progress để tránh spam trong lúc Agent đang chạy
+  if (statusName === 'In Progress' || statusName === 'In progress') {
+    return;
+  }
+
   const isCompleted = statusName.toLowerCase().includes('review') || 
                       statusName.toLowerCase().includes('done') || 
                       statusName.toLowerCase().includes('hoàn thành');
@@ -309,7 +296,8 @@ async function sendNotification(key, summary, author, statusName) {
     msg += `👉 <i>Phát hiện User Story mới cần thực thi kịch bản kiểm thử tự động!</i>`;
     buttons.push([{ text: `🛠 Viết Code (${key})`, callback_data: `dev:${key}` }]);
   } else {
-    msg += `👉 <i>Code automation đã hoàn thành và sẵn sàng!</i>`;
+    msg += `👉 <i>Code automation đã hoàn thành và sẵn sàng!</i>\n`;
+    msg += `✅ <b>Kết quả:</b> Đã hoàn thành các bước kiểm thử, tự động tạo Bug (nếu có) và Push code thành công.`;
   }
 
   buttons.push(...getNavigationButtons());
@@ -360,6 +348,41 @@ async function executeDevAutomation(ticketKey) {
   } catch (err) {
     console.error('[TRIGGER ERROR]', err.message);
     await sendTelegramMessage(`❌ Lỗi khi kích hoạt automation: ${err.message}`);
+  }
+
+  setTimeout(() => { isExecutingTask = false; }, 3000);
+}
+
+async function executeRetestAutomation(ticketKey) {
+  if (isExecutingTask) {
+    await sendTelegramMessage(`⚠️ Hiện đang có một tiến trình Automation khác đang chạy. Vui lòng chờ.`);
+    return;
+  }
+
+  isExecutingTask = true;
+
+  try {
+    // Ghi mã ticket vào file trigger cho IDE Agent
+    const dir = path.dirname(TRIGGER_FILE);
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(TRIGGER_FILE, ticketKey, 'utf8');
+    console.log(`[TRIGGER] Đã ghi ${ticketKey} vào trigger.txt cho IDE Agent (RETEST).`);
+
+    await sendTelegramMessage(
+      `🔄 <b>[LUỒNG RETEST: ĐÃ KÍCH HOẠT TRIGGER KIỂM THỬ LẠI]</b>\n\n` +
+      `🎯 Ticket: <code>${ticketKey}</code>\n` +
+      `Đã ghi nhận yêu cầu vào <code>scratch/trigger.txt</code>.\n\n` +
+      `👉 <b>Trên Antigravity IDE, bạn hãy gõ lệnh:</b>\n` +
+      `<code>/e2e_retest_bug trigger.txt</code>\n\n` +
+      `<i>Agent trong IDE sẽ tự động:</i>\n` +
+      `1️⃣ Mở test file tương ứng\n` +
+      `2️⃣ Loại bỏ cờ SKIP (test.fixme)\n` +
+      `3️⃣ Chạy Test ở local để đảm bảo Bug đã được fix (PASS xanh)\n` +
+      `4️⃣ Push Git để CI/CD hoàn tất quá trình kiểm chứng`
+    );
+  } catch (err) {
+    console.error('[TRIGGER ERROR]', err.message);
+    await sendTelegramMessage(`❌ Lỗi khi kích hoạt retest: ${err.message}`);
   }
 
   setTimeout(() => { isExecutingTask = false; }, 3000);
@@ -485,6 +508,10 @@ async function startPolling() {
             const ticket = data.replace('dev:', '');
             console.log(`[ACTION] Kích hoạt Automation Dev cho ${ticket}`);
             executeDevAutomation(ticket);
+          } else if (data.startsWith('retest:')) {
+            const ticket = data.replace('retest:', '');
+            console.log(`[ACTION] Kích hoạt Automation Retest cho ${ticket}`);
+            executeRetestAutomation(ticket);
           } else if (data.startsWith('run_ci:')) {
             const ticket = data.replace('run_ci:', '');
             console.log(`[ACTION] Kích hoạt Automation Run cho ${ticket}`);

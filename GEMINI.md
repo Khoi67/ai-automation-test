@@ -125,12 +125,11 @@ Test chỉ được coi là **hoàn thành** khi đáp ứng **toàn bộ** các
 
 | Loại             | Công nghệ                                     |
 | ----------------- | ----------------------------------------------- |
-| Ngôn ngữ        | Java, TypeScript                                |
-| Web Automation    | Playwright (TS/Java), Selenium WebDriver (Java) |
-| Mobile Automation | Appium (Java)                                   |
-| API Automation    | REST Assured                                    |
-| Test Framework    | TestNG, Playwright Test                         |
-| Build Tool        | Maven, npm                                      |
+| Ngôn ngữ        | TypeScript                                      |
+| Web Automation    | Playwright (TypeScript)                         |
+| API Automation    | Playwright API Request                          |
+| Test Framework    | Playwright Test                                 |
+| Build Tool        | npm                                             |
 
 ## 4. Tham Chiếu Rules Chi Tiết
 
@@ -139,9 +138,6 @@ Agent phải tham chiếu quy tắc chi tiết trong `.agent/rules/`:
 - [Quy tắc chung Automation](.agent/rules/automation_rules.md) — POM, Test Data, Naming, Assertions
 - [Chiến lược chọn Locator](.agent/rules/locator_strategy.md) — Thứ tự ưu tiên locator
 - [Quy tắc Playwright](.agent/rules/playwright_rules.md) — Browser setup, locator semantic, wait strategy
-- [Quy tắc Selenium](.agent/rules/selenium_rules.md) — WebDriverWait, TestNG structure
-- [Quy tắc Appium](.agent/rules/appium_rules.md) — Mobile locator, scroll, permission
-- [Quy tắc API Testing](.agent/rules/api_rules.md) — Standard HTTP assertions, Schema validation, Auth lifecycle
 
 ## 5. Tham Chiếu Skills
 
@@ -201,8 +197,6 @@ code:     TC_LOGIN_1712049200
 | Framework  | Smart Wait                                                           |
 | ---------- | -------------------------------------------------------------------- |
 | Playwright | `expect().toBeVisible()`, `expect().toBeEnabled()`, Locator APIs |
-| Selenium   | `WebDriverWait` + `ExpectedConditions`                           |
-| Appium     | `WebDriverWait` + custom conditions                                |
 
 - Hạn chế `waitForSelector` nếu `expect()` đáp ứng được.
 - Mọi assertion phải có **timeout rõ ràng** hoặc dùng default timeout hợp lý.
@@ -225,19 +219,14 @@ Agent sử dụng workflows trong `.agent/workflows/` qua slash commands:
 
 | Workflow                                  | Mô tả                                                     |
 | ----------------------------------------- | ----------------------------------------------------------- |
-| `/generate_requirements_from_website`   | Sinh requirements từ website/module                        |
-| `/analyze_requirement_document`         | Phân tích requirement document (Jira/.doc) — sinh tài liệu phân tích, KHÔNG sinh TC |
 | `/generate_manual_testcases_rbt`        | Sinh manual test cases theo AI-RBT 6 bước (FULL RBT mode) |
 | `/generate_testcases_from_requirements` | Sinh test cases nhanh từ requirements (QUICK mode)         |
 | `/generate_automation_from_testcases`   | Chuyển manual test cases → automation scripts             |
-| `/generate_automation_from_ui_flow`     | Sinh automation từ UI flow trực tiếp                     |
 | `/generate_application_test_plan`       | Khám phá app, sinh test plan (Mode PLAN) hoặc full suite (Mode FULL) |
 | `/generate_automation_framework`        | Thiết kế automation framework                             |
 | `/generate_locator`                     | Sinh locator ổn định cho UI element                      |
 | `/generate_test_data`                   | Sinh test data có cấu trúc                               |
 | `/generate_cross_module_test_plan`    | Phân tích cross-module (2 modes: DOCUMENT/BROWSER), sinh ma trận kết hợp bằng script pairwise |
 | `/generate_combinatorial_test_data`   | Sinh test data cho ma trận kết hợp — offline hoặc pipeline qua browser          |
-| `/generate_api_tests_from_swagger`      | Sinh API tests từ Swagger spec                             |
 | `/analyze_flaky_tests`                  | Phân tích và khắc phục flaky tests                     |
 | `/fetch_jira_requirements`              | Lấy requirements/user stories từ Jira                     |
-| `/import_test_results_xray`             | Đẩy kết quả test lên Xray                              |

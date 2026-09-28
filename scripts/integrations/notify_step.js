@@ -1,42 +1,32 @@
-const axios = require('axios');
-const path = require('path');
-require('dotenv').config({ path: path.resolve(__dirname, '../../.env') });
+/**
+ * Pipeline Step Notifier
+ * Gửi thông báo tiến trình từng bước của E2E Automation về Telegram Bot.
+ */
 
-const TG_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
-const TG_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
+const { parseArgs, sendTelegramMessage } = require('../utils');
 
-if (!TG_BOT_TOKEN || !TG_CHAT_ID) {
-  process.exit(0);
-}
+const argv = parseArgs(process.argv.slice(2));
 
-const args = process.argv.slice(2);
-let ticket = 'SCRUM';
-let step = '1';
-let title = '';
-let detail = '';
-
-for (let i = 0; i < args.length; i++) {
-  if (args[i] === '--ticket') ticket = args[i + 1];
-  if (args[i] === '--step') step = args[i + 1];
-  if (args[i] === '--title') title = args[i + 1];
-  if (args[i] === '--detail') detail = args[i + 1];
-}
+const ticket = argv.ticket || 'SCRUM';
+const step = argv.step || '1';
+let title = argv.title || '';
+let detail = argv.detail || '';
 
 // Fallback nếu truyền chuỗi tự do
-if (!title && args.length > 0) {
-  detail = args.join(' ');
+if (!title && argv._ && argv._.length > 0) {
+  detail = argv._.join(' ');
 }
 
-let msg = `🤖 <b>[E2E PIPELINE: ${ticket}]</b>\n\n` +
-          `📌 <b>Bước ${step}: ${title || 'Cập nhật tiến trình'}</b>\n` +
-          (detail ? `• ${detail}` : '');
+const msg = `🤖 <b>[E2E PIPELINE: ${ticket}]</b>\n\n` +
+            `📌 <b>Bước ${step}: ${title || 'Cập nhật tiến trình'}</b>\n` +
+            (detail ? `• ${detail}` : '');
 
-axios.post(`https://api.telegram.org/bot${TG_BOT_TOKEN}/sendMessage`, {
-  chat_id: TG_CHAT_ID,
-  text: msg,
-  parse_mode: 'HTML'
-}).then(() => {
-  console.log(`[OK] Đã gửi thông báo Bước ${step} có dấu đầy đủ.`);
-}).catch(err => {
-  console.error('[NOTIFY ERROR]', err.message);
-});
+sendTelegramMessage(msg)
+  .then((res) => {
+    if (res && res.ok) {
+      console.log(`[OK] Đã gửi thông báo Bước ${step} có dấu đầy đủ.`);
+    }
+  })
+  .catch((err) => {
+    console.error('[NOTIFY ERROR]', err.message);
+  });

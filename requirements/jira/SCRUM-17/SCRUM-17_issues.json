@@ -1,0 +1,322 @@
+{
+  "fetchedAt": "2026-09-27T09:45:05.878Z",
+  "mode": "single",
+  "ticketKey": "SCRUM-17",
+  "total": 1,
+  "issues": [
+    {
+      "key": "SCRUM-17",
+      "id": "10016",
+      "summary": "[Profile] Xem danh sách khóa học đã ghi danh và Hủy ghi danh",
+      "description": {
+        "type": "doc",
+        "version": 1,
+        "content": [
+          {
+            "type": "blockquote",
+            "content": [
+              {
+                "type": "paragraph",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Là một",
+                    "marks": [
+                      {
+                        "type": "strong"
+                      }
+                    ]
+                  },
+                  {
+                    "type": "text",
+                    "text": " học viên đã đăng nhập vào hệ thống V Learning,"
+                  },
+                  {
+                    "type": "hardBreak"
+                  },
+                  {
+                    "type": "text",
+                    "text": "Tôi muốn",
+                    "marks": [
+                      {
+                        "type": "strong"
+                      }
+                    ]
+                  },
+                  {
+                    "type": "text",
+                    "text": " truy cập trang Thông tin cá nhân để xem danh mục tất cả khóa học mà tôi đã đăng ký và có thể hủy ghi danh khi cần,"
+                  },
+                  {
+                    "type": "hardBreak"
+                  },
+                  {
+                    "type": "text",
+                    "text": "Để",
+                    "marks": [
+                      {
+                        "type": "strong"
+                      }
+                    ]
+                  },
+                  {
+                    "type": "text",
+                    "text": " tôi chủ động quản lý lộ trình học tập của mình."
+                  }
+                ],
+                "attrs": {
+                  "localId": "fd9a43a838b6"
+                }
+              }
+            ],
+            "attrs": {
+              "localId": "9d246915428d"
+            }
+          },
+          {
+            "type": "heading",
+            "attrs": {
+              "level": 4,
+              "localId": "11cc9821b16d"
+            },
+            "content": [
+              {
+                "type": "text",
+                "text": "✅ Acceptance Criteria (Tiêu chí chấp nhận):"
+              }
+            ]
+          },
+          {
+            "type": "orderedList",
+            "attrs": {
+              "order": 1,
+              "localId": "8d5588ed3294"
+            },
+            "content": [
+              {
+                "type": "listItem",
+                "attrs": {
+                  "localId": "5fd8e4374255"
+                },
+                "content": [
+                  {
+                    "type": "paragraph",
+                    "content": [
+                      {
+                        "type": "text",
+                        "text": "AC-1 (Hiển thị danh sách):",
+                        "marks": [
+                          {
+                            "type": "strong"
+                          }
+                        ]
+                      },
+                      {
+                        "type": "text",
+                        "text": " Khi truy cập "
+                      },
+                      {
+                        "type": "text",
+                        "text": "/thongtincanhan",
+                        "marks": [
+                          {
+                            "type": "code"
+                          }
+                        ]
+                      },
+                      {
+                        "type": "text",
+                        "text": ", hệ thống hiển thị danh sách các khóa học học viên đã ghi danh kèm tên khóa học, hình ảnh và ngày đăng ký."
+                      }
+                    ],
+                    "attrs": {
+                      "localId": "ba165cb11d6a"
+                    }
+                  }
+                ]
+              },
+              {
+                "type": "listItem",
+                "attrs": {
+                  "localId": "f4dd44d3b8cd"
+                },
+                "content": [
+                  {
+                    "type": "paragraph",
+                    "content": [
+                      {
+                        "type": "text",
+                        "text": "AC-2 (Hủy ghi danh thành công):",
+                        "marks": [
+                          {
+                            "type": "strong"
+                          }
+                        ]
+                      },
+                      {
+                        "type": "text",
+                        "text": " Khi học viên nhấn nút "
+                      },
+                      {
+                        "type": "text",
+                        "text": "\"Hủy ghi danh\"",
+                        "marks": [
+                          {
+                            "type": "em"
+                          }
+                        ]
+                      },
+                      {
+                        "type": "text",
+                        "text": " tại một khóa học, hệ thống hiển thị hộp thoại xác nhận (SweetAlert popup). Nếu xác nhận:"
+                      }
+                    ],
+                    "attrs": {
+                      "localId": "700dc89ab856"
+                    }
+                  },
+                  {
+                    "type": "bulletList",
+                    "content": [
+                      {
+                        "type": "listItem",
+                        "attrs": {
+                          "localId": "499d5846aba1"
+                        },
+                        "content": [
+                          {
+                            "type": "paragraph",
+                            "content": [
+                              {
+                                "type": "text",
+                                "text": "Khóa học bị xóa khỏi danh sách của học viên."
+                              }
+                            ],
+                            "attrs": {
+                              "localId": "9fbd5baaa09c"
+                            }
+                          }
+                        ]
+                      },
+                      {
+                        "type": "listItem",
+                        "attrs": {
+                          "localId": "ab6af8dd2f98"
+                        },
+                        "content": [
+                          {
+                            "type": "paragraph",
+                            "content": [
+                              {
+                                "type": "text",
+                                "text": "Hiển thị thông báo thành công: "
+                              },
+                              {
+                                "type": "text",
+                                "text": "\"Hủy ghi danh thành công!\"",
+                                "marks": [
+                                  {
+                                    "type": "em"
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "text",
+                                "text": "."
+                              }
+                            ],
+                            "attrs": {
+                              "localId": "00c3d96adbe4"
+                            }
+                          }
+                        ]
+                      }
+                    ],
+                    "attrs": {
+                      "localId": "b0bff16cb0f7"
+                    }
+                  }
+                ]
+              },
+              {
+                "type": "listItem",
+                "attrs": {
+                  "localId": "cb16962e4ade"
+                },
+                "content": [
+                  {
+                    "type": "paragraph",
+                    "content": [
+                      {
+                        "type": "text",
+                        "text": "AC-3 (Chặn truy cập khách vãng lai):",
+                        "marks": [
+                          {
+                            "type": "strong"
+                          }
+                        ]
+                      },
+                      {
+                        "type": "text",
+                        "text": " Khách chưa đăng nhập khi truy cập đường dẫn "
+                      },
+                      {
+                        "type": "text",
+                        "text": "/thongtincanhan",
+                        "marks": [
+                          {
+                            "type": "code"
+                          }
+                        ]
+                      },
+                      {
+                        "type": "text",
+                        "text": " sẽ tự động bị chuyển hướng về trang "
+                      },
+                      {
+                        "type": "text",
+                        "text": "/login",
+                        "marks": [
+                          {
+                            "type": "code"
+                          }
+                        ]
+                      },
+                      {
+                        "type": "text",
+                        "text": "."
+                      }
+                    ],
+                    "attrs": {
+                      "localId": "254c48c355ba"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "status": "In Progress",
+      "priority": "Medium",
+      "issueType": "Story",
+      "assignee": "Unassigned",
+      "reporter": "Nguyên Khôi",
+      "created": "2026-09-26T16:26:59.207+0700",
+      "updated": "2026-09-27T16:45:05.813+0700",
+      "labels": [],
+      "components": [],
+      "acceptanceCriteria": [
+        {
+          "id": 2,
+          "name": "SCRUM Sprint 0",
+          "state": "active",
+          "boardId": 1,
+          "startDate": "2026-09-23T14:22:54.610Z",
+          "endDate": "2026-10-07T14:22:54.610Z"
+        }
+      ],
+      "attachments": []
+    }
+  ]
+}

@@ -1,4 +1,9 @@
-const https = require('https');
+/**
+ * GitHub Actions CI/CD Telegram Notifier
+ * Chạy trên Cloud runner (Node 18+), không phụ thuộc node_modules ngoài.
+ */
+
+const { sendTelegramMessage, buildInlineKeyboard, escapeHtml } = require('../utils');
 
 const botToken = process.env.TELEGRAM_BOT_TOKEN;
 const chatId = process.env.TELEGRAM_CHAT_ID;
@@ -13,11 +18,7 @@ const statusIcon = testResult === 'success' ? '✅' : '❌';
 const statusText = testResult === 'success' ? 'PASS TOÀN BỘ' : 'CÓ LỖI (FAIL)';
 
 const rawCommit = (process.env.COMMIT_MSG || 'Auto CI Run').split('\n')[0];
-// Escape HTML entities to avoid Telegram parse errors
-const commitMsg = rawCommit
-  .replace(/&/g, '&amp;')
-  .replace(/</g, '&lt;')
-  .replace(/>/g, '&gt;');
+const commitMsg = escapeHtml(rawCommit);
 
 const refName = process.env.REF_NAME || 'main';
 const actor = process.env.ACTOR || 'system';
@@ -34,41 +35,16 @@ const text = `🤖 <b>[CI/CD GITHUB ACTIONS HOÀN TẤT]</b>\n\n` +
   `📊 <b>Allure Report:</b> https://${repoOwner}.github.io/${repoName}/\n\n` +
   (runId ? `🔗 <a href="https://github.com/${repo}/actions/runs/${runId}">Xem chi tiết GitHub Actions Run</a>` : '');
 
-const payload = JSON.stringify({
-  chat_id: chatId,
-  text: text,
-  parse_mode: 'HTML'
-});
+const inlineKeyboard = buildInlineKeyboard();
 
-const req = https.request({
-  hostname: 'api.telegram.org',
-  path: `/bot${botToken}/sendMessage`,
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json',
-    'Content-Length': Buffer.byteLength(payload)
-  },
-  timeout: 10000
-}, (res) => {
-  let body = '';
-  res.on('data', chunk => body += chunk);
-  res.on('end', () => {
-    try {
-      const data = JSON.parse(body);
-      if (data.ok) {
-        console.log('[OK] Đã gửi thông báo CI/CD về Telegram thành công!');
-      } else {
-        console.error('[TG ERROR]', data.description);
-      }
-    } catch (e) {
-      console.log('[RESPONSE]', body);
+sendTelegramMessage(text, inlineKeyboard, chatId)
+  .then((data) => {
+    if (data && data.ok) {
+      console.log('[OK] Đã gửi thông báo CI/CD về Telegram thành công!');
+    } else {
+      console.error('[TG ERROR] Không thể gửi thông báo CI/CD:', data);
     }
+  })
+  .catch((err) => {
+    console.error('[REQUEST ERROR]', err.message);
   });
-});
-
-req.on('error', (err) => {
-  console.error('[REQUEST ERROR]', err.message);
-});
-
-req.write(payload);
-req.end();

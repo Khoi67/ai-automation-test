@@ -2,25 +2,10 @@ const axios = require('axios');
 const path = require('path');
 const fs = require('fs');
 
-// Load .env variables
-require('dotenv').config({ path: path.resolve(__dirname, '../../../.env') });
+const { getJiraConfig, getJiraHeaders, sendTelegramPhoto, escapeHtml, parseArgs } = require('../../utils');
 
-const JIRA_BASE_URL = (process.env.JIRA_BASE_URL || '').replace(/\/+$/, '');
-const JIRA_EMAIL = process.env.JIRA_EMAIL;
-const JIRA_API_TOKEN = process.env.JIRA_API_TOKEN;
-const JIRA_PROJECT_KEY = process.env.JIRA_PROJECT_KEY || 'SCRUM';
-
-if (!JIRA_BASE_URL || !JIRA_EMAIL || !JIRA_API_TOKEN) {
-  console.error('[ERROR] Thiếu cấu hình Jira trong file .env');
-  process.exit(1);
-}
-
-const auth = Buffer.from(`${JIRA_EMAIL}:${JIRA_API_TOKEN}`).toString('base64');
-const headers = {
-  'Authorization': `Basic ${auth}`,
-  'Accept': 'application/json',
-  'Content-Type': 'application/json'
-};
+const { baseUrl: JIRA_BASE_URL, projectKey: JIRA_PROJECT_KEY } = getJiraConfig();
+const headers = getJiraHeaders();
 
 async function getValidIssueType() {
   try {
@@ -198,40 +183,11 @@ async function uploadAttachment(issueKey, filePath) {
 
 // Send Telegram notification with optional image/document attachment
 async function sendTelegramAlert(text, attachmentPath = null) {
-  const token = process.env.TELEGRAM_BOT_TOKEN;
-  const chatId = process.env.TELEGRAM_CHAT_ID;
-  if (!token || !chatId) return;
-
   try {
-    if (attachmentPath && fs.existsSync(attachmentPath)) {
-      const ext = path.extname(attachmentPath).toLowerCase();
-      const isImg = ['.png', '.jpg', '.jpeg', '.gif', '.webp'].includes(ext);
-      const endpoint = isImg ? 'sendPhoto' : 'sendDocument';
-      const formKey = isImg ? 'photo' : 'document';
-
-      const fileBuffer = fs.readFileSync(attachmentPath);
-      const blob = new Blob([fileBuffer]);
-      const form = new FormData();
-      form.append('chat_id', chatId);
-      form.append(formKey, blob, path.basename(attachmentPath));
-
-      const caption = text.length > 1000 ? text.substring(0, 995) + '...' : text;
-      form.append('caption', caption);
-      form.append('parse_mode', 'HTML');
-
-      await axios.post(`https://api.telegram.org/bot${token}/${endpoint}`, form, { timeout: 25000 });
-      console.log(`[OK] Đã gửi thông báo kèm Attachment đến Telegram thành công!`);
-      return;
-    }
-
-    await axios.post(`https://api.telegram.org/bot${token}/sendMessage`, {
-      chat_id: chatId,
-      text: text,
-      parse_mode: 'HTML',
-    }, { timeout: 10000 });
+    await sendTelegramPhoto(attachmentPath, text);
     console.log(`[OK] Đã gửi thông báo Bug đến Telegram thành công!`);
   } catch (err) {
-    console.error('[WARN] Lỗi gửi thông báo Telegram:', err.response?.data || err.message);
+    console.error('[WARN] Lỗi gửi thông báo Telegram:', err.message);
   }
 }
 
@@ -333,14 +289,6 @@ async function createJiraBug({
       await uploadAttachment(newBugKey, resolvedAttachment);
     }
 
-function escapeHtml(text) {
-  if (!text) return '';
-  return text
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;');
-}
-
     // Format message for Telegram
     let tgMsg = 
       `🚨 <b>[PHÁT HIỆN APPLICATION BUG TRÊN UI]</b>\n\n` +
@@ -364,34 +312,20 @@ function escapeHtml(text) {
 }
 
 // Parse arguments
-const args = process.argv.slice(2);
+const argv = parseArgs(process.argv.slice(2));
 let params = {
-  parentKey: '',
-  summary: '',
-  precondition: '',
-  steps: '',
-  actual: '',
-  expected: '',
-  attachment: '',
-  desc: '',
-  testFilter: '',
-  tcId: '',
-  tcFile: ''
+  parentKey: argv.parent || '',
+  summary: argv.summary || '',
+  precondition: argv.precondition || '',
+  steps: argv.steps || '',
+  actual: argv.actual || '',
+  expected: argv.expected || '',
+  attachment: argv.attachment || '',
+  desc: argv.desc || '',
+  testFilter: argv.test || argv.filter || '',
+  tcId: argv.tc || '',
+  tcFile: argv.tcfile || ''
 };
-
-for (let i = 0; i < args.length; i++) {
-  if (args[i] === '--parent') params.parentKey = args[i+1];
-  if (args[i] === '--summary') params.summary = args[i+1];
-  if (args[i] === '--precondition') params.precondition = args[i+1];
-  if (args[i] === '--steps') params.steps = args[i+1];
-  if (args[i] === '--actual') params.actual = args[i+1];
-  if (args[i] === '--expected') params.expected = args[i+1];
-  if (args[i] === '--attachment') params.attachment = args[i+1];
-  if (args[i] === '--desc') params.desc = args[i+1];
-  if (args[i] === '--test' || args[i] === '--filter') params.testFilter = args[i+1];
-  if (args[i] === '--tc') params.tcId = args[i+1];
-  if (args[i] === '--tcfile') params.tcFile = args[i+1];
-}
 
 // Tự động đồng bộ từ file Test Case Markdown nếu có chỉ định --tc
 if (params.tcId) {

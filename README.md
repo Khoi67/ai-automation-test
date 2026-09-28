@@ -15,7 +15,7 @@ Framework kiểm thử tự động toàn diện (End-to-End Automation Testing)
 | **Test Runner** | Playwright Test Runner (`@playwright/test`) |
 | **Reporting** | Playwright HTML Report & Allure Report |
 | **CI/CD** | GitHub Actions + GitHub Pages (Auto-deploy Allure Report) |
-| **Integrations** | Jira Software, Xray Cloud, Telegram Bot Event-Driven Trigger |
+| **Integrations** | Jira Software, Telegram Bot Event-Driven Trigger |
 
 ---
 
@@ -40,15 +40,24 @@ demo-ai-automation/
 │   └── register-page.ts
 ├── requirements/         # Tài liệu yêu cầu chi tiết đồng bộ từ Jira
 ├── scratch/              # Tệp runtime phục vụ Telegram Bot trigger (trigger.txt, push_trigger.txt)
-├── scripts/              # Scripts tiện ích: Telegram Bot daemon, Jira integration
+├── scripts/              # Scripts tiện ích: Telegram Bot daemon, Jira integration, Utils
 │   ├── integrations/
 │   │   ├── git_push_delivery.js # Bàn giao Git & kích hoạt quy trình CI/CD
+│   │   ├── notify_ci.js         # Gửi thông báo kết quả GitHub Actions CI/CD
 │   │   ├── notify_step.js       # Bắn thông báo có dấu chuẩn từng bước về Telegram Bot
 │   │   ├── report_local_test.js # Báo cáo kết quả kiểm thử local kèm nút duyệt Push
+│   │   ├── trigger_server.js    # Local HTTP server nhận webhook trigger
 │   │   └── jira/
 │   │       ├── jira_create_bug.js # Tự động tạo Bug trên Jira + gửi Telegram kèm screenshot
 │   │       ├── jira_fetcher.js    # Kéo User Stories/Requirements từ Jira Cloud
+│   │       ├── jira_sync.js       # Đồng bộ và so khớp thay đổi requirements Jira
 │   │       └── jira_transition.js # Tự động chuyển trạng thái Ticket (In Progress, In Review)
+│   ├── utils/            # Thư viện tiện ích dùng chung (DRY Architecture)
+│   │   ├── index.js             # Barrel export cho toàn bộ utils
+│   │   ├── cli.js               # Tiện ích chuẩn hóa phân tích tham số dòng lệnh (parseArgs)
+│   │   ├── jira_api.js          # Jira REST API client & helpers (auth headers, extract bugs, JQL)
+│   │   ├── telegram_api.js      # Telegram Bot client đa năng (native fetch Node 18+, messages, photos)
+│   │   └── telegram_ui.js       # UI Components & chuẩn hoá nút điều hướng Telegram Bot
 │   └── telegram_bot.js        # Telegram Assistant Bot (Zero-Config, Long-Polling)
 ├── services/             # API Service wrappers (Auth, User, Course)
 ├── test-cases/           # Tài liệu Test Cases chuẩn RBT (SCRUM-2, SCRUM-6, SCRUM-19,...)
@@ -331,6 +340,44 @@ AI Agent sẽ tự động đọc `scratch/trigger.txt` và lần lượt thực
 
 ---
 
+### 🔄 Quy trình Kiểm Thử Lại Bug Sau Khi Dev Sửa Xong (`/e2e_retest_bug`)
+
+Khi một Bug trên ứng dụng đã được đội ngũ Developer khắc phục xong và cập nhật trạng thái trên Jira:
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Dev as Developer / Tester
+    participant TG as Telegram Bot
+    participant TF as scratch/trigger.txt
+    participant IDE as Antigravity AI Agent
+    participant PW as Playwright (Headed 1920x1080)
+    participant Git as GitHub Actions
+    participant Jira as Jira Cloud
+
+    Dev->>TG: Bấm "🔄 Test Lại (SCRUM-X)"
+    TG->>TF: Ghi mã Ticket vào trigger.txt
+    Dev->>IDE: Gõ lệnh: /e2e_retest_bug trigger.txt
+    IDE->>IDE: Bước 1: Tìm Spec file & gỡ bỏ cờ test.fixme
+    IDE->>PW: Bước 2: Chạy kiểm thử trực tiếp trên UI thật
+    alt Retest Vẫn Thất Bại (Chưa Fix Xong)
+        IDE->>IDE: Tự động khôi phục cờ test.fixme (Bảo vệ CI)
+        IDE->>TG: Bắn cảnh báo LỖI kèm nguyên nhân chi tiết
+    else Retest Thành Công (PASS x2)
+        IDE->>TG: Báo cáo kết quả kiểm thử đạt chuẩn
+        IDE->>Git: Tự động Commit & Push code lên main
+        IDE->>Jira: Chuyển trạng thái sang "In Review"
+        IDE->>TG: Thông báo hoàn tất quy trình Retest
+    end
+```
+
+#### Các điểm cốt lõi của Retest Workflow:
+1. **Nhận diện thông minh**: Telegram Bot tự động quét liên kết `issuelinks` trên Jira. Nếu Story đang gắn Bug, nút bấm tự chuyển thành **`[🔄 Test Lại (SCRUM-X)]`** thay vì sinh lại code từ đầu.
+2. **Bảo toàn CI Safety**: Test case được tạm mở (`test(...)` thay vì `test.fixme(...)`). Nếu test vẫn **FAIL** trên UI thật, Agent **tự động hoàn tác lại cờ `test.fixme`** để tránh làm vỡ pipeline CI/CD khi đồng nghiệp push code.
+3. **Báo cáo chuẩn hoá & Nhất quán**: Thông báo lỗi hoặc thành công được tích hợp các nút điều hướng chuẩn (`Quét User Story Mới`, `Danh sách Story`, `Xem Bugs`, `Trạng thái`).
+
+---
+
 ## 🔄 CI/CD Pipeline (GitHub Actions)
 
 Dự án đã được cấu hình CI/CD hoàn chỉnh trong `.github/workflows/playwright.yml`:
@@ -368,9 +415,9 @@ Dự án đã được cấu hình CI/CD hoàn chỉnh trong `.github/workflows/
 
 Hệ thống cấu hình và chuẩn hoá cho AI Automation Agent (Rules, Skills và Workflows) trong thư mục `.agent/` được xây dựng, tham khảo và kế thừa từ cộng đồng **[Anh Tester](https://anhtester.com)**:
 
-- **`.agent/rules/`**: Bộ quy tắc chuẩn cho Automation Testing (Quy ước đặt tên POM, chiến lược chọn locator bền vững, quy chuẩn Playwright, Selenium, Appium, API Testing).
+- **`.agent/rules/`**: Bộ quy tắc chuẩn cho Automation Testing (Quy ước đặt tên POM, chiến lược chọn locator bền vững, quy chuẩn Playwright).
 - **`.agent/skills/`**: Các bộ kỹ năng chuyên sâu cho AI Agent (QA Automation Engineer, UI Debug, Smart Locator, Locator Healer, Flaky Test Analyzer, Test Data Generator).
-- **`.agent/workflows/`**: Quy trình chuẩn hóa thực thi tự động (Phân tích Requirement từ Jira/Website, AI-RBT Manual Testing 6 bước, sinh Test Cases, chuyển đổi sang Automation Script E2E).
+- **`.agent/workflows/`**: Quy trình chuẩn hóa thực thi tự động (Phân tích Requirement từ Jira, AI-RBT Manual Testing 6 bước, sinh Test Cases, chuyển đổi sang Automation Script E2E).
 
 > Toàn bộ tài nguyên, quy chuẩn và kiến trúc `.agent` được tham khảo và phát triển dựa trên chia sẻ từ **[Anh Tester](https://anhtester.com)** — Nền tảng & cộng đồng đào tạo kiểm thử phần mềm tự động (Software Testing & Automation) hàng đầu tại Việt Nam.
 > 
