@@ -6,7 +6,8 @@
 const { execSync } = require('child_process');
 const path = require('path');
 const fs = require('fs');
-const { parseArgs, sendTelegramMessage, buildInlineKeyboard } = require('../utils');
+const axios = require('axios');
+const { parseArgs, sendTelegramMessage, buildInlineKeyboard, getJiraConfig, getJiraHeaders } = require('../utils');
 
 const argv = parseArgs(process.argv.slice(2));
 let ticket = argv.ticket || '';
@@ -23,6 +24,52 @@ if (!ticket) {
 }
 
 const startStep = parseInt(argv['start-step'] || argv.startStep, 10) || 1;
+
+/**
+ * Kiểm tra xem Ticket có Bug hay không (từ test.fixme trong code hoặc linked bugs trên Jira)
+ */
+async function checkTicketBugs(ticketKey) {
+  let hasBugs = false;
+  let linkedBugs = [];
+
+  // 1. Kiểm tra trong mã nguồn test spec xem có cờ test.fixme() hay không
+  try {
+    const specFile = path.resolve(__dirname, `../../tests/ui/${ticketKey}.spec.ts`);
+    if (fs.existsSync(specFile)) {
+      const content = fs.readFileSync(specFile, 'utf8');
+      if (content.includes('test.fixme(')) {
+        hasBugs = true;
+      }
+    }
+  } catch (e) {}
+
+  // 2. Kiểm tra trên Jira API xem có linked bugs nào chưa đóng hay không
+  try {
+    const { baseUrl } = getJiraConfig();
+    const res = await axios.get(`${baseUrl}/rest/api/3/issue/${ticketKey}?fields=issuelinks,status`, {
+      headers: getJiraHeaders(),
+      timeout: 10000
+    });
+    const issue = res.data;
+    if (issue && issue.fields && Array.isArray(issue.fields.issuelinks)) {
+      for (const link of issue.fields.issuelinks) {
+        const linked = link.inwardIssue || link.outwardIssue;
+        if (linked && linked.fields && linked.fields.issuetype && linked.fields.issuetype.name === 'Bug') {
+          const bugStatus = (linked.fields.status?.name || '').toLowerCase();
+          const isClosed = bugStatus.includes('done') || bugStatus.includes('closed') || bugStatus.includes('resolved') || bugStatus.includes('hoàn thành');
+          if (!isClosed) {
+            hasBugs = true;
+            linkedBugs.push(linked.key);
+          }
+        }
+      }
+    }
+  } catch (e) {
+    console.warn('[WARN] Không thể kiểm tra Jira bugs qua API, sử dụng kết quả kiểm tra test.fixme:', e.message);
+  }
+
+  return { hasBugs, linkedBugs: [...new Set(linkedBugs)] };
+}
 
 async function runDelivery() {
   console.log(`[GIT DELIVERY] Bắt đầu bàn giao Git cho ticket: ${ticket}...`);
@@ -54,17 +101,24 @@ async function runDelivery() {
     execSync('git push origin main', { stdio: 'inherit' });
     console.log('[LOG] Đã push code lên GitHub thành công.');
 
-    // Bước 2: Chuyển Jira sang In Review
+    // Bước 2: Cập nhật trạng thái Jira
+    const { hasBugs, linkedBugs } = await checkTicketBugs(ticket);
+    const targetStatus = hasBugs ? 'In Progress' : 'In Review';
+    const bugInfoStr = linkedBugs.length > 0 ? ` (Bugs: ${linkedBugs.join(', ')})` : '';
+    const statusDetail = hasBugs 
+      ? `Giữ trạng thái In Progress do còn Bug ứng dụng chưa fix${bugInfoStr}`
+      : 'Toàn bộ kiểm thử PASS (không có Bug), chuyển sang In Review';
+
     try {
-      execSync(`node "${notifyScript}" --ticket ${ticket} --step ${startStep + 1} --title "Chuyển Jira sang In Review" --detail "Cập nhật trạng thái ticket trên Jira sang In Review"`, { stdio: 'inherit' });
+      execSync(`node "${notifyScript}" --ticket ${ticket} --step ${startStep + 1} --title "Cập nhật trạng thái Jira" --detail "${statusDetail}"`, { stdio: 'inherit' });
     } catch (e) {
       console.warn('[WARN] Lỗi khi gửi notify step 2:', e.message);
     }
 
-    console.log(`[LOG] Đổi trạng thái Jira ${ticket} sang "In Review"...`);
+    console.log(`[LOG] Cập nhật trạng thái Jira ${ticket} sang "${targetStatus}"...`);
     const transScript = path.resolve(__dirname, 'jira/jira_transition.js');
     try {
-      execSync(`node "${transScript}" --issue ${ticket} --status "In Review"`, { stdio: 'inherit' });
+      execSync(`node "${transScript}" --issue ${ticket} --status "${targetStatus}"`, { stdio: 'inherit' });
     } catch (e) {
       console.warn('[WARN] Lỗi khi đổi trạng thái Jira (bỏ qua):', e.message);
     }
@@ -88,13 +142,17 @@ async function runDelivery() {
     ];
     const inlineKeyboard = buildInlineKeyboard(completeButtons);
 
+    const jiraStatusMsg = hasBugs 
+      ? `🟡 Giữ nguyên <b>In Progress</b> <i>(Còn Bug chờ Dev fix: ${linkedBugs.join(', ') || 'test.fixme'})</i>`
+      : `🟢 Đã chuyển sang <b>In Review</b> <i>(Toàn bộ test PASS sạch sẽ)</i>`;
+
     await sendTelegramMessage(
       `🎉 <b>[HOÀN TẤT BÀN GIAO: ${ticket}]</b>\n\n` +
-      `⚡ <b>Trạng thái:</b> <code>Hoàn thành</code>\n` +
+      `⚡ <b>Trạng thái quy trình:</b> <code>Hoàn thành</code>\n` +
       `✅ <b>Code:</b> Đã push thành công lên nhánh <code>main</code>\n` +
-      `✅ <b>Jira:</b> Đã chuyển trạng thái sang <b>In Review</b>\n` +
+      `📌 <b>Jira:</b> ${jiraStatusMsg}\n` +
       `⚡ <b>CI/CD:</b> GitHub Actions đang tự động kích hoạt workflow kiểm thử trên Cloud.\n\n` +
-      `👏 Chúc mừng! Quy trình hoàn thành xuất sắc.`,
+      `👏 Chúc mừng! Quy trình bàn giao hoàn tất an toàn.`,
       inlineKeyboard
     );
     console.log(`[GIT DELIVERY] Hoàn tất thành công cho ${ticket}!`);

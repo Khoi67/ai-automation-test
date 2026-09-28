@@ -29,13 +29,19 @@ rules:
 
 ---
 
-### Bước 2: Chuyển Jira sang In Review
-0. Gửi thông báo:
+### Bước 2: Cập Nhật Trạng Thái Jira (In Progress vs In Review)
+0. **Quy tắc chuyển trạng thái Jira khi Push (MANDATORY):**
+   - **Nếu Ticket CÓ BUG** (trong test spec có cờ `test.fixme()` hoặc có linked bugs chưa đóng): **BẮT BUỘC giữ trạng thái `In Progress`** (không chuyển sang `In Review` vì còn Bug đang chờ Dev sửa).
+   - **Chỉ khi Ticket SẠCH BUG** (toàn bộ test PASS 100%, không còn cờ `test.fixme()`): **Mới chuyển sang `In Review`**.
+1. Gửi thông báo:
    ```bash
-   node scripts/integrations/notify_step.js --ticket <JIRA_KEY> --step 2 --title "Chuyển Jira sang In Review" --detail "Cập nhật trạng thái ticket trên Jira sang In Review"
+   node scripts/integrations/notify_step.js --ticket <JIRA_KEY> --step 2 --title "Cập nhật trạng thái Jira" --detail "<Giữ In Progress do còn Bug / Chuyển In Review do sạch Bug>"
    ```
-1. Cập nhật trạng thái ticket:
+2. Cập nhật trạng thái ticket:
    ```bash
+   # Nếu có Bug:
+   node scripts/integrations/jira/jira_transition.js --issue <JIRA_KEY> --status "In Progress"
+   # Nếu không có Bug:
    node scripts/integrations/jira/jira_transition.js --issue <JIRA_KEY> --status "In Review"
    ```
 
@@ -51,9 +57,22 @@ rules:
 
 ---
 
+### Bước 4: Kiểm Tra CI/CD Trên GitHub Actions
+0. Gửi thông báo & theo dõi trạng thái:
+   ```bash
+   node scripts/integrations/check_ci.js --ticket <JIRA_KEY> --wait true
+   ```
+1. Script sẽ tự động theo dõi workflow run trên GitHub Actions cho tới khi hoàn tất và gửi thông báo kết quả PASS/FAIL cùng link Allure Report về Telegram.
+
+---
+
 ### Hoặc Thực Thi Trọn Gói Qua Script
-Bạn có thể chạy toàn bộ 3 bước trên tự động bằng 1 lệnh duy nhất:
+Bạn có thể chạy tự động toàn bộ quy trình bằng các script tích hợp:
 ```bash
+# 1. Bàn giao Git, chuyển Jira và kích hoạt CI
 node scripts/integrations/git_push_delivery.js --ticket <JIRA_KEY>
+
+# 2. Kiểm tra và xác thực kết quả CI trên GitHub Actions
+node scripts/integrations/check_ci.js --ticket <JIRA_KEY> --wait true
 ```
-Script sẽ tự động chạy từng bước, gửi thông báo step về Telegram và hiển thị thông báo hoàn tất bàn giao.
+Script sẽ tự động chạy từng bước, gửi thông báo step về Telegram và hiển thị thông báo hoàn tất bàn giao kèm link Allure Report.

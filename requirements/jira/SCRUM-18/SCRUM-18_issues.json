@@ -1,0 +1,90 @@
+{
+  "fetchedAt": "2026-09-28T13:43:47.927Z",
+  "mode": "single",
+  "ticketKey": "SCRUM-18",
+  "total": 1,
+  "issues": [
+    {
+      "key": "SCRUM-18",
+      "id": "10017",
+      "summary": "[Cart] Thêm khóa học vào Giỏ hàng & Áp dụng mã giảm giá (Shopping Cart & Coupon)",
+      "description": {
+        "type": "doc",
+        "version": 1,
+        "content": [
+          {
+            "type": "paragraph",
+            "content": [
+              {
+                "type": "text",
+                "text": "Là học viên, tôi muốn có nút "
+              },
+              {
+                "type": "text",
+                "text": "\"Thêm vào giỏ hàng\"",
+                "marks": [
+                  {
+                    "type": "em"
+                  }
+                ]
+              },
+              {
+                "type": "text",
+                "text": " tại mỗi khóa học, xem trang Giỏ hàng ("
+              },
+              {
+                "type": "text",
+                "text": "/giohang",
+                "marks": [
+                  {
+                    "type": "code"
+                  }
+                ]
+              },
+              {
+                "type": "text",
+                "text": ") và nhập mã giảm giá "
+              },
+              {
+                "type": "text",
+                "text": "CYBER2026",
+                "marks": [
+                  {
+                    "type": "code"
+                  }
+                ]
+              },
+              {
+                "type": "text",
+                "text": " để được giảm 20% học phí."
+              }
+            ],
+            "attrs": {
+              "localId": "24db145a471b"
+            }
+          }
+        ]
+      },
+      "status": "In Progress",
+      "priority": "Medium",
+      "issueType": "Story",
+      "assignee": "Unassigned",
+      "reporter": "Nguyên Khôi",
+      "created": "2026-09-26T16:27:41.975+0700",
+      "updated": "2026-09-28T20:43:49.403+0700",
+      "labels": [],
+      "components": [],
+      "acceptanceCriteria": [
+        {
+          "id": 2,
+          "name": "SCRUM Sprint 0",
+          "state": "active",
+          "boardId": 1,
+          "startDate": "2026-09-23T14:22:54.610Z",
+          "endDate": "2026-10-07T14:22:54.610Z"
+        }
+      ],
+      "attachments": []
+    }
+  ]
+}

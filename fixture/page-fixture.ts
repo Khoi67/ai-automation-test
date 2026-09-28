@@ -7,6 +7,7 @@ import { ForgotPasswordPage } from '../page-object/forgot-password-page.js';
 import { HeaderComponent } from '../page-object/components/header-component.js';
 import { FooterComponent } from '../page-object/components/footer-component.js';
 import { ProfilePage } from '../page-object/profile-page.js';
+import { CartPage } from '../page-object/cart-page.js';
 import { LoginWorkflow } from '../workflow/ui/login-workflow.js';
 import { CourseWorkflow } from '../workflow/ui/course-workflow.js';
 import { WrapAuthServices } from '../services/wrap-auth-services.js';
@@ -27,6 +28,7 @@ export type PageFixtures = {
   coursePage: CoursePage;
   forgotPasswordPage: ForgotPasswordPage;
   profilePage: ProfilePage;
+  cartPage: CartPage;
   headerComponent: HeaderComponent;
   footerComponent: FooterComponent;
 
@@ -68,6 +70,10 @@ export const test = baseTest.extend<PageFixtures>({
 
   profilePage: async ({ page }, use) => {
     await use(new ProfilePage(page));
+  },
+
+  cartPage: async ({ page }, use) => {
+    await use(new CartPage(page));
   },
 
   headerComponent: async ({ page }, use) => {

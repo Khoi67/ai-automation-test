@@ -171,18 +171,22 @@ flowchart TD
    - Tự động kiểm tra `git status`.
    - Stage và commit với message chuẩn: `feat(automation): add test suite and POM for <JIRA_KEY>`.
    - Push lên nhánh `main`.
-   - Chuyển trạng thái Jira sang **"In Review"** qua `jira_transition.js`.
+   - Cập nhật trạng thái Jira qua `jira_transition.js`: **Giữ In Progress nếu còn Bug**, chỉ chuyển sang **In Review** khi không còn Bug (`test.fixme`).
    - Gửi thông báo hoàn tất bàn giao về Telegram.
 
 ---
 
-### Bước 6: CI/CD & Báo Cáo Tổng Kết
-0. Gửi thông báo: `node scripts/integrations/notify_step.js --ticket <JIRA_KEY> --step 6 --title "Kích Hoạt CI/CD & Báo Cáo Allure" --detail "Kích hoạt kiểm thử tự động trên Cloud & Cập nhật Allure Report"`
+### Bước 6: Kiểm Tra CI/CD Trên GitHub & Báo Cáo Tổng Kết
+0. Gửi thông báo & theo dõi trạng thái:
+   ```bash
+   node scripts/integrations/check_ci.js --ticket <JIRA_KEY> --wait true
+   ```
 1. GitHub Actions tự động kích hoạt workflow `Playwright Tests` trên Cloud khi có commit mới trên nhánh `main`.
-2. Báo cáo kiểm thử Allure Report được cập nhật lên GitHub Pages:
+2. Script `check_ci.js` theo dõi tiến trình chạy kiểm thử và cập nhật kết quả.
+3. Báo cáo kiểm thử Allure Report được cập nhật lên GitHub Pages:
    `https://<GITHUB_OWNER>.github.io/<GITHUB_REPO>/`
-3. **Báo cáo kết quả CI về Telegram Bot:**
-   - GitHub Actions chạy xong step kiểm thử và deploy report sẽ tự động bắn thông báo kết quả (Status PASS/FAIL, Commit message, Link Allure Report, Link GitHub Actions Run) trực tiếp về Telegram Bot.
+4. **Báo cáo kết quả CI về Telegram Bot:**
+   - Khi hoàn tất, thông báo kết quả (Status PASS/FAIL, Commit message, Link Allure Report, Link GitHub Actions Run) được gửi trực tiếp về Telegram Bot.
 
 ---
 

@@ -5,8 +5,9 @@
 function getStandardNavigationButtons() {
   return [
     [{ text: '🔍 Quét User Story Mới', callback_data: 'view_new_stories' }],
+    [{ text: '🐞 Ticket Bị Bug (Cần Retest)', callback_data: 'view_bug_stories' }],
     [{ text: '📋 Danh sách toàn bộ Story', callback_data: 'view_all_stories' }],
-    [{ text: '🐞 Xem Bugs & Lỗi', callback_data: 'view_all_bugs' }],
+    [{ text: '🐛 Xem Chi Tiết Các Bug', callback_data: 'view_all_bugs' }],
     [{ text: '📊 Trạng thái Hệ thống', callback_data: 'status' }]
   ];
 }

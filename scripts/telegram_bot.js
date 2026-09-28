@@ -70,25 +70,40 @@ function getNavigationButtons() {
   return getStandardNavigationButtons();
 }
 
-// 1. Quét User Story mới (To Do & In Progress)
+// 1. Quét User Story mới (chỉ hiển thị User Story mới thực sự, chưa dính Bug)
 async function showNewStories() {
   try {
     console.log('[LOG] Đang quét User Stories mới...');
     const jql = `project = "${JIRA_PROJECT_KEY}" AND issuetype = Story AND status in ("To Do", "In Progress") ORDER BY updated DESC`;
     const res = await axios.get(`${JIRA_BASE_URL}/rest/api/3/search/jql`, {
       headers: getJiraHeaders(),
-      params: { jql, maxResults: 10, fields: 'summary,updated,status,creator,issuelinks' },
+      params: { jql, maxResults: 20, fields: 'summary,updated,status,creator,issuelinks' },
       timeout: 15000,
     });
     const issues = res.data.issues || [];
 
-    if (issues.length === 0) {
-      await sendTelegramMessage(
-        `🎉 <b>[QUÉT USER STORY MỚI]</b>\n\n` +
-        `Hiện tại không có User Story nào ở trạng thái <b>To Do</b> hoặc <b>In Progress</b> trong Project <b>${JIRA_PROJECT_KEY}</b>.\n\n` +
-        `✅ Toàn bộ User Stories đã được thực hiện hoàn tất!`,
-        { inline_keyboard: getNavigationButtons() }
-      );
+    const newStories = [];
+    const bugStoryKeys = [];
+
+    for (const issue of issues) {
+      const linkedBugs = extractLinkedBugs(issue);
+      if (linkedBugs.length > 0) {
+        bugStoryKeys.push(issue.key);
+      } else {
+        newStories.push(issue);
+      }
+    }
+
+    if (newStories.length === 0) {
+      let emptyMsg = `🎉 <b>[QUÉT USER STORY MỚI]</b>\n\n` +
+                     `Hiện tại không có User Story mới nào cần viết code trong Project <b>${JIRA_PROJECT_KEY}</b>.\n\n`;
+      if (bugStoryKeys.length > 0) {
+        emptyMsg += `💡 <i>Phát hiện có <b>${bugStoryKeys.length}</b> User Story đang bị Bug chờ sửa (${bugStoryKeys.join(', ')}). Nhấn nút <b>"🐞 Ticket Bị Bug (Cần Retest)"</b> bên dưới để xem và Test Lại.</i>`;
+      } else {
+        emptyMsg += `✅ Toàn bộ User Stories đã được thực hiện hoàn tất!`;
+      }
+
+      await sendTelegramMessage(emptyMsg, { inline_keyboard: getNavigationButtons() });
       console.log('[LOG] Đã gửi thông báo không có User Story mới cần làm đến Telegram.');
       return;
     }
@@ -96,27 +111,21 @@ async function showNewStories() {
     let msg = `🔍 <b>DANH SÁCH USER STORY MỚI CẦN LÀM (${JIRA_PROJECT_KEY}):</b>\n\n`;
     const buttons = [];
 
-    issues.forEach((issue, idx) => {
+    newStories.forEach((issue, idx) => {
       const key = issue.key;
       const summary = issue.fields.summary || 'Không có tiêu đề';
       const author = issue.fields.creator?.displayName || 'Team';
       const status = issue.fields.status?.name || 'To Do';
 
-      let bugInfo = '';
-      let btnText = `🛠 Viết Code (${key})`;
-      let callbackAction = `dev:${key}`;
-      const linkedBugs = extractLinkedBugs(issue);
-      if (linkedBugs.length > 0) {
-        bugInfo = ` | 🐞 Bugs: <b>${linkedBugs.join(', ')}</b>`;
-        btnText = `🔄 Test Lại (${key})`;
-        callbackAction = `retest:${key}`;
-      }
-
       msg += `${idx + 1}️⃣ <b>[${key}]</b> ${summary}\n` +
-             `   👤 Tác giả: ${author} | 📌 Trạng thái: <code>${status}</code>${bugInfo}\n\n`;
+             `   👤 Tác giả: ${author} | 📌 Trạng thái: <code>${status}</code>\n\n`;
 
-      buttons.push([{ text: btnText, callback_data: callbackAction }]);
+      buttons.push([{ text: `🛠 Viết Code (${key})`, callback_data: `dev:${key}` }]);
     });
+
+    if (bugStoryKeys.length > 0) {
+      msg += `💡 <i>Có <b>${bugStoryKeys.length}</b> User Story đang bị Bug (${bugStoryKeys.join(', ')}). Bấm nút <b>"🐞 Ticket Bị Bug (Cần Retest)"</b> bên dưới để xem riêng.</i>\n\n`;
+    }
 
     msg += `👇 <i>Bấm nút bên dưới để chọn hành động:</i>`;
     buttons.push(...getNavigationButtons());
@@ -125,6 +134,64 @@ async function showNewStories() {
     console.log('[LOG] Đã gửi danh sách User Stories mới đến Telegram.');
   } catch (err) {
     console.error('[FETCH NEW STORIES ERROR]', err.response?.data || err.message);
+    await sendTelegramMessage(`❌ Lỗi khi tải danh sách: ${err.message}`, { inline_keyboard: getNavigationButtons() });
+  }
+}
+
+// 1.5. Danh sách các Ticket bị Bug (Cần Retest)
+async function showBugStories() {
+  try {
+    console.log('[LOG] Đang tải danh sách các Ticket bị Bug...');
+    const jql = `project = "${JIRA_PROJECT_KEY}" AND issuetype = Story ORDER BY updated DESC`;
+    const res = await axios.get(`${JIRA_BASE_URL}/rest/api/3/search/jql`, {
+      headers: getJiraHeaders(),
+      params: { jql, maxResults: 25, fields: 'summary,updated,status,creator,issuelinks' },
+      timeout: 15000,
+    });
+    const issues = res.data.issues || [];
+
+    const bugStories = [];
+    for (const issue of issues) {
+      const linkedBugs = extractLinkedBugs(issue);
+      if (linkedBugs.length > 0) {
+        bugStories.push({ issue, linkedBugs });
+      }
+    }
+
+    if (bugStories.length === 0) {
+      await sendTelegramMessage(
+        `🎉 <b>[TICKET BỊ BUG]</b>\n\n` +
+        `Tuyệt vời! Hiện tại không có User Story nào bị dính Bug trong Project <b>${JIRA_PROJECT_KEY}</b>.\n` +
+        `Toàn bộ hệ thống đang hoạt động ổn định!`,
+        { inline_keyboard: getNavigationButtons() }
+      );
+      console.log('[LOG] Đã gửi thông báo không có ticket bị bug đến Telegram.');
+      return;
+    }
+
+    let msg = `🐞 <b>DANH SÁCH USER STORY ĐANG BỊ BUG (${JIRA_PROJECT_KEY}):</b>\n\n`;
+    const buttons = [];
+
+    bugStories.forEach(({ issue, linkedBugs }, idx) => {
+      const key = issue.key;
+      const summary = issue.fields.summary || 'Không có tiêu đề';
+      const author = issue.fields.creator?.displayName || 'Team';
+      const status = issue.fields.status?.name || 'In Progress';
+
+      msg += `${idx + 1}️⃣ <b>[${key}]</b> ${summary}\n` +
+             `   👤 Tác giả: ${author} | 📌 Trạng thái: <code>${status}</code>\n` +
+             `   🐞 Bugs liên quan: <b>${linkedBugs.join(', ')}</b>\n\n`;
+
+      buttons.push([{ text: `🔄 Test Lại (${key})`, callback_data: `retest:${key}` }]);
+    });
+
+    msg += `👇 <i>Bấm nút bên dưới để thực hiện Retest hoặc chuyển mục:</i>`;
+    buttons.push(...getNavigationButtons());
+
+    await sendTelegramMessage(msg, { inline_keyboard: buttons });
+    console.log('[LOG] Đã gửi danh sách User Story bị Bug đến Telegram.');
+  } catch (err) {
+    console.error('[FETCH BUG STORIES ERROR]', err.response?.data || err.message);
     await sendTelegramMessage(`❌ Lỗi khi tải danh sách: ${err.message}`, { inline_keyboard: getNavigationButtons() });
   }
 }
@@ -522,6 +589,8 @@ async function startPolling() {
             handleConfirmPush(ticket);
           } else if (data === 'view_new_stories' || data === 'check_jira') {
             await showNewStories();
+          } else if (data === 'view_bug_stories') {
+            await showBugStories();
           } else if (data === 'view_all_stories') {
             await showAllStories();
           } else if (data === 'view_all_bugs') {
@@ -548,10 +617,12 @@ async function startPolling() {
             await showNewStories();
           } else if (text === '/new' || text.toLowerCase().includes('quét')) {
             await showNewStories();
+          } else if (text === '/retest' || text.toLowerCase().includes('bị bug')) {
+            await showBugStories();
           } else if (text === '/stories' || text === '/list' || text.toLowerCase().includes('story')) {
             await showAllStories();
           } else if (text === '/bugs' || text.toLowerCase().includes('bug')) {
-            await showAllBugs();
+            await showBugStories();
           } else if (text === '/status') {
             await sendTelegramMessage(
               `📊 <b>[TRẠNG THÁI]</b>\n• Jira: <code>${JIRA_PROJECT_KEY}</code>\n• Bot: 🟢 Trực tuyến\n• Đang thực thi: ${isExecutingTask ? 'Có' : 'Sẵn sàng'}`,
