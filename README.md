@@ -34,7 +34,12 @@ demo-ai-automation/
 │   └── workflows/
 │       └── playwright.yml         # GitHub Actions CI/CD Pipeline & Deploy Allure lên GitHub Pages
 ├── constant/                     # Hằng số URL, Timeouts, Endpoints dùng chung
-├── core/                         # Tiện ích cốt lõi: API Client, Helpers sinh dữ liệu traceable (string.ts)
+├── core/                         # Tiện ích cốt lõi & Enterprise UI Wrapper
+│   ├── api/                      # Base API Client & HTTP request handler
+│   ├── browser/                  # Browser utilities & Dialog helpers (BrowserUtils)
+│   ├── element/                  # UIElement Wrapper tự động ghi test.step Allure Report & Smart Chaining
+│   ├── fixture/                  # Custom Base Fixture mở rộng
+│   └── utils/                    # Helpers sinh dữ liệu traceable (string.ts)
 ├── data-object/                  # TypeScript Models & Interfaces cho Request/Response (API & UI)
 ├── fixture/                      # Playwright Fixtures mở rộng (Dependency Injection POM & Services)
 ├── page-object/                  # Page Object Classes (Chỉ chứa Locators & User Actions, KHÔNG assert)
@@ -415,12 +420,19 @@ npm run docker:down
   * **Test Specs (`tests/`):** Nhận Page Object qua Playwright Fixtures, thực hiện các bước và Web-First Assertions (`await expect(locator).toBeVisible()`).
 * **Tránh Hard Sleep:** Cấm hoàn toàn `waitForTimeout()` hoặc fixed delay. Sử dụng smart auto-waiting của Playwright.
 
-### 3. Quy chuẩn Test Data
+### 3. Chuẩn Thiết Kế UIElement Wrapper (`core/element/ui-element.ts`)
+* **Mục tiêu:** Khắc phục nhược điểm viết `test.step()` thủ công lặp lại trong Page Object hoặc thiếu log chi tiết trên Allure Report. Lớp `UIElement` đóng vai trò là một Smart Wrapper bao bọc Playwright `Locator`.
+* **Đặc điểm nổi bật:**
+  * **Tự động ghi Step Log:** Mọi thao tác (`click`, `fill`, `hover`, `getText`, `clear`, `waitFor`, `selectOption`, `setInputFiles`) đều tự động sinh ra bước kiểm thử Allure (`test.step("Click: [Nút Đăng Ký]", ...)`) với nhãn phần tử nhân văn rõ ràng.
+  * **Hỗ trợ Fluent Chaining:** Cung cấp các hàm chuỗi tương tự Playwright Locator: `first()`, `nth()`, `filter()`, `locator()`, `getByRole()`, `getByPlaceholder()`, `getByText()`, `or()`, `and()`.
+  * **Tương thích hoàn toàn với Web-First Assertions:** Cung cấp hàm `getLocator()` để tương thích 100% với cú pháp `await expect(element.getLocator()).toBeVisible()` của Playwright Test.
+
+### 4. Quy chuẩn Test Data
 * Dữ liệu cho các trường yêu cầu unique (tài khoản, email) bắt buộc phải sinh động qua `core/utils/string.ts` (`generateUsername()`, `generateEmail()`).
 * Dữ liệu phải mang tính **traceable** (chứa timestamp và prefix) để dễ dàng tra cứu trong database khi cần debug.
 * Tài khoản tạo mới tuân thủ giới hạn backend của CyberSoft: độ dài `<= 16 ký tự`.
 
-### 4. Cơ chế CI Safety (`test.fixme`)
+### 5. Cơ chế CI Safety (`test.fixme`)
 * Khi phát hiện lỗi ứng dụng (Bug), test case được chuyển thành `test.fixme(...)`:
   ```typescript
   // Đánh dấu fixme do Bug SCRUM-22 trên Jira: Không hiển thị hộp thoại xác nhận khi Hủy khóa học
