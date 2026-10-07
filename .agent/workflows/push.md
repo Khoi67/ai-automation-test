@@ -15,6 +15,16 @@ rules:
 
 ## Các Bước Thực Hiện Chi Tiết
 
+### Bước 0: Pre-Push Quality Gate (Chốt Chặn Kiểm Thử Bắt Buộc)
+> **MANDATORY:** Trước khi commit hoặc push bất kỳ dòng code nào lên Git, hệ thống **BẮT BUỘC** phải chạy kiểm thử toàn bộ test suite cục bộ:
+> ```bash
+> npx playwright test
+> ```
+> - **Nếu có bất kỳ Test Case nào FAILED:** **DỪNG NGAY LẬP TỨC!** Tuyệt đối không được phép commit hay push code lên GitHub.
+> - **Chỉ khi PASS 100% (hoặc các test case lỗi app đã được gắn cờ `test.fixme()`):** Mới được phép tiếp tục sang Bước 1.
+
+---
+
 ### Bước 1: Git Commit & Push lên main
 0. Gửi thông báo:
    ```bash

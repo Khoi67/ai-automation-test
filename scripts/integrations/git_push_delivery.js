@@ -93,6 +93,35 @@ async function runDelivery() {
   console.log(`[GIT DELIVERY] Bắt đầu bàn giao Git cho ticket: ${ticket}...`);
   const notifyScript = path.resolve(__dirname, 'notify_step.js');
 
+  // =========================================================================
+  // BƯỚC 0: PRE-PUSH QUALITY GATE (BẮT BUỘC KIỂM THỬ XÁC THỰC TRƯỚC KHI PUSH)
+  // =========================================================================
+  const skipTest = argv['skip-test'] === true || argv['skip-test'] === 'true';
+  if (!skipTest) {
+    console.log(`\n[QUALITY GATE] Đang chạy kiểm thử toàn bộ test suite để xác thực chất lượng trước khi Push...`);
+    try {
+      execSync('npx playwright test', { stdio: 'inherit' });
+      console.log(`[QUALITY GATE PASS] ✅ Toàn bộ test suite ĐẠT chuẩn Definition of Done (0 Failures). Cho phép bàn giao.\n`);
+    } catch (testError) {
+      console.error(`\n❌ [QUALITY GATE FAILED] Phát hiện Test Case bị FAILED trên máy cục bộ!`);
+      console.error(`[BLOCKED] TỪ CHỐI commit và push code lên GitHub để bảo vệ CI/CD Pipeline không bị FAIL!\n`);
+
+      const alertMsg = `🚫 <b>[CHẶN PUSH CODE: ${ticket}]</b>\n\n` +
+                       `⚠️ <b>Cảnh báo Chốt Chặn Chất Lượng (Pre-Push Quality Gate):</b>\n` +
+                       `Hệ thống phát hiện có Test Case bị <b>FAILED</b> khi chạy kiểm thử cục bộ!\n\n` +
+                       `🛡️ <b>Hành động tự động:</b> Đã <b>TỪ CHỐI</b> đẩy code lên GitHub để bảo vệ CI/CD Pipeline không bị gãy.\n` +
+                       `👉 Vui lòng kiểm tra lại log kiểm thử, sửa lỗi hoặc đánh dấu <code>test.fixme()</code> cho các test bị lỗi app trước khi bàn giao!`;
+      try {
+        await sendTelegramMessage(alertMsg, buildInlineKeyboard());
+      } catch (tgErr) {
+        console.warn('[WARN] Không thể gửi cảnh báo chặn push về Telegram:', tgErr.message);
+      }
+      process.exit(1);
+    }
+  } else {
+    console.warn(`[WARN] Bỏ qua Pre-Push Quality Gate theo tham số (--skip-test).\n`);
+  }
+
   try {
     // Bước 1: Git Commit & Push lên main
     try {

@@ -290,13 +290,18 @@ sequenceDiagram
 
     Note over IDE,Git: Giai đoạn 3: Bàn Giao Git & Kích Hoạt CI/CD
     IDE->>TG: Gửi báo cáo kết quả kiểm thử Local (Pass / Fail / Bug)
-    IDE->>Git: [Bước 5] Git commit & push mã nguồn lên nhánh main
-    alt Test Suite còn Bug dính test.fixme
-        IDE->>Jira: Giữ nguyên trạng thái "In Progress" (chờ Dev sửa)
-    else Test Suite PASS sạch sẽ
-        IDE->>Jira: Chuyển trạng thái Story sang "In Review"
+    Note over IDE: Chốt Chặn Chất Lượng: Pre-Push Quality Gate (Tự động npx playwright test)
+    alt Có Test Case FAILED cục bộ
+        IDE->>TG: TỪ CHỐI Push Code & Bắn cảnh báo vi phạm Quality Gate
+    else Toàn bộ Test Suite ĐẠT chuẩn
+        IDE->>Git: [Bước 5] Git commit & push mã nguồn lên nhánh main
+        alt Test Suite còn Bug dính test.fixme
+            IDE->>Jira: Giữ nguyên trạng thái "In Progress" (chờ Dev sửa)
+        else Test Suite PASS sạch sẽ
+            IDE->>Jira: Chuyển trạng thái Story sang "In Review"
+        end
+        IDE->>TG: Bắn thông báo hoàn tất bàn giao Git
     end
-    IDE->>TG: Bắn thông báo hoàn tất bàn giao Git
 
     Note over Git,TG: Giai đoạn 4: Xác Thực CI/CD & Deploy Report
     Git->>Git: [Bước 6] GitHub Actions chạy test trên Cloud Runner
