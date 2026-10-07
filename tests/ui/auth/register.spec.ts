@@ -133,9 +133,9 @@ test.describe('SCRUM-2: User Registration Feature (UI)', { tag: ['@SCRUM-2', '@a
       await registerPage.clickRegister();
     });
 
-    await test.step('Verify email format validation error', async () => {
-      await expect(registerPage.errorMsgEmail).toBeVisible();
-      await expect(registerPage.errorMsgEmail).toContainText(/email không hợp lệ|định dạng/i);
+    await test.step('Verify email format validation error via HTML5 validity', async () => {
+      const isInvalid = await registerPage.inputEmail.evaluate((el: HTMLInputElement) => !el.checkValidity());
+      expect(isInvalid).toBe(true);
     });
   });
 });

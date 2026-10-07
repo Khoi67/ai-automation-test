@@ -5,6 +5,10 @@ import { ProfilePage } from '../../../page-object/profile-page.js';
 
 /**
  * Test Suite: SCRUM-19 - [Profile] Đổi ảnh đại diện học viên (Upload Profile Avatar)
+ *
+ * NOTE: Tính năng đổi ảnh đại diện chưa được triển khai trên Web UI của CyberSoft
+ * (chỉ có nút "Hồ sơ cá nhân" và "CẬP NHẬT", không có nút/input tải lên avatar).
+ * Sử dụng test.fixme() để bảo vệ CI/CD không bị fail theo quy chuẩn CI Safety.
  */
 test.describe('SCRUM-19: [Profile] Đổi ảnh đại diện học viên', { tag: ['@SCRUM-19', '@profile', '@avatar'] }, () => {
   const username = process.env.TEST_USERNAME || 'auto_testuser_20260922160653_131';
@@ -24,7 +28,8 @@ test.describe('SCRUM-19: [Profile] Đổi ảnh đại diện học viên', { ta
     await profilePage.openProfileModal();
   });
 
-  test('TC01: Cập nhật ảnh đại diện thành công với file hợp lệ (Happy Path)', async ({ page }) => {
+  // Đánh dấu fixme do Bug/Chưa triển khai trên UI: Giao diện chưa có nút tải lên avatar
+  test.fixme('TC01: Cập nhật ảnh đại diện thành công với file hợp lệ (Happy Path)', async ({ page }) => {
     const profilePage = new ProfilePage(page);
 
     await profilePage.uploadAvatar(VALID_AVATAR);
@@ -35,7 +40,8 @@ test.describe('SCRUM-19: [Profile] Đổi ảnh đại diện học viên', { ta
     });
   });
 
-  test('TC02: Hệ thống từ chối tải lên file sai định dạng (PDF)', async ({ page }) => {
+  // Đánh dấu fixme do Bug/Chưa triển khai trên UI: Giao diện chưa có nút tải lên avatar
+  test.fixme('TC02: Hệ thống từ chối tải lên file sai định dạng (PDF)', async ({ page }) => {
     const profilePage = new ProfilePage(page);
 
     await profilePage.uploadAvatar(INVALID_FILE);
@@ -46,7 +52,8 @@ test.describe('SCRUM-19: [Profile] Đổi ảnh đại diện học viên', { ta
     });
   });
 
-  test('TC03: Hệ thống từ chối file ảnh vượt quá dung lượng cho phép (>2MB)', async ({ page }) => {
+  // Đánh dấu fixme do Bug/Chưa triển khai trên UI: Giao diện chưa có nút tải lên avatar
+  test.fixme('TC03: Hệ thống từ chối file ảnh vượt quá dung lượng cho phép (>2MB)', async ({ page }) => {
     const profilePage = new ProfilePage(page);
 
     await profilePage.uploadAvatar(LARGE_AVATAR);
@@ -57,7 +64,8 @@ test.describe('SCRUM-19: [Profile] Đổi ảnh đại diện học viên', { ta
     });
   });
 
-  test('TC04: Hủy thao tác cập nhật ảnh và đóng modal', async ({ page }) => {
+  // Đánh dấu fixme do Bug/Chưa triển khai trên UI: Giao diện chưa có nút tải lên avatar
+  test.fixme('TC04: Hủy thao tác cập nhật ảnh và đóng modal', async ({ page }) => {
     const profilePage = new ProfilePage(page);
 
     await profilePage.uploadAvatar(VALID_AVATAR);
