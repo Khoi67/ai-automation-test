@@ -1,26 +1,45 @@
 import { Locator, Page, test } from '@playwright/test';
 import { BasePage } from './base-page.js';
+import { UIElement } from '../core/element/ui-element.js';
 
 /**
  * Cart Page — handles shopping cart and coupon.
  */
 export class CartPage extends BasePage {
-  readonly cartItems: Locator;
-  readonly cartTotal: Locator;
-  readonly couponInput: Locator;
-  readonly btnApplyCoupon: Locator;
-  readonly couponSuccessMsg: Locator;
-  readonly couponErrorMsg: Locator;
+  readonly cartItems: UIElement;
+  readonly cartTotal: UIElement;
+  readonly couponInput: UIElement;
+  readonly btnApplyCoupon: UIElement;
+  readonly couponSuccessMsg: UIElement;
+  readonly couponErrorMsg: UIElement;
 
   constructor(page: Page) {
     super(page);
 
-    this.cartItems = page.locator('.cart-item, [data-testid="cart-item"]');
-    this.cartTotal = page.locator('.cart-total, [data-testid="cart-total"]');
-    this.couponInput = page.locator('input[placeholder*="mã giảm giá"], input[name="coupon"], [data-testid="coupon-input"]');
-    this.btnApplyCoupon = page.getByRole('button', { name: /áp dụng/i });
-    this.couponSuccessMsg = page.locator('.coupon-success, [data-testid="coupon-success"]');
-    this.couponErrorMsg = page.locator('.coupon-error, [data-testid="coupon-error"]');
+    this.cartItems = new UIElement(
+      page.locator('.cart-item, [data-testid="cart-item"]'), 
+      'Danh sách sản phẩm trong giỏ hàng'
+    );
+    this.cartTotal = new UIElement(
+      page.locator('.cart-total, [data-testid="cart-total"]'), 
+      'Tổng tiền giỏ hàng'
+    );
+    this.couponInput = new UIElement(
+      page.locator('input[placeholder*="mã giảm giá"], input[name="coupon"], [data-testid="coupon-input"]'), 
+      'Ô nhập mã giảm giá'
+    );
+    this.btnApplyCoupon = new UIElement(
+      page.getByRole('button', { name: /áp dụng/i }), 
+      'Nút Áp dụng mã giảm giá'
+    );
+    this.couponSuccessMsg = new UIElement(
+      page.locator('.coupon-success, [data-testid="coupon-success"]'), 
+      'Thông báo áp dụng mã thành công'
+    );
+    this.couponErrorMsg = new UIElement(
+      page.locator('.coupon-error, [data-testid="coupon-error"]'), 
+      'Thông báo lỗi áp dụng mã'
+    );
   }
 
   async goToCartPage(): Promise<void> {
@@ -30,7 +49,7 @@ export class CartPage extends BasePage {
   }
 
   async applyCoupon(code: string): Promise<void> {
-    await test.step(`Apply coupon: ${code}`, async () => {
+    await test.step(`Thực hiện quy trình áp dụng mã giảm giá: ${code}`, async () => {
       await this.couponInput.fill(code);
       await this.btnApplyCoupon.click();
     });

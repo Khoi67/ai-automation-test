@@ -39,7 +39,7 @@ test.describe('SCRUM-17: [Profile] Xem danh sách khóa học đã ghi danh và 
     await expect(btnUnenroll).toBeVisible({ timeout: 15000 });
     await btnUnenroll.click();
 
-    await expect(profilePage.sweetAlertConfirm).toBeVisible();
+    await expect(profilePage.sweetAlertConfirm.getLocator()).toBeVisible();
     await profilePage.confirmSweetAlert();
 
     // Verify success message
@@ -56,11 +56,11 @@ test.describe('SCRUM-17: [Profile] Xem danh sách khóa học đã ghi danh và 
     await expect(btnUnenroll).toBeVisible({ timeout: 15000 });
     await btnUnenroll.click();
 
-    await expect(profilePage.sweetAlertCancel).toBeVisible();
+    await expect(profilePage.sweetAlertCancel.getLocator()).toBeVisible();
     await profilePage.cancelSweetAlert();
 
     // Verify SweetAlert is closed
-    await expect(profilePage.sweetAlertConfirm).toBeHidden();
+    await expect(profilePage.sweetAlertConfirm.getLocator()).toBeHidden();
   });
 
   // Đánh dấu fixme do Bug SCRUM-21 trên Jira: App không chuyển hướng khi chưa đăng nhập

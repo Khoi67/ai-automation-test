@@ -23,7 +23,7 @@ test.describe('SCRUM-18: [Cart] Thêm khóa học vào Giỏ hàng & Áp dụng 
     await cartPage.goToCartPage();
     
     // Expect cart items and total to be visible
-    await expect(cartPage.cartTotal).toBeVisible();
+    await expect(cartPage.cartTotal.getLocator()).toBeVisible();
   });
 
   test.fixme('TC_CART_03: Áp dụng mã giảm giá hợp lệ', async ({ cartPage }) => {
@@ -31,8 +31,8 @@ test.describe('SCRUM-18: [Cart] Thêm khóa học vào Giỏ hàng & Áp dụng 
     
     await cartPage.applyCoupon('CYBER2026');
     
-    await expect(cartPage.couponSuccessMsg).toBeVisible();
-    await expect(cartPage.couponSuccessMsg).toContainText(/thành công/i);
+    await expect(cartPage.couponSuccessMsg.getLocator()).toBeVisible();
+    await expect(cartPage.couponSuccessMsg.getLocator()).toContainText(/thành công/i);
   });
 
   test.fixme('TC_CART_04: Áp dụng mã giảm giá không hợp lệ', async ({ cartPage }) => {
@@ -40,7 +40,7 @@ test.describe('SCRUM-18: [Cart] Thêm khóa học vào Giỏ hàng & Áp dụng 
     
     await cartPage.applyCoupon('INVALID_CODE');
     
-    await expect(cartPage.couponErrorMsg).toBeVisible();
-    await expect(cartPage.couponErrorMsg).toContainText(/không hợp lệ/i);
+    await expect(cartPage.couponErrorMsg.getLocator()).toBeVisible();
+    await expect(cartPage.couponErrorMsg.getLocator()).toContainText(/không hợp lệ/i);
   });
 });

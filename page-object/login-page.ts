@@ -1,4 +1,5 @@
 import { Locator, Page, test } from '@playwright/test';
+import { UIElement } from '../core/element/ui-element.js';
 import { BasePage } from './base-page.js';
 
 /**
@@ -7,21 +8,21 @@ import { BasePage } from './base-page.js';
  */
 export class LoginPage extends BasePage {
   // --- Locators ---
-  readonly loginForm: Locator;
-  readonly inputUsername: Locator;
-  readonly inputPassword: Locator;
-  readonly btnLogin: Locator;
-  readonly errorMessage: Locator;
-  readonly linkRegister: Locator;
+  readonly loginForm: UIElement;
+  readonly inputUsername: UIElement;
+  readonly inputPassword: UIElement;
+  readonly btnLogin: UIElement;
+  readonly errorMessage: UIElement;
+  readonly linkRegister: UIElement;
 
   constructor(page: Page) {
     super(page);
-    this.loginForm = page.locator('form').filter({ hasText: /đăng nhập/i });
+    this.loginForm = new UIElement(page.locator('form').filter({ hasText: /đăng nhập/i }), 'loginForm');
     this.inputUsername = this.loginForm.getByPlaceholder(/tài khoản|username/i);
     this.inputPassword = this.loginForm.getByPlaceholder(/mật khẩu|password/i);
     this.btnLogin = this.loginForm.getByRole('button', { name: /đăng nhập/i });
-    this.errorMessage = page.locator('.swal-title, .swal2-title');
-    this.linkRegister = page.getByRole('link', { name: /đăng ký/i }).or(page.getByText('Đăng ký'));
+    this.errorMessage = new UIElement(page.locator('.swal-title, .swal2-title'), 'errorMessage');
+    this.linkRegister = new UIElement(page.getByRole('link', { name: /đăng ký/i }).or(page.getByText('Đăng ký')), 'linkRegister');
   }
 
   /** Navigate to login page */
@@ -64,7 +65,7 @@ export class LoginPage extends BasePage {
 
   /** Getter for error message locator to be asserted in Test class */
   getErrorMessageLocator(): Locator {
-    return this.errorMessage;
+    return this.errorMessage.getLocator();
   }
 }
 

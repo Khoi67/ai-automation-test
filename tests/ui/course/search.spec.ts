@@ -36,6 +36,6 @@ test.describe('SCRUM-7: Course Search', { tag: ['@SCRUM-7', '@course', '@search'
   test('TC_SEARCH_03: Tìm kiếm với chuỗi rỗng', async ({ homePage }) => {
     // Để trống và submit, verify trang hoạt động bình thường
     await homePage.searchCourse('');
-    await expect(homePage.searchInput).toBeVisible();
+    await expect(homePage.searchInput.getLocator()).toBeVisible();
   });
 });

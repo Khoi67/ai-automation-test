@@ -11,7 +11,7 @@ test.describe('SCRUM-6: Chức năng Quên mật khẩu (UI)', { tag: ['@SCRUM-6
     await forgotPasswordPage.goToLoginPage();
     await forgotPasswordPage.clickForgotPasswordLink();
     await expect(
-      forgotPasswordPage.inputEmailForgot,
+      forgotPasswordPage.inputEmailForgot.getLocator(),
       'Ô nhập Email quên mật khẩu phải hiển thị sau khi click liên kết'
     ).toBeVisible({ timeout: 5000 });
   });
@@ -26,7 +26,7 @@ test.describe('SCRUM-6: Chức năng Quên mật khẩu (UI)', { tag: ['@SCRUM-6
 
     // 2. Kỳ vọng hiển thị thông báo thành công
     await expect(
-      forgotPasswordPage.alertSuccess,
+      forgotPasswordPage.alertSuccess.getLocator(),
       'Hệ thống phải hiển thị thông báo gửi hướng dẫn đặt lại mật khẩu thành công'
     ).toBeVisible();
   });
@@ -40,7 +40,7 @@ test.describe('SCRUM-6: Chức năng Quên mật khẩu (UI)', { tag: ['@SCRUM-6
 
     // Kỳ vọng thông báo lỗi email không tồn tại
     await expect(
-      forgotPasswordPage.alertError,
+      forgotPasswordPage.alertError.getLocator(),
       'Hệ thống phải thông báo lỗi Email không tồn tại'
     ).toBeVisible();
   });
@@ -54,7 +54,7 @@ test.describe('SCRUM-6: Chức năng Quên mật khẩu (UI)', { tag: ['@SCRUM-6
 
     // Kiểm tra thông báo yêu cầu nhập email
     await expect(
-      forgotPasswordPage.errorMsgRequiredEmail,
+      forgotPasswordPage.errorMsgRequiredEmail.getLocator(),
       'Phải có thông báo lỗi yêu cầu nhập email'
     ).toBeVisible();
   });
@@ -68,7 +68,7 @@ test.describe('SCRUM-6: Chức năng Quên mật khẩu (UI)', { tag: ['@SCRUM-6
 
     // Kiểm tra thông báo lỗi định dạng
     await expect(
-      forgotPasswordPage.errorMsgInvalidFormat,
+      forgotPasswordPage.errorMsgInvalidFormat.getLocator(),
       'Phải có thông báo lỗi định dạng email không hợp lệ'
     ).toBeVisible();
   });

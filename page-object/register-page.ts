@@ -1,4 +1,5 @@
 import { Locator, Page } from '@playwright/test';
+import { UIElement } from '../core/element/ui-element.js';
 import { BasePage } from './base-page.js';
 
 /**
@@ -7,38 +8,38 @@ import { BasePage } from './base-page.js';
  */
 export class RegisterPage extends BasePage {
   // --- Locators ---
-  readonly inputUsername: Locator;
-  readonly inputPassword: Locator;
-  readonly inputFullName: Locator;
-  readonly inputPhone: Locator;
-  readonly inputEmail: Locator;
-  readonly selectGroup: Locator;
-  readonly btnRegister: Locator;
-  readonly successMessage: Locator;
-  readonly errorMessage: Locator;
-  readonly errorMsgUsername: Locator;
-  readonly errorMsgPassword: Locator;
-  readonly errorMsgFullName: Locator;
-  readonly errorMsgPhone: Locator;
-  readonly errorMsgEmail: Locator;
+  readonly inputUsername: UIElement;
+  readonly inputPassword: UIElement;
+  readonly inputFullName: UIElement;
+  readonly inputPhone: UIElement;
+  readonly inputEmail: UIElement;
+  readonly selectGroup: UIElement;
+  readonly btnRegister: UIElement;
+  readonly successMessage: UIElement;
+  readonly errorMessage: UIElement;
+  readonly errorMsgUsername: UIElement;
+  readonly errorMsgPassword: UIElement;
+  readonly errorMsgFullName: UIElement;
+  readonly errorMsgPhone: UIElement;
+  readonly errorMsgEmail: UIElement;
 
   constructor(page: Page) {
     super(page);
     const registerForm = page.locator('form').filter({ hasText: /đăng ký/i }).first();
-    this.inputUsername = registerForm.locator('input[name="taiKhoan"], #taiKhoan');
-    this.inputPassword = registerForm.locator('input[name="matKhau"], input[type="password"], #matKhau');
-    this.inputFullName = registerForm.locator('input[name="hoTen"], #hoTen');
-    this.inputPhone = registerForm.locator('input[name="soDT"], input[name="soDt"], #soDt');
-    this.inputEmail = registerForm.locator('input[name="email"], input[type="email"], #email');
-    this.selectGroup = registerForm.locator('select[name="maNhom"], #maNhom');
-    this.btnRegister = registerForm.getByRole('button', { name: 'Đăng ký', exact: true });
-    this.successMessage = page.locator('.swal-title');
-    this.errorMessage = page.locator('.swal-title');
-    this.errorMsgUsername = registerForm.locator('.errorMessage').filter({ hasText: /tài khoản/i }).first();
-    this.errorMsgFullName = registerForm.locator('.errorMessage').filter({ hasText: /tên/i }).first();
-    this.errorMsgPassword = registerForm.locator('.errorMessage').nth(2);
-    this.errorMsgEmail = registerForm.locator('.errorMessage').filter({ hasText: /email/i }).first();
-    this.errorMsgPhone = registerForm.locator('.errorMessage').filter({ hasText: /số điện thoại/i }).first();
+    this.inputUsername = new UIElement(registerForm.locator('input[name="taiKhoan"], #taiKhoan'), 'inputUsername');
+    this.inputPassword = new UIElement(registerForm.locator('input[name="matKhau"], input[type="password"], #matKhau'), 'inputPassword');
+    this.inputFullName = new UIElement(registerForm.locator('input[name="hoTen"], #hoTen'), 'inputFullName');
+    this.inputPhone = new UIElement(registerForm.locator('input[name="soDT"], input[name="soDt"], #soDt'), 'inputPhone');
+    this.inputEmail = new UIElement(registerForm.locator('input[name="email"], input[type="email"], #email'), 'inputEmail');
+    this.selectGroup = new UIElement(registerForm.locator('select[name="maNhom"], #maNhom'), 'selectGroup');
+    this.btnRegister = new UIElement(registerForm.getByRole('button', { name: 'Đăng ký', exact: true }), 'btnRegister');
+    this.successMessage = new UIElement(page.locator('.swal-title'), 'successMessage');
+    this.errorMessage = new UIElement(page.locator('.swal-title'), 'errorMessage');
+    this.errorMsgUsername = new UIElement(registerForm.locator('.errorMessage').filter({ hasText: /tài khoản/i }).first(), 'errorMsgUsername');
+    this.errorMsgFullName = new UIElement(registerForm.locator('.errorMessage').filter({ hasText: /tên/i }).first(), 'errorMsgFullName');
+    this.errorMsgPassword = new UIElement(registerForm.locator('.errorMessage').nth(2), 'errorMsgPassword');
+    this.errorMsgEmail = new UIElement(registerForm.locator('.errorMessage').filter({ hasText: /email/i }).first(), 'errorMsgEmail');
+    this.errorMsgPhone = new UIElement(registerForm.locator('.errorMessage').filter({ hasText: /số điện thoại/i }).first(), 'errorMsgPhone');
   }
 
   /** Navigate to register page */
@@ -74,11 +75,11 @@ export class RegisterPage extends BasePage {
 
   /** Getter for success message locator to assert in Test class */
   getSuccessMessageLocator(): Locator {
-    return this.successMessage;
+    return this.successMessage.getLocator();
   }
 
   /** Getter for error message locator to assert in Test class */
   getErrorMessageLocator(): Locator {
-    return this.errorMessage;
+    return this.errorMessage.getLocator();
   }
 }

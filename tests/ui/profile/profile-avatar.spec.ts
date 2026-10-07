@@ -71,6 +71,6 @@ test.describe('SCRUM-19: [Profile] Đổi ảnh đại diện học viên', { ta
     await profilePage.uploadAvatar(VALID_AVATAR);
     await profilePage.closeProfileModal();
 
-    await expect(profilePage.profileModal).toBeHidden();
+    await expect(profilePage.profileModal.getLocator()).toBeHidden();
   });
 });

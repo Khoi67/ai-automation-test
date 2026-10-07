@@ -110,11 +110,11 @@ test.describe('SCRUM-2: User Registration Feature (UI)', { tag: ['@SCRUM-2', '@a
     });
 
     await test.step('Verify validation errors are displayed', async () => {
-      await expect(registerPage.errorMsgUsername).toBeVisible();
-      await expect(registerPage.errorMsgPassword).toBeVisible();
-      await expect(registerPage.errorMsgFullName).toBeVisible();
-      await expect(registerPage.errorMsgPhone).toBeVisible();
-      await expect(registerPage.errorMsgEmail).toBeVisible();
+      await expect(registerPage.errorMsgUsername.getLocator()).toBeVisible();
+      await expect(registerPage.errorMsgPassword.getLocator()).toBeVisible();
+      await expect(registerPage.errorMsgFullName.getLocator()).toBeVisible();
+      await expect(registerPage.errorMsgPhone.getLocator()).toBeVisible();
+      await expect(registerPage.errorMsgEmail.getLocator()).toBeVisible();
     });
   });
 
@@ -134,7 +134,7 @@ test.describe('SCRUM-2: User Registration Feature (UI)', { tag: ['@SCRUM-2', '@a
     });
 
     await test.step('Verify email format validation error via HTML5 validity', async () => {
-      const isInvalid = await registerPage.inputEmail.evaluate((el: HTMLInputElement) => !el.checkValidity());
+      const isInvalid = await registerPage.inputEmail.evaluate((el) => !(el as HTMLInputElement).checkValidity());
       expect(isInvalid).toBe(true);
     });
   });
