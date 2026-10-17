@@ -83,6 +83,17 @@ async function checkCI() {
             await sendTelegramMessage(msg, buildInlineKeyboard());
           }
 
+          if (isSuccess) {
+            // Tự động dọn dẹp nhánh local và đồng bộ main khi CI Pass
+            try {
+              const { cleanupLocalBranches } = require('../utils/cleanup_merged_branch');
+              console.log('\n[AUTO-CLEANUP] CI PASS -> Đang tự động dọn dẹp nhánh local và đồng bộ main...');
+              cleanupLocalBranches();
+            } catch (cleanErr) {
+              console.warn('[WARN] Không thể tự động dọn dẹp local:', cleanErr.message);
+            }
+          }
+
           if (!isSuccess) {
             process.exit(1);
           }

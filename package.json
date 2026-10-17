@@ -18,6 +18,7 @@
     "format:check": "prettier --check .",
     "clean": "node -e \"['test-results','playwright-report','allure-results','allure-report'].forEach(d => require('fs').rmSync(d, {recursive: true, force: true}))\"",
     "clean:data": "node scripts/utils/cleanup_stale_test_data.js",
+    "clean:branch": "node scripts/utils/cleanup_merged_branch.js",
     "bot": "node scripts/telegram_bot.js",
     "docker:up": "docker compose up -d",
     "docker:down": "docker compose down",

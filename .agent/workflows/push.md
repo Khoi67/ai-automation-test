@@ -90,21 +90,43 @@ rules:
 ---
 
 ### Bước 5: Tự Động Merge vào Main & Tự Động Xóa Nhánh khi CI PASS
-* **Nếu CI PASS 100%:** GitHub Actions sẽ kích hoạt job `auto-merge`:
+* **Nếu CI PASS 100%:** GitHub Actions sẽ kích hoạt bước `auto-merge`:
   1. Tự động merge nhánh `feat/<JIRA_KEY>` vào nhánh `main`.
   2. Tự động **xóa luôn nhánh `feat/<JIRA_KEY>` trên GitHub remote** để giữ kho mã nguồn gọn gàng.
   3. Cập nhật Allure Report trên GitHub Pages.
-* **Nếu CI FAILED:** Job `auto-merge` tự động bị chặn lại để bảo vệ nhánh `main` an toàn tuyệt đối, nhánh feature được giữ nguyên để điều tra lỗi. Bot Telegram sẽ gửi cảnh báo kèm log thất bại.
+* **Nếu CI FAILED:** Bước `auto-merge` tự động bị chặn lại để bảo vệ nhánh `main` an toàn tuyệt đối, nhánh feature được giữ nguyên để điều tra lỗi. Bot Telegram sẽ gửi cảnh báo kèm log thất bại.
+
+---
+
+### Bước 6: Đồng Bộ & Xóa Nhánh Tại Máy Cục Bộ (Local Branch Cleanup)
+Sau khi CI thông báo PASS và Auto-Merge thành công:
+1. Chuyển về nhánh `main`:
+   ```bash
+   git checkout main
+   ```
+2. Kéo toàn bộ mã nguồn mới nhất vừa được merge về máy:
+   ```bash
+   git pull origin main
+   ```
+3. Xóa nhánh feature tại local:
+   ```bash
+   git branch -D feat/<JIRA_KEY>
+   ```
+4. Dọn dẹp con trỏ remote tracking đã bị xóa trên GitHub:
+   ```bash
+   git fetch --prune origin
+   ```
+*(Hoặc chạy lệnh tự động: `npm run clean:branch`)*
 
 ---
 
 ### 🚀 Thực Thi Trọn Gói Tự Động Qua Script
-Bạn có thể chạy tự động toàn bộ quy trình bằng script tích hợp (đã hỗ trợ auto-branching & auto-merge):
+Bạn có thể chạy tự động toàn bộ quy trình bằng script tích hợp (đã hỗ trợ auto-branching, auto-merge và local cleanup):
 ```bash
 # 1. Tự động kiểm tra chất lượng, tạo branch feat/<JIRA_KEY>, push và gửi PR link về Telegram
 node scripts/integrations/git_push_delivery.js --ticket <JIRA_KEY>
 
-# 2. Kiểm tra và xác thực kết quả CI trên GitHub Actions (tự động merge vào main khi Pass)
+# 2. Kiểm tra và xác thực kết quả CI trên GitHub Actions (tự động merge và dọn dẹp local khi Pass)
 node scripts/integrations/check_ci.js --ticket <JIRA_KEY> --wait true
 ```
-Script sẽ tự động chạy từng bước, bảo đảm **nhánh main chỉ được merge khi CI Pass 100%**.
+Script sẽ tự động chạy từng bước, bảo đảm **nhánh main chỉ được merge khi CI Pass 100%** và **máy local luôn sạch sẽ sau khi hoàn tất**.
