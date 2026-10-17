@@ -108,7 +108,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Configure Git and Merge into main
+      - name: Configure Git, Merge into main, and Delete Feature Branch
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
@@ -116,6 +116,12 @@ jobs:
           git pull origin main
           git merge --no-ff ${{ github.ref }} -m "ci(auto-merge): merge ${{ github.ref_name }} into main after 100% CI PASS [skip ci]"
           git push origin main
+
+          # Clean up feature branch on remote after successful merge
+          if [[ "${{ github.ref_name }}" =~ ^(feat|fix)/ ]]; then
+            echo "Deleting merged remote branch ${{ github.ref_name }}..."
+            git push origin --delete "${{ github.ref_name }}" || echo "Branch deletion skipped or already removed."
+          fi
 
   deploy-report:
     needs: [test, auto-merge]
