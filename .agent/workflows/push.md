@@ -89,9 +89,12 @@ rules:
 
 ---
 
-### Bước 5: Tự Động Merge vào Main khi CI PASS (Auto-Merge)
-* **Nếu CI PASS 100%:** GitHub Actions sẽ kích hoạt job `auto-merge`, tự động merge nhánh `feat/<JIRA_KEY>` vào nhánh `main` và cập nhật Allure Report trên GitHub Pages.
-* **Nếu CI FAILED:** Job `auto-merge` tự động bị chặn lại để bảo vệ nhánh `main` an toàn tuyệt đối. Bot Telegram sẽ gửi cảnh báo kèm log thất bại.
+### Bước 5: Tự Động Merge vào Main & Tự Động Xóa Nhánh khi CI PASS
+* **Nếu CI PASS 100%:** GitHub Actions sẽ kích hoạt job `auto-merge`:
+  1. Tự động merge nhánh `feat/<JIRA_KEY>` vào nhánh `main`.
+  2. Tự động **xóa luôn nhánh `feat/<JIRA_KEY>` trên GitHub remote** để giữ kho mã nguồn gọn gàng.
+  3. Cập nhật Allure Report trên GitHub Pages.
+* **Nếu CI FAILED:** Job `auto-merge` tự động bị chặn lại để bảo vệ nhánh `main` an toàn tuyệt đối, nhánh feature được giữ nguyên để điều tra lỗi. Bot Telegram sẽ gửi cảnh báo kèm log thất bại.
 
 ---
 

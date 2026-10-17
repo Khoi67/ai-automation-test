@@ -78,12 +78,14 @@ https://github.com/<OWNER>/<REPO>/compare/main...feat/<JIRA_KEY>?expand=1
 
 ---
 
-### Bước 6: Tự Động Merge vào Main khi CI PASS (Auto-Merge Lifecycle)
+### Bước 6: Tự Động Merge vào Main khi CI PASS & Xóa Nhánh (Auto-Merge & Cleanup)
 1. **GitHub Actions Tự Động Kích Hoạt:**
    - Ngay khi push nhánh `feat/<JIRA_KEY>`, workflow Cloud sẽ tự động kích hoạt job `test`.
 2. **Cơ chế Auto-Merge Chặn Lỗi (Quality Gate Protection):**
    - **Nếu CI PASS 100%:** Job `auto-merge` trong `.github/workflows/playwright.yml` sẽ **tự động merge nhánh feature vào `main`**.
    - **Nếu CI FAILED:** Job `auto-merge` sẽ bị **SKIP / CHẶN HOÀN TOÀN**, nhánh `main` được bảo vệ nguyên vẹn 100%, đồng thời bot Telegram gửi thông báo thất bại ngay lập tức để QA/Dev xử lý.
+3. **Tự Động Xóa Nhánh Sau Khi Merge (Branch Housekeeping):**
+   - Ngay sau khi merge thành công vào `main`, GitHub Actions tự động thực hiện xóa nhánh `feat/<JIRA_KEY>` trên GitHub (`git push origin --delete feat/<JIRA_KEY>`) để tránh ứ đọng các nhánh rác đã hoàn thành.
 
 ---
 
