@@ -119,7 +119,7 @@ jobs:
 
   deploy-report:
     needs: [test, auto-merge]
-    if: always() && (github.ref == 'refs/heads/main' || needs.auto-merge.result == 'success')
+    if: always() && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     environment:
       name: github-pages
