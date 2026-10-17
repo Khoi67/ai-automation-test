@@ -16,6 +16,14 @@ import { WrapCourseServices } from '../services/wrap-course-services.js';
 import { AuthApiWorkflow } from '../workflow/api/auth-workflow.js';
 import { CourseApiWorkflow } from '../workflow/api/course-workflow.js';
 
+import { ThongTinDangNhap } from '../data-object/api/user-model.js';
+
+export type IsolatedUserSession = {
+  credentials: ThongTinDangNhap;
+  accessToken: string;
+  injectAuthToPage: () => Promise<void>;
+};
+
 /**
  * Page fixture — composes Page Objects, Workflows and Services.
  * Tests import { test, expect } from this file.
@@ -44,6 +52,9 @@ export type PageFixtures = {
   // API Workflows
   authApiWorkflow: AuthApiWorkflow;
   courseApiWorkflow: CourseApiWorkflow;
+
+  // Isolated dynamic user with auto-teardown (Solves Race Condition & DB Pollution)
+  isolatedUser: IsolatedUserSession;
 };
 
 export const test = baseTest.extend<PageFixtures>({
@@ -113,6 +124,44 @@ export const test = baseTest.extend<PageFixtures>({
 
   courseApiWorkflow: async ({ apiUtils }, use) => {
     await use(new CourseApiWorkflow(apiUtils));
+  },
+
+  // --- Isolated User Session with Auto-Teardown ---
+  isolatedUser: async ({ page, authApiWorkflow, authService }, use) => {
+    // 1. Setup: Create unique dynamic user via API
+    const user = await authApiWorkflow.createDynamicAccount();
+    const loginRes = await authService.login(user);
+    const body = await loginRes.json();
+    const accessToken = body.accessToken;
+
+    const credentialsPayload = {
+      taiKhoan: body.taiKhoan,
+      email: body.email,
+      soDT: body.soDT,
+      maNhom: body.maNhom,
+      maLoaiNguoiDung: body.maLoaiNguoiDung,
+      hoTen: body.hoTen,
+      accessToken: accessToken,
+      hinhAnh: body.hinhAnh || '',
+    };
+
+    const injectAuthToPage = async () => {
+      await page.addInitScript((creds) => {
+        window.localStorage.setItem('credentials', JSON.stringify(creds));
+      }, credentialsPayload);
+    };
+
+    try {
+      // 2. Yield to test
+      await use({
+        credentials: user,
+        accessToken,
+        injectAuthToPage,
+      });
+    } finally {
+      // 3. Teardown: Clean up user from DB after test completes (even if test fails)
+      await authApiWorkflow.deleteDynamicAccount(user);
+    }
   },
 });
 

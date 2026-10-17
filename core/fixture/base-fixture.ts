@@ -17,9 +17,11 @@ export const test = base.extend<BaseFixtures>({
   apiContext: async ({ playwright }, use) => {
     const context = await playwright.request.newContext({
       baseURL: API_BASE_URL,
-      extraHTTPHeaders: TOKEN_CYBERSOFT ? {
-        TokenCybersoft: TOKEN_CYBERSOFT,
-      } : {},
+      extraHTTPHeaders: TOKEN_CYBERSOFT
+        ? {
+            TokenCybersoft: TOKEN_CYBERSOFT,
+          }
+        : {},
     });
     await use(context);
     await context.dispose();

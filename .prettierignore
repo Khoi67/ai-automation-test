@@ -1,0 +1,17 @@
+node_modules/
+test-results/
+playwright-report/
+allure-results/
+allure-report/
+.auth/
+.gemini/
+brain/
+artifacts/
+package-lock.json
+.agent/
+.github/
+requirements/
+test-cases/
+scratch/
+scripts/
+*.md

@@ -22,7 +22,9 @@ export class HeaderComponent {
     this.navCourses = page.locator('header').getByText('Khóa học');
     this.navEvents = page.locator('header').getByText('Sự kiện');
     this.navBlog = page.locator('header').getByText('Blog');
-    this.searchInput = page.locator('header input[type="search"], header input[placeholder*="tìm"]');
+    this.searchInput = page.locator(
+      'header input[type="search"], header input[placeholder*="tìm"]',
+    );
     this.btnLogin = page.locator('header').getByText('Đăng nhập');
     this.btnRegister = page.locator('header').getByText('Đăng ký');
     this.userDropdown = page.locator('header .dropdown-toggle, header .user-info');

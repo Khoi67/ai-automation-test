@@ -17,28 +17,30 @@ export class CartPage extends BasePage {
     super(page);
 
     this.cartItems = new UIElement(
-      page.locator('.cart-item, [data-testid="cart-item"]'), 
-      'Danh sách sản phẩm trong giỏ hàng'
+      page.locator('.cart-item, [data-testid="cart-item"]'),
+      'Danh sách sản phẩm trong giỏ hàng',
     );
     this.cartTotal = new UIElement(
-      page.locator('.cart-total, [data-testid="cart-total"]'), 
-      'Tổng tiền giỏ hàng'
+      page.locator('.cart-total, [data-testid="cart-total"]'),
+      'Tổng tiền giỏ hàng',
     );
     this.couponInput = new UIElement(
-      page.locator('input[placeholder*="mã giảm giá"], input[name="coupon"], [data-testid="coupon-input"]'), 
-      'Ô nhập mã giảm giá'
+      page.locator(
+        'input[placeholder*="mã giảm giá"], input[name="coupon"], [data-testid="coupon-input"]',
+      ),
+      'Ô nhập mã giảm giá',
     );
     this.btnApplyCoupon = new UIElement(
-      page.getByRole('button', { name: /áp dụng/i }), 
-      'Nút Áp dụng mã giảm giá'
+      page.getByRole('button', { name: /áp dụng/i }),
+      'Nút Áp dụng mã giảm giá',
     );
     this.couponSuccessMsg = new UIElement(
-      page.locator('.coupon-success, [data-testid="coupon-success"]'), 
-      'Thông báo áp dụng mã thành công'
+      page.locator('.coupon-success, [data-testid="coupon-success"]'),
+      'Thông báo áp dụng mã thành công',
     );
     this.couponErrorMsg = new UIElement(
-      page.locator('.coupon-error, [data-testid="coupon-error"]'), 
-      'Thông báo lỗi áp dụng mã'
+      page.locator('.coupon-error, [data-testid="coupon-error"]'),
+      'Thông báo lỗi áp dụng mã',
     );
   }
 

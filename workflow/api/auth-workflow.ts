@@ -79,7 +79,10 @@ export class AuthApiWorkflow {
    * Register a new account and immediately login to get an access token.
    * Replaces the old static default account logic.
    */
-  async createAccountAndGetAccessToken(): Promise<{ accessToken: string; credentials: ThongTinDangNhap }> {
+  async createAccountAndGetAccessToken(): Promise<{
+    accessToken: string;
+    credentials: ThongTinDangNhap;
+  }> {
     const credentials = await this.createDynamicAccount();
     const accessToken = await this.getAccessToken(credentials.taiKhoan, credentials.matKhau);
     return { accessToken, credentials };

@@ -1,9 +1,7 @@
 import { APIUtils } from '../../core/api/api.js';
 import { WrapCourseServices } from '../../services/wrap-course-services.js';
-import { AuthApiWorkflow } from './auth-workflow.js';
 import { KhoaHocModel } from '../../data-object/api/course-model.js';
-import { generateCourseCode, formatDateDDMMYYYY } from '../../core/utils/string.js';
-import { MA_NHOM, TEST_USERNAME, TEST_PASSWORD } from '../../constant/config-constant.js';
+import { MA_NHOM } from '../../constant/config-constant.js';
 import { expect } from '@playwright/test';
 
 /**
@@ -11,11 +9,9 @@ import { expect } from '@playwright/test';
  */
 export class CourseApiWorkflow {
   private readonly courseService: WrapCourseServices;
-  private readonly authWorkflow: AuthApiWorkflow;
 
   constructor(apiUtils: APIUtils) {
     this.courseService = new WrapCourseServices(apiUtils);
-    this.authWorkflow = new AuthApiWorkflow(apiUtils);
   }
 
   /**

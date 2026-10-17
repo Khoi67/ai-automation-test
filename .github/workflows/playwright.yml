@@ -2,7 +2,7 @@ name: Playwright Tests
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [ main, master, 'feat/**', 'fix/**' ]
   pull_request:
     branches: [ main, master ]
   workflow_dispatch:
@@ -18,7 +18,8 @@ on:
           - api
 
 permissions:
-  contents: read
+  contents: write
+  pull-requests: write
   pages: write
   id-token: write
 
@@ -96,9 +97,29 @@ jobs:
           path: allure-report
           retention-days: 14
 
-  deploy-report:
+  auto-merge:
+    name: Auto Merge to Main on CI Pass
     needs: test
-    if: always() && github.ref == 'refs/heads/main'
+    if: needs.test.result == 'success' && (startsWith(github.ref, 'refs/heads/feat/') || startsWith(github.ref, 'refs/heads/fix/') || github.event_name == 'pull_request')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configure Git and Merge into main
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout main
+          git pull origin main
+          git merge --no-ff ${{ github.ref }} -m "ci(auto-merge): merge ${{ github.ref_name }} into main after 100% CI PASS [skip ci]"
+          git push origin main
+
+  deploy-report:
+    needs: [test, auto-merge]
+    if: always() && (github.ref == 'refs/heads/main' || needs.auto-merge.result == 'success')
     runs-on: ubuntu-latest
     environment:
       name: github-pages
@@ -123,7 +144,7 @@ jobs:
         uses: actions/deploy-pages@v4
 
   notify:
-    needs: [test, deploy-report]
+    needs: [test, auto-merge, deploy-report]
     if: always()
     runs-on: ubuntu-latest
     steps:
@@ -140,6 +161,7 @@ jobs:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           TEST_RESULT: ${{ needs.test.result }}
+          MERGE_RESULT: ${{ needs.auto-merge.result }}
           COMMIT_MSG: ${{ github.event.head_commit.message }}
           ACTOR: ${{ github.actor }}
           REF_NAME: ${{ github.ref_name }}
