@@ -66,11 +66,13 @@ demo-ai-automation/
 │   │       ├── jira_fetcher.js   # Kéo User Stories/Requirements từ Jira Cloud
 │   │       └── jira_transition.js# Tự động chuyển đổi trạng thái Issue trên Jira
 │   ├── utils/                    # Thư viện tiện ích dùng chung (DRY Architecture)
+│   │   ├── cleanup_merged_branch.js # Tự động xóa nhánh feature/fix local đã hoàn tất & pull main
+│   │   ├── cleanup_stale_test_data.js # Dọn dẹp dữ liệu test cũ định kỳ
 │   │   ├── cli.js                # Parser tham số dòng lệnh chuẩn hóa
 │   │   ├── jira_api.js           # Jira REST API client & helpers
 │   │   ├── telegram_api.js       # Telegram Bot client đa năng (native fetch Node 18+)
 │   │   └── telegram_ui.js        # Giao diện tin nhắn & các nút điều hướng Telegram
-│   └── telegram_bot.js           # Telegram Assistant Bot (Event-driven Long-Polling)
+│   └── telegram_bot.js           # Telegram Assistant Bot (Dual-Mode: CI Notifier + Long-Polling)
 ├── services/                     # API Service Wrappers (AuthService, UserService, CourseService)
 ├── test-cases/                   # Bộ Manual Test Cases chuẩn RBT (<KEY>_testcases.md)
 ├── test-data/                    # Dữ liệu kiểm thử ngoại vi & Fixture files (avatar.png, document.pdf)
@@ -175,6 +177,15 @@ npm run test:headed
 
 # Kiểm tra cú pháp và kiểu dữ liệu TypeScript (Zero Error Guarantee)
 npm run typecheck
+
+# Kiểm tra chất lượng mã nguồn (ESLint)
+npm run lint
+
+# Định dạng mã nguồn toàn diện (Prettier)
+npm run format
+
+# Tự động dọn dẹp và xóa các nhánh local đã được auto-merge vào main
+npm run clean:branch
 ```
 
 ### 2. Chạy kiểm thử theo Module Thư Mục
@@ -293,26 +304,32 @@ sequenceDiagram
         IDE->>IDE: Đánh dấu test.fixme() cho test case bị lỗi để bảo vệ CI
     end
 
-    Note over IDE,Git: Giai đoạn 3: Bàn Giao Git & Kích Hoạt CI/CD
+    Note over IDE,Git: Giai đoạn 3: Bàn Giao Feature Branch & Chốt Chặn
     IDE->>TG: Gửi báo cáo kết quả kiểm thử Local (Pass / Fail / Bug)
-    Note over IDE: Chốt Chặn Chất Lượng: Pre-Push Quality Gate (Tự động npx playwright test)
+    Note over IDE: Chốt Chặn Chất Lượng: Pre-Push Quality Gate (npm run typecheck + npx playwright test)
     alt Có Test Case FAILED cục bộ
         IDE->>TG: TỪ CHỐI Push Code & Bắn cảnh báo vi phạm Quality Gate
-    else Toàn bộ Test Suite ĐẠT chuẩn
-        IDE->>Git: [Bước 5] Git commit & push mã nguồn lên nhánh main
+    else Toàn bộ Test Suite ĐẠT chuẩn (0 Failures)
+        IDE->>Git: [Bước 5] Tạo nhánh feat/<JIRA_KEY>, commit & push lên GitHub (CẤM push main)
+        IDE->>TG: Bắn thông báo kèm link mở Pull Request (PR)
         alt Test Suite còn Bug dính test.fixme
             IDE->>Jira: Giữ nguyên trạng thái "In Progress" (chờ Dev sửa)
         else Test Suite PASS sạch sẽ
             IDE->>Jira: Chuyển trạng thái Story sang "In Review"
         end
-        IDE->>TG: Bắn thông báo hoàn tất bàn giao Git
     end
 
-    Note over Git,TG: Giai đoạn 4: Xác Thực CI/CD & Deploy Report
-    Git->>Git: [Bước 6] GitHub Actions chạy test trên Cloud Runner
-    Git->>Git: Biên dịch Allure Report & Deploy lên GitHub Pages
-    IDE->>Git: check_ci.js theo dõi tiến trình chạy workflow run
-    IDE->>TG: Bắn thông báo kết quả CI/CD kèm link Allure Report về Telegram
+    Note over Git,TG: Giai đoạn 4: Single-Pipeline CI/CD, Auto-Merge & Deploy
+    Git->>Git: [Bước 6] GitHub Actions chạy Playwright trên Cloud Runner
+    alt Kiểm thử PASS 100% trên feat/*
+        Git->>Git: Tự động Auto-Merge vào main (--no-ff) & Xóa nhánh feat/* trên remote
+        Git->>Git: Khôi phục Trend History & Deploy Allure lên gh-pages (peaceiris/actions-gh-pages)
+        Git->>TG: Bắn thông báo PASS 100% + Đã Auto-Merge + Link Allure Report
+        IDE->>IDE: Tự động đồng bộ main & dọn dẹp nhánh feature tại local (npm run clean:branch)
+    else Kiểm thử FAIL
+        Git->>Git: Giữ nguyên nhánh feat/* để debug & Deploy Allure Report
+        Git->>TG: Bắn cảnh báo FAIL kèm Screenshot lỗi + Link Allure Report
+    end
 ```
 
 ---
@@ -447,13 +464,21 @@ npm run docker:down
 
 ## 🛠️ GitHub Actions CI/CD Pipeline
 
-Pipeline CI/CD trong `.github/workflows/playwright.yml` tự động vận hành mỗi khi có commit mới đẩy lên nhánh `main`:
+Pipeline CI/CD trong `.github/workflows/playwright.yml` được thiết kế theo kiến trúc **Single-Pipeline Conditional Steps + peaceiris/actions-gh-pages@v4** tối ưu nhất:
 
-1. **Environment Setup**: Khởi tạo Node.js 18 trên Ubuntu Cloud Runner.
-2. **Dependencies & Cache**: Cài đặt npm packages và Playwright Browsers có lưu cache để tối ưu thời gian build.
-3. **Execution**: Chạy toàn bộ test suites ở chế độ Headless.
-4. **Allure Publishing**: Tự động biên dịch Allure Report và xuất bản lên **GitHub Pages** (`https://<username>.github.io/<repo>/`).
-5. **Telegram Notification**: Job `notify` gửi tin nhắn tóm tắt kết quả (Pass/Fail, Commit hash, Tác giả, Link Allure Report) trực tiếp về Telegram.
+1. **Concurrency Queueing**: Xếp hàng tuần tự khi có nhiều nhánh cùng merge/deploy để chống triệt để race condition (`cancel-in-progress: false`).
+2. **Environment Setup & Cache**: Khởi tạo Node.js 24 trên Ubuntu Cloud Runner, tự động cache npm dependencies và Playwright Chromium Browsers.
+3. **Execution**: Chạy toàn bộ test suites ở chế độ Headless và lưu giữ `allure-results`.
+4. **Conditional Auto-Merge & Remote Cleanup**:
+   - Khi test **PASS 100% trên nhánh `feat/*` hoặc `fix/*`**: Bot `github-actions[bot]` tự động merge vào `main` với cờ `--no-ff`, push lên `origin main`, và xóa luôn nhánh feature trên remote.
+   - Khi test **FAIL**: Nhánh feature được giữ nguyên trên remote để phục vụ việc debug và điều tra lỗi.
+5. **Restore Trend History & Build Allure**: Kéo thư mục `history/` từ nhánh `gh-pages` về `allure-results/history/` để giữ vững biểu đồ xu hướng (Trend & Retries) qua các lần build.
+6. **Deploy Allure lên GitHub Pages**: Sử dụng Action `peaceiris/actions-gh-pages@v4` đẩy thẳng thư mục `./allure-report` vào nhánh `gh-pages` mà không bị chặn bởi Branch Protection Policy.
+7. **Báo Cáo Telegram Thông Minh (Dual-Mode Notifier)**:
+   - Tự động bóc tách số liệu Passed / Failed / Skipped từ Allure Report.
+   - Tự động tìm và gửi ảnh chụp màn hình lỗi (Screenshot) nếu có test FAIL.
+   - Đính kèm nút bấm trực tiếp mở Allure Report (`https://<username>.github.io/<repo>/`) và GitHub Actions Run.
+8. **Đồng Bộ & Dọn Dẹp Local (`npm run clean:branch`)**: Cung cấp lệnh tiện ích giúp dev/QA tự động chuyển về `main`, kéo code mới nhất và xóa các nhánh local đã hoàn thành.
 
 ---
 

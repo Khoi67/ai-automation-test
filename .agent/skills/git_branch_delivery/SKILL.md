@@ -84,8 +84,25 @@ https://github.com/<OWNER>/<REPO>/compare/main...feat/<JIRA_KEY>?expand=1
 2. **Cơ chế Auto-Merge Chặn Lỗi (Quality Gate Protection):**
    - **Nếu CI PASS 100%:** Job `auto-merge` trong `.github/workflows/playwright.yml` sẽ **tự động merge nhánh feature vào `main`**.
    - **Nếu CI FAILED:** Job `auto-merge` sẽ bị **SKIP / CHẶN HOÀN TOÀN**, nhánh `main` được bảo vệ nguyên vẹn 100%, đồng thời bot Telegram gửi thông báo thất bại ngay lập tức để QA/Dev xử lý.
-3. **Tự Động Xóa Nhánh Sau Khi Merge (Branch Housekeeping):**
-   - Ngay sau khi merge thành công vào `main`, GitHub Actions tự động thực hiện xóa nhánh `feat/<JIRA_KEY>` trên GitHub (`git push origin --delete feat/<JIRA_KEY>`) để tránh ứ đọng các nhánh rác đã hoàn thành.
+3. **Tự Động Xóa Nhánh Trên Remote (Remote Housekeeping):**
+   - Ngay sau khi merge thành công vào `main`, GitHub Actions tự động thực hiện xóa nhánh `feat/<JIRA_KEY>` trên GitHub (`git push origin --delete feat/<JIRA_KEY>`) để tránh ứ đọng các nhánh rác đã hoàn thành trên server.
+4. **Tự Động Đồng Bộ & Xóa Nhánh Tại Máy Cục Bộ (Local Branch Cleanup):**
+   - Sau khi CI/CD đã tự động merge vào `main` và xóa nhánh trên GitHub remote, máy local cần được giải phóng và đồng bộ về trạng thái sạch sẽ:
+     ```bash
+     # 1. Chuyển về nhánh chính
+     git checkout main
+
+     # 2. Kéo toàn bộ code vừa được CI Auto-Merge về máy
+     git pull origin main
+
+     # 3. Xóa nhánh feature tại local
+     git branch -D feat/<JIRA_KEY>
+
+     # 4. Đồng bộ xóa các con trỏ tracking đã bị xóa trên GitHub
+     git fetch --prune origin
+     ```
+   - *Hoặc dùng lệnh script tự động:* `npm run clean:branch`
+   - *Kết quả:* Repository ở cả Remote lẫn Local luôn ở trạng thái sạch sẽ tuyệt đối, không tồn đọng nhánh rác, sẵn sàng cho ticket tiếp theo!
 
 ---
 
