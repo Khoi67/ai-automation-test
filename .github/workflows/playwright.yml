@@ -114,7 +114,7 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git checkout main
           git pull origin main
-          git merge --no-ff ${{ github.ref }} -m "ci(auto-merge): merge ${{ github.ref_name }} into main after 100% CI PASS [skip ci]"
+          git merge --no-ff ${{ github.ref }} -m "ci(auto-merge): merge ${{ github.ref_name }} into main after 100% CI PASS"
           git push origin main
 
           # Clean up feature branch on remote after successful merge
