@@ -4,6 +4,8 @@ const { exec } = require('child_process');
 const axios = require('axios');
 const {
   sendTelegramMessage,
+  sendTelegramPhoto,
+  escapeHtml,
   answerCallbackQuery,
   getStandardNavigationButtons,
   buildInlineKeyboard,
@@ -648,4 +650,162 @@ async function startPolling() {
   }
 }
 
-startPolling();
+// ============================================================================
+// GitHub Actions CI/CD Notification Handler (Single Pipeline Mode)
+// ============================================================================
+async function sendCiNotification() {
+  console.log('========================================================');
+  console.log('  Telegram CI Notification Mode (Single-Pipeline CI/CD)');
+  console.log('========================================================');
+
+  const { botToken, chatId } = getTelegramConfig();
+  if (!botToken || !chatId) {
+    console.warn('[WARN] TELEGRAM_BOT_TOKEN hoặc TELEGRAM_CHAT_ID chưa được cấu hình. Bỏ qua gửi thông báo CI.');
+    process.exit(0);
+  }
+
+  const testResult = process.env.TEST_RESULT || 'success';
+  const isPass = testResult === 'success';
+  const refName = process.env.REF_NAME || 'main';
+  const mergeResult = process.env.MERGE_RESULT || 'skipped';
+  const actor = process.env.ACTOR || 'github-actions';
+  const repoOwner = process.env.REPO_OWNER || 'Khoi67';
+  const repoName = process.env.REPO_NAME || 'ai-automation-test';
+  const repo = process.env.REPO || `${repoOwner}/${repoName}`;
+  const runId = process.env.RUN_ID || '';
+  const rawCommit = (process.env.COMMIT_MSG || 'CI Execution').split('\n')[0];
+  const commitMsg = escapeHtml(rawCommit);
+  const reportUrl = process.env.REPORT_URL || `https://${repoOwner}.github.io/${repoName}/`;
+
+  // 1. Thu thập dữ liệu thống kê kiểm thử từ Allure Report (nếu có)
+  let statsText = '';
+  try {
+    const summaryPath = path.resolve(__dirname, '../allure-report/widgets/summary.json');
+    if (fs.existsSync(summaryPath)) {
+      const summaryData = JSON.parse(fs.readFileSync(summaryPath, 'utf8'));
+      const s = summaryData.statistic;
+      if (s) {
+        statsText = `📈 <b>Thống kê Tests:</b>\n` +
+          `  • ✅ Passed: <b>${s.passed || 0}</b>\n` +
+          `  • ❌ Failed: <b>${s.failed || 0}</b>\n` +
+          (s.broken ? `  • 💥 Broken: <b>${s.broken}</b>\n` : '') +
+          `  • ⏭️ Skipped: <b>${s.skipped || 0}</b>\n` +
+          `  • 🔢 Tổng cộng: <b>${s.total || 0}</b> tests\n\n`;
+      }
+    }
+  } catch (err) {
+    console.log('[INFO] Bỏ qua đọc summary.json của Allure:', err.message);
+  }
+
+  // 2. Định dạng trạng thái & phân loại nhánh
+  const isFeatureBranch = refName.startsWith('feat/') || refName.startsWith('fix/');
+  const statusEmoji = isPass ? '✅' : '❌';
+  const statusBadge = isPass ? 'PASS TOÀN BỘ (100%)' : 'CÓ TEST THẤT BẠI (FAIL)';
+  const title = isPass
+    ? `🟢 <b>[CI/CD PIPELINE: TEST PASS 100%]</b>`
+    : `🔴 <b>[CI/CD PIPELINE: CÓ TEST THẤT BẠI]</b>`;
+
+  let branchStatusInfo = '';
+  if (isPass) {
+    if (isFeatureBranch) {
+      if (mergeResult === 'success') {
+        branchStatusInfo = `🔀 <b>Auto-Merge:</b> ✅ <i>Đã tự động merge vào <code>main</code> và xóa nhánh <code>${refName}</code> thành công!</i>\n`;
+      } else {
+        branchStatusInfo = `🔀 <b>Trạng thái Nhánh:</b> ℹ️ <i>Kiểm thử thành công trên nhánh <code>${refName}</code>.</i>\n`;
+      }
+    } else {
+      branchStatusInfo = `📌 <b>Nhánh:</b> <code>main</code> (Production / Stable)\n`;
+    }
+  } else {
+    if (isFeatureBranch) {
+      branchStatusInfo = `🛡️ <b>Trạng thái Nhánh:</b> ⚠️ <i>Giữ nguyên nhánh <code>${refName}</code> trên remote để QA/Dev kiểm tra và debug.</i>\n`;
+    } else {
+      branchStatusInfo = `📌 <b>Nhánh:</b> <code>${refName}</code> (Cảnh báo: Có test lỗi trên nhánh chính!)\n`;
+    }
+  }
+
+  const messageText = `${title}\n\n` +
+    `⚡ <b>Kết quả:</b> ${statusEmoji} <code>${statusBadge}</code>\n` +
+    `📌 <b>Nhánh:</b> <code>${refName}</code>\n` +
+    branchStatusInfo +
+    `👤 <b>Tác giả:</b> ${actor}\n` +
+    `📝 <b>Commit:</b> <code>${commitMsg}</code>\n\n` +
+    statsText +
+    `📊 <b>Allure Report:</b> ${reportUrl}\n` +
+    (runId ? `🔗 <a href="https://github.com/${repo}/actions/runs/${runId}">Xem chi tiết GitHub Actions Run #${runId}</a>\n` : '');
+
+  // 3. Chuẩn bị Action Buttons với URL
+  const buttons = [
+    [
+      { text: '📊 Xem Allure Report', url: reportUrl },
+      ...(runId ? [{ text: '🔗 GitHub Run', url: `https://github.com/${repo}/actions/runs/${runId}` }] : [])
+    ]
+  ];
+  const replyMarkup = { inline_keyboard: buttons };
+
+  // 4. Tìm kiếm screenshot lỗi nếu kiểm thử thất bại
+  let errorScreenshot = null;
+  if (!isPass) {
+    const testResultsDir = path.resolve(__dirname, '../test-results');
+    if (fs.existsSync(testResultsDir)) {
+      const pngFiles = [];
+      function findPngs(dir) {
+        try {
+          const entries = fs.readdirSync(dir, { withFileTypes: true });
+          for (const entry of entries) {
+            const fullPath = path.join(dir, entry.name);
+            if (entry.isDirectory()) {
+              findPngs(fullPath);
+            } else if (entry.isFile() && entry.name.toLowerCase().endsWith('.png')) {
+              pngFiles.push(fullPath);
+            }
+          }
+        } catch (e) {
+          // Bỏ qua lỗi truy cập thư mục
+        }
+      }
+      findPngs(testResultsDir);
+      if (pngFiles.length > 0) {
+        // Lấy screenshot có thời gian sửa đổi gần nhất
+        pngFiles.sort((a, b) => fs.statSync(b).mtimeMs - fs.statSync(a).mtimeMs);
+        errorScreenshot = pngFiles[0];
+        console.log(`[CI NOTIFIER] Phát hiện screenshot lỗi: ${errorScreenshot}`);
+      }
+    }
+  }
+
+  // 5. Gửi thông báo đến Telegram
+  try {
+    if (errorScreenshot) {
+      console.log('[CI NOTIFIER] Đang gửi ảnh screenshot kèm thông báo kết quả kiểm thử...');
+      const res = await sendTelegramPhoto(errorScreenshot, messageText, replyMarkup, chatId);
+      if (res && res.ok) {
+        console.log('[OK] Đã gửi thông báo kèm screenshot về Telegram thành công!');
+      } else {
+        console.log('[WARN] Không thể gửi ảnh, fallback sang tin nhắn dạng text...');
+        await sendTelegramMessage(messageText, replyMarkup, chatId);
+      }
+    } else {
+      console.log('[CI NOTIFIER] Đang gửi tin nhắn thông báo dạng text...');
+      const res = await sendTelegramMessage(messageText, replyMarkup, chatId);
+      if (res && res.ok) {
+        console.log('[OK] Đã gửi thông báo CI/CD về Telegram thành công!');
+      }
+    }
+  } catch (err) {
+    console.error('[CI NOTIFIER ERROR] Lỗi gửi thông báo Telegram:', err.message);
+  }
+
+  // Kết thúc process sau khi gửi xong thông báo trong CI
+  process.exit(0);
+}
+
+// ============================================================================
+// Entrypoint: Tự động phân nhánh giữa chế độ CI Notifier và Local Long-Polling
+// ============================================================================
+if (process.env.CI || process.env.TEST_RESULT || process.argv.includes('--ci')) {
+  sendCiNotification();
+} else {
+  startPolling();
+}
+

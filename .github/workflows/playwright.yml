@@ -17,33 +17,35 @@ on:
           - ui
           - api
 
+# Chống Race Condition: Xếp hàng tuần tự khi có nhiều nhánh cùng merge/deploy
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
 permissions:
   contents: write
   pull-requests: write
-  pages: write
-  id-token: write
-
-concurrency:
-  group: 'pages'
-  cancel-in-progress: false
 
 jobs:
   test:
+    name: Playwright Tests & Delivery Pipeline
     timeout-minutes: 60
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
-      
+        with:
+          fetch-depth: 0
+
       - name: Setup Node.js 24
         uses: actions/setup-node@v4
         with:
           node-version: 24
           cache: 'npm'
-          
+
       - name: Install dependencies
         run: npm ci
-        
+
       - name: Cache Playwright Browsers
         id: playwright-cache
         uses: actions/cache@v4
@@ -52,16 +54,18 @@ jobs:
           key: ${{ runner.os }}-playwright-${{ hashFiles('**/package-lock.json') }}
           restore-keys: |
             ${{ runner.os }}-playwright-
-            
+
       - name: Install Playwright Browsers
         if: steps.playwright-cache.outputs.cache-hit != 'true'
         run: npx playwright install --with-deps chromium
-        
+
       - name: Install Playwright OS Dependencies
         if: steps.playwright-cache.outputs.cache-hit == 'true'
         run: npx playwright install-deps chromium
-        
+
+      # Chạy Test Playwright và ghi nhận kết quả
       - name: Run Tests (with Allure)
+        id: run-tests
         run: |
           if [ "${{ github.event.inputs.test_suite }}" = "ui" ]; then
             npm run test:ui -- --reporter=line,allure-playwright
@@ -76,11 +80,54 @@ jobs:
           TOKEN_CYBERSOFT: ${{ secrets.TOKEN_CYBERSOFT }}
           TEST_USERNAME: ${{ secrets.TEST_USERNAME }}
           TEST_PASSWORD: ${{ secrets.TEST_PASSWORD }}
-          
-      - name: Generate Allure Report
+
+      # 1. Bước Auto-Merge & Dọn dẹp nhánh (Chỉ chạy khi Test PASS 100% trên nhánh feat/* hoặc fix/*)
+      - name: Auto-Merge to Main and Delete Feature Branch
+        if: steps.run-tests.outcome == 'success' && (startsWith(github.ref_name, 'feat/') || startsWith(github.ref_name, 'fix/'))
+        id: auto-merge
+        run: |
+          echo "Configuring git bot credentials..."
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          echo "Switching to main branch..."
+          git checkout main
+          git pull origin main
+
+          echo "Merging origin/${{ github.ref_name }} into main with --no-ff..."
+          git merge --no-ff "origin/${{ github.ref_name }}" -m "ci(auto-merge): merge ${{ github.ref_name }} into main after 100% CI PASS"
+
+          echo "Pushing merged main to remote..."
+          git push origin main
+
+          echo "Deleting remote feature branch ${{ github.ref_name }}..."
+          git push origin --delete "${{ github.ref_name }}" || echo "Branch deletion skipped or already removed."
+
+          echo "MERGE_STATUS=success" >> $GITHUB_ENV
+
+      # 2. Bước Khôi phục History & Build Allure Report (Luôn chạy cả khi PASS lẫn FAIL)
+      - name: Restore History and Build Allure Report
         if: always()
-        run: npm run generate:allure
-          
+        continue-on-error: true
+        run: |
+          echo "Fetching gh-pages branch to restore Allure history trend..."
+          git fetch origin gh-pages:gh-pages --depth=1 || true
+          if git rev-parse --verify gh-pages >/dev/null 2>&1; then
+            echo "Extracting history folder from gh-pages..."
+            mkdir -p allure-results/history
+            git checkout gh-pages -- history || echo "No existing history folder on gh-pages yet."
+            if [ -d "history" ]; then
+              cp -r history/* allure-results/history/ || true
+              rm -rf history
+            fi
+          else
+            echo "Branch gh-pages does not exist yet. Starting fresh history."
+          fi
+
+          echo "Generating Allure HTML Report..."
+          npm run generate:allure
+
+      # Upload Allure Results Artifact để lưu trữ
       - name: Upload Allure Results Artifact
         if: always()
         uses: actions/upload-artifact@v4
@@ -88,7 +135,8 @@ jobs:
           name: allure-results
           path: allure-results
           retention-days: 14
-          
+
+      # Upload Allure HTML Report Artifact để lưu trữ
       - name: Upload Allure HTML Report Artifact
         if: always()
         uses: actions/upload-artifact@v4
@@ -97,85 +145,34 @@ jobs:
           path: allure-report
           retention-days: 14
 
-  auto-merge:
-    name: Auto Merge to Main on CI Pass
-    needs: test
-    if: needs.test.result == 'success' && (startsWith(github.ref, 'refs/heads/feat/') || startsWith(github.ref, 'refs/heads/fix/') || github.event_name == 'pull_request')
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
+      # 3. Bước Deploy Allure Report bằng peaceiris/actions-gh-pages@v4 (Luôn chạy cả khi PASS lẫn FAIL)
+      - name: Deploy Allure Report to GitHub Pages
+        if: always()
+        uses: peaceiris/actions-gh-pages@v4
         with:
-          fetch-depth: 0
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_branch: gh-pages
+          publish_dir: ./allure-report
+          user_name: 'github-actions[bot]'
+          user_email: 'github-actions[bot]@users.noreply.github.com'
 
-      - name: Configure Git, Merge into main, and Delete Feature Branch
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git checkout main
-          git pull origin main
-          git merge --no-ff ${{ github.ref }} -m "ci(auto-merge): merge ${{ github.ref_name }} into main after 100% CI PASS"
-          git push origin main
-
-          # Clean up feature branch on remote after successful merge
-          if [[ "${{ github.ref_name }}" =~ ^(feat|fix)/ ]]; then
-            echo "Deleting merged remote branch ${{ github.ref_name }}..."
-            git push origin --delete "${{ github.ref_name }}" || echo "Branch deletion skipped or already removed."
-          fi
-
-  deploy-report:
-    needs: [test, auto-merge]
-    if: always() && github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - name: Download Allure Report
-        uses: actions/download-artifact@v4
-        with:
-          name: allure-report
-          path: allure-report
-          
-      - name: Setup Pages
-        uses: actions/configure-pages@v5
-
-      - name: Upload Pages Artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: allure-report
-
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
-
-  notify:
-    needs: [test, auto-merge, deploy-report]
-    if: always()
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js 24
-        uses: actions/setup-node@v4
-        with:
-          node-version: 24
-
+      # 4. Bước Gửi Thông Báo Telegram (Luôn chạy cả khi PASS lẫn FAIL)
       - name: Send Telegram Notification
+        if: always()
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-          TEST_RESULT: ${{ needs.test.result }}
-          MERGE_RESULT: ${{ needs.auto-merge.result }}
+          TEST_RESULT: ${{ steps.run-tests.outcome }}
+          REF_NAME: ${{ github.ref_name }}
+          MERGE_RESULT: ${{ env.MERGE_STATUS || 'skipped' }}
           COMMIT_MSG: ${{ github.event.head_commit.message }}
           ACTOR: ${{ github.actor }}
-          REF_NAME: ${{ github.ref_name }}
           REPO: ${{ github.repository }}
           RUN_ID: ${{ github.run_id }}
           REPO_OWNER: ${{ github.repository_owner }}
           REPO_NAME: ${{ github.event.repository.name }}
-        run: node scripts/integrations/notify_ci.js
+          REPORT_URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/
+        run: node scripts/telegram_bot.js
 
 
 
