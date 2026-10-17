@@ -17,12 +17,18 @@ export class LoginPage extends BasePage {
 
   constructor(page: Page) {
     super(page);
-    this.loginForm = new UIElement(page.locator('form').filter({ hasText: /đăng nhập/i }), 'loginForm');
+    this.loginForm = new UIElement(
+      page.locator('form').filter({ hasText: /đăng nhập/i }),
+      'loginForm',
+    );
     this.inputUsername = this.loginForm.getByPlaceholder(/tài khoản|username/i);
     this.inputPassword = this.loginForm.getByPlaceholder(/mật khẩu|password/i);
     this.btnLogin = this.loginForm.getByRole('button', { name: /đăng nhập/i });
     this.errorMessage = new UIElement(page.locator('.swal-title, .swal2-title'), 'errorMessage');
-    this.linkRegister = new UIElement(page.getByRole('link', { name: /đăng ký/i }).or(page.getByText('Đăng ký')), 'linkRegister');
+    this.linkRegister = new UIElement(
+      page.getByRole('link', { name: /đăng ký/i }).or(page.getByText('Đăng ký')),
+      'linkRegister',
+    );
   }
 
   /** Navigate to login page */
@@ -68,4 +74,3 @@ export class LoginPage extends BasePage {
     return this.errorMessage.getLocator();
   }
 }
-

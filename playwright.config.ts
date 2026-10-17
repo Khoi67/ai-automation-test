@@ -10,18 +10,14 @@ const API_BASE_URL = process.env.API_BASE_URL || 'https://elearningnew.cybersoft
 const rawToken = process.env.TOKEN_CYBERSOFT?.trim();
 
 if (process.env.CI && !rawToken) {
-  throw new Error(
-    'TOKEN_CYBERSOFT is required in CI but was not provided.',
-  );
+  throw new Error('TOKEN_CYBERSOFT is required in CI but was not provided.');
 }
 
 if (rawToken && /[\r\n]/.test(rawToken)) {
   throw new Error('TOKEN_CYBERSOFT contains invalid newline characters.');
 }
 
-const apiHeaders: Record<string, string> = rawToken
-  ? { TokenCybersoft: rawToken }
-  : {};
+const apiHeaders: Record<string, string> = rawToken ? { TokenCybersoft: rawToken } : {};
 
 export default defineConfig({
   testDir: './tests',
@@ -50,8 +46,19 @@ export default defineConfig({
 
   projects: [
     {
+      name: 'setup',
+      testMatch: /.*\.setup\.ts/,
+      use: {
+        ...devices['Desktop Chrome'],
+        baseURL: UI_BASE_URL,
+        viewport: { width: 1920, height: 1080 },
+        headless: !!process.env.CI,
+      },
+    },
+    {
       name: 'ui',
       testDir: './tests/ui',
+      dependencies: ['setup'],
       use: {
         ...devices['Desktop Chrome'],
         baseURL: UI_BASE_URL,

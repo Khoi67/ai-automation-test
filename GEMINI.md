@@ -15,6 +15,20 @@
 
 ---
 
+## Git Delivery & Branching Rules (MANDATORY)
+
+* **CẤM PUSH TRỰC TIẾP LÊN MAIN:** Nhánh `main` là protected branch, tuyệt đối **KHÔNG ĐƯỢC PHÉP** chạy `git push origin main` từ local.
+* **Bắt buộc phân nhánh Feature Branch:** Mọi thay đổi code hoặc kịch bản test mới phải được phát triển trên nhánh riêng biệt theo quy ước:
+  * `feat/<JIRA_KEY>` (ví dụ: `feat/SCRUM-17`) cho kịch bản kiểm thử mới.
+  * `fix/<JIRA_KEY>` cho việc sửa lỗi automation test hoặc heal locator.
+* **Quy trình bàn giao qua Pull Request:**
+  1. **Pre-Push Quality Gate:** Bắt buộc `npm run typecheck` và `npx playwright test` đạt 100% PASS (hoặc fixme bảo vệ CI).
+  2. **Tạo nhánh:** `git checkout -b feat/<JIRA_KEY>`
+  3. **Commit & Push nhánh:** `git push -u origin feat/<JIRA_KEY>`
+  4. **Tạo Pull Request:** Tự động sinh link GitHub PR (`compare/main...feat/<JIRA_KEY>`) gửi về Telegram để Tech Lead / Reviewer duyệt merge vào `main`.
+
+---
+
 ## Browser Rules (MANDATORY)
 
 ### 🖥️ Viewport & Mode
@@ -156,6 +170,7 @@ Agent sử dụng skills trong `.agent/skills/` tùy theo nhiệm vụ:
 | `test_data_generator`    | Sinh test data unique, traceable — hỗ trợ multi-step pipeline & combinatorial data       |
 | `flaky_test_analyzer`    | Phân tích và khắc phục flaky tests                                                   |
 | `jira_integration`       | Tích hợp Jira/Xray — lấy requirements, đẩy test results                             |
+| `git_branch_delivery`    | Quản lý phân nhánh (Feature Branching), cấm push vào main, tạo PR tự động           |
 
 ## 6. Kế Hoạch Kiểm Thử (Plan Templates)
 
@@ -213,6 +228,7 @@ code:     TC_LOGIN_1712049200
 | Copy selector từ code cũ không verify          | Luôn verify selector trên browser hiện tại |
 | Viết test không chạy ngay                      | Chạy test ngay sau khi implement              |
 | Commit test FAIL                                  | Chỉ commit khi test PASS ổn định           |
+| Push trực tiếp lên nhánh `main` (`git push origin main`) | Bắt buộc tạo Feature Branch (`feat/<JIRA_KEY>`) và mở Pull Request |
 | Để debug log / commented code khi deliver       | Cleanup trước khi deliver                    |
 | Dùng test data hardcoded trùng lặp             | Sinh data random + traceable                   |
 
@@ -222,6 +238,7 @@ Agent sử dụng workflows trong `.agent/workflows/` qua slash commands:
 
 | Workflow                                  | Mô tả                                                     |
 | ----------------------------------------- | ----------------------------------------------------------- |
+| `/push`                                   | Bàn giao Git qua Feature Branch, cấm push vào main, tạo PR, đổi trạng thái Jira và chạy CI |
 | `/generate_manual_testcases_rbt`        | Sinh manual test cases theo AI-RBT 6 bước (FULL RBT mode) |
 | `/generate_testcases_from_requirements` | Sinh test cases nhanh từ requirements (QUICK mode)         |
 | `/generate_automation_from_testcases`   | Chuyển manual test cases → automation scripts             |

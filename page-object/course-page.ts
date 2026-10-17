@@ -42,22 +42,43 @@ export class CoursePage extends BasePage {
     this.courseCardImage = new UIElement(page.locator('.cardGlobal img'), 'courseCardImage');
     // TODO: Request dev team to add data-testid="category-filter"
     this.categoryFilter = new UIElement(page.locator('.courseCateList').first(), 'categoryFilter'); // Current DOM uses ul/li, not select
-    this.paginationNext = new UIElement(page.locator('.paginationPages a').filter({ hasText: 'Sau' }), 'paginationNext');
-    this.paginationPrev = new UIElement(page.locator('.paginationPages a').filter({ hasText: 'Trước' }), 'paginationPrev');
+    this.paginationNext = new UIElement(
+      page.locator('.paginationPages a').filter({ hasText: 'Sau' }),
+      'paginationNext',
+    );
+    this.paginationPrev = new UIElement(
+      page.locator('.paginationPages a').filter({ hasText: 'Trước' }),
+      'paginationPrev',
+    );
 
     // Detail
     // TODO: Request dev team to add data-testid="course-detail-title"
     this.courseTitle = new UIElement(page.locator('h4.titleDetailCourse').first(), 'courseTitle');
     // TODO: Request dev team to add data-testid="course-description"
-    this.courseDescription = new UIElement(page.locator('.textDiscripts').first(), 'courseDescription');
+    this.courseDescription = new UIElement(
+      page.locator('.textDiscripts').first(),
+      'courseDescription',
+    );
     // TODO: Request dev team to add data-testid="course-image"
-    this.courseImage = new UIElement(page.locator('.sideBarCourseDetail img').first(), 'courseImage');
-    this.btnEnroll = new UIElement(page.getByRole('button', { name: /đăng ký/i }).first(), 'btnEnroll');
+    this.courseImage = new UIElement(
+      page.locator('.sideBarCourseDetail img').first(),
+      'courseImage',
+    );
+    this.btnEnroll = new UIElement(
+      page.getByRole('button', { name: /đăng ký/i }).first(),
+      'btnEnroll',
+    );
     // TODO: Request dev team to add data-testid="course-enroll-count"
-    this.courseViewCount = new UIElement(page.locator('.sideBarDetailContent li').filter({ hasText: 'Ghi danh' }), 'courseViewCount');
+    this.courseViewCount = new UIElement(
+      page.locator('.sideBarDetailContent li').filter({ hasText: 'Ghi danh' }),
+      'courseViewCount',
+    );
 
     // SweetAlert modal
-    this.alertModal = new UIElement(page.locator('.swal-modal, .swal2-modal, [role="dialog"]'), 'alertModal');
+    this.alertModal = new UIElement(
+      page.locator('.swal-modal, .swal2-modal, [role="dialog"]'),
+      'alertModal',
+    );
     this.alertTitle = new UIElement(page.locator('.swal-title, .swal2-title'), 'alertTitle');
     this.alertText = new UIElement(page.locator('.swal-text, .swal2-html-container'), 'alertText');
   }

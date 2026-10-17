@@ -280,6 +280,21 @@ Triggers when user asks:
 
 ---
 
+### Deliver automation code via Git Branch
+
+> **Delegate:** Tác vụ này sử dụng skill **`git_branch_delivery`** để quản lý phân nhánh và ngăn chặn push trực tiếp vào main.
+
+Use workflow: `push`
+
+Triggers when user asks:
+
+- push git / bàn giao code
+- push code lên nhánh / tạo pull request
+- deliver automation code
+- git branch delivery
+
+---
+
 # Automation Framework
 
 Default automation stack:

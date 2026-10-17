@@ -1,4 +1,4 @@
-import { Locator } from '@playwright/test';
+import { Page } from '@playwright/test';
 import { UIElement } from '../core/element/ui-element.js';
 import { BasePage } from './base-page.js';
 
@@ -14,21 +14,27 @@ export class HomePage extends BasePage {
   readonly searchInput: UIElement;
   readonly btnViewAll: UIElement;
 
-  constructor(page: import('@playwright/test').Page) {
+  constructor(page: Page) {
     super(page);
     // TODO: Request dev team to add data-testid="hero-section"
     this.heroSection = new UIElement(page.locator('.sliderHome').first(), 'heroSection');
-    
+
     // TODO: Request dev team to add data-testid="course-card"
     this.courseCards = new UIElement(page.locator('.cardGlobal, .myCourseItem'), 'courseCards');
-    
+
     // TODO: Request dev team to add data-testid="course-title"
-    this.courseCardTitle = new UIElement(page.locator('.cardGlobal h6, .myCourseItem h6'), 'courseCardTitle');
-    
+    this.courseCardTitle = new UIElement(
+      page.locator('.cardGlobal h6, .myCourseItem h6'),
+      'courseCardTitle',
+    );
+
     this.searchInput = new UIElement(page.getByPlaceholder(/Tìm kiếm/i).first(), 'searchInput');
-    
+
     // TODO: Request dev team to add data-testid="btn-view-all"
-    this.btnViewAll = new UIElement(page.getByRole('button', { name: 'Xem thêm' }).or(page.getByText('Xem thêm')), 'btnViewAll');
+    this.btnViewAll = new UIElement(
+      page.getByRole('button', { name: 'Xem thêm' }).or(page.getByText('Xem thêm')),
+      'btnViewAll',
+    );
   }
 
   /** Navigate to home page */
@@ -45,7 +51,9 @@ export class HomePage extends BasePage {
     if (keyword) {
       try {
         await this.searchInput.fill(keyword);
-      } catch {}
+      } catch {
+        // Ignored
+      }
     }
   }
 

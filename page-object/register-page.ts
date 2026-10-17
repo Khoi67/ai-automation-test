@@ -25,21 +25,66 @@ export class RegisterPage extends BasePage {
 
   constructor(page: Page) {
     super(page);
-    const registerForm = page.locator('form').filter({ hasText: /đăng ký/i }).first();
-    this.inputUsername = new UIElement(registerForm.locator('input[name="taiKhoan"], #taiKhoan'), 'inputUsername');
-    this.inputPassword = new UIElement(registerForm.locator('input[name="matKhau"], input[type="password"], #matKhau'), 'inputPassword');
-    this.inputFullName = new UIElement(registerForm.locator('input[name="hoTen"], #hoTen'), 'inputFullName');
-    this.inputPhone = new UIElement(registerForm.locator('input[name="soDT"], input[name="soDt"], #soDt'), 'inputPhone');
-    this.inputEmail = new UIElement(registerForm.locator('input[name="email"], input[type="email"], #email'), 'inputEmail');
-    this.selectGroup = new UIElement(registerForm.locator('select[name="maNhom"], #maNhom'), 'selectGroup');
-    this.btnRegister = new UIElement(registerForm.getByRole('button', { name: 'Đăng ký', exact: true }), 'btnRegister');
+    const registerForm = page
+      .locator('form')
+      .filter({ hasText: /đăng ký/i })
+      .first();
+    this.inputUsername = new UIElement(
+      registerForm.locator('input[name="taiKhoan"], #taiKhoan'),
+      'inputUsername',
+    );
+    this.inputPassword = new UIElement(
+      registerForm.locator('input[name="matKhau"], input[type="password"], #matKhau'),
+      'inputPassword',
+    );
+    this.inputFullName = new UIElement(
+      registerForm.locator('input[name="hoTen"], #hoTen'),
+      'inputFullName',
+    );
+    this.inputPhone = new UIElement(
+      registerForm.locator('input[name="soDT"], input[name="soDt"], #soDt'),
+      'inputPhone',
+    );
+    this.inputEmail = new UIElement(
+      registerForm.locator('input[name="email"], input[type="email"], #email'),
+      'inputEmail',
+    );
+    this.selectGroup = new UIElement(
+      registerForm.locator('select[name="maNhom"], #maNhom'),
+      'selectGroup',
+    );
+    this.btnRegister = new UIElement(
+      registerForm.getByRole('button', { name: 'Đăng ký', exact: true }),
+      'btnRegister',
+    );
     this.successMessage = new UIElement(page.locator('.swal-title'), 'successMessage');
     this.errorMessage = new UIElement(page.locator('.swal-title'), 'errorMessage');
-    this.errorMsgUsername = new UIElement(registerForm.locator('.errorMessage').filter({ hasText: /tài khoản/i }).first(), 'errorMsgUsername');
-    this.errorMsgFullName = new UIElement(registerForm.locator('.errorMessage').filter({ hasText: /tên/i }).first(), 'errorMsgFullName');
-    this.errorMsgPassword = new UIElement(registerForm.locator('.errorMessage').nth(2), 'errorMsgPassword');
-    this.errorMsgEmail = new UIElement(registerForm.locator('.errorMessage').filter({ hasText: /email/i }).first(), 'errorMsgEmail');
-    this.errorMsgPhone = new UIElement(registerForm.locator('.errorMessage').filter({ hasText: /số điện thoại/i }).first(), 'errorMsgPhone');
+    this.errorMsgUsername = new UIElement(
+      registerForm
+        .locator('.errorMessage')
+        .filter({ hasText: /tài khoản/i })
+        .first(),
+      'errorMsgUsername',
+    );
+    this.errorMsgFullName = new UIElement(
+      registerForm.locator('.errorMessage').filter({ hasText: /tên/i }).first(),
+      'errorMsgFullName',
+    );
+    this.errorMsgPassword = new UIElement(
+      registerForm.locator('.errorMessage').nth(2),
+      'errorMsgPassword',
+    );
+    this.errorMsgEmail = new UIElement(
+      registerForm.locator('.errorMessage').filter({ hasText: /email/i }).first(),
+      'errorMsgEmail',
+    );
+    this.errorMsgPhone = new UIElement(
+      registerForm
+        .locator('.errorMessage')
+        .filter({ hasText: /số điện thoại/i })
+        .first(),
+      'errorMsgPhone',
+    );
   }
 
   /** Navigate to register page */

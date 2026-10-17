@@ -25,10 +25,9 @@ test.describe('Login UI', { tag: ['@auth', '@login'] }, () => {
 
     await test.step('Verify login success state and redirection', async () => {
       // Assert URL redirects away from /login
-      await expect(
-        page,
-        'Sau khi login thành công, URL chuyển hướng khỏi /login',
-      ).not.toHaveURL(/\/login/);
+      await expect(page, 'Sau khi login thành công, URL chuyển hướng khỏi /login').not.toHaveURL(
+        /\/login/,
+      );
     });
   });
 

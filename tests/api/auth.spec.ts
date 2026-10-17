@@ -34,7 +34,9 @@ test.describe('Auth API', () => {
         taiKhoan: validUser.taiKhoan,
         matKhau: 'completely_wrong_password_12345',
       });
-      expect(response.status(), 'Login API with wrong password should not return 200').not.toBe(200);
+      expect(response.status(), 'Login API with wrong password should not return 200').not.toBe(
+        200,
+      );
     });
   });
 

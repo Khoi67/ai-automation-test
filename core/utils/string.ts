@@ -27,7 +27,9 @@ export function generateEmail(prefix = 'test'): string {
  */
 export function generateUsername(prefix = 'u'): string {
   const ts = Date.now().toString().slice(-8);
-  const rand = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+  const rand = Math.floor(Math.random() * 1000)
+    .toString()
+    .padStart(3, '0');
   return `${prefix}_${ts}${rand}`.slice(0, 16);
 }
 

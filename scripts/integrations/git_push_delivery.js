@@ -122,19 +122,30 @@ async function runDelivery() {
     console.warn(`[WARN] Bỏ qua Pre-Push Quality Gate theo tham số (--skip-test).\n`);
   }
 
+  const branchName = argv.branch || `feat/${ticket}`;
+
   try {
-    // Bước 1: Git Commit & Push lên main
+    // Bước 1: Tạo/chuyển sang Feature Branch và Push
     try {
-      execSync(`node "${notifyScript}" --ticket ${ticket} --step ${startStep} --title "Git Commit & Push lên main" --detail "Đang commit và đẩy mã nguồn kiểm thử lên nhánh main"`, { stdio: 'inherit' });
+      execSync(`node "${notifyScript}" --ticket ${ticket} --step ${startStep} --title "Tạo & Push Feature Branch" --detail "Đang tạo nhánh ${branchName} và đẩy mã nguồn kiểm thử lên GitHub"`, { stdio: 'inherit' });
     } catch (e) {
       console.warn('[WARN] Lỗi khi gửi notify step 1:', e.message);
     }
 
-    // 1. Git add
+    // 1. Kiểm tra và chuyển nhánh
+    const currentBranch = execSync('git branch --show-current', { encoding: 'utf8' }).trim();
+    if (currentBranch !== branchName) {
+      console.log(`[LOG] Chuyển từ nhánh '${currentBranch}' sang nhánh '${branchName}'...`);
+      execSync(`git checkout -B "${branchName}"`, { stdio: 'inherit' });
+    } else {
+      console.log(`[LOG] Đang ở nhánh '${branchName}'.`);
+    }
+
+    // 2. Git add
     console.log('[LOG] Chạy git add .');
     execSync('git add .', { stdio: 'inherit' });
 
-    // 2. Git commit
+    // 3. Git commit
     const commitMsg = `feat(automation): add test suite and POM for ${ticket}`;
     try {
       execSync(`git commit -m "${commitMsg}"`, { stdio: 'inherit' });
@@ -143,10 +154,13 @@ async function runDelivery() {
       console.log('[LOG] Không có thay đổi mới để commit (Working tree clean).');
     }
 
-    // 3. Git push
-    console.log('[LOG] Chạy git push origin main');
-    execSync('git push origin main', { stdio: 'inherit' });
-    console.log('[LOG] Đã push code lên GitHub thành công.');
+    // 4. Git push branch
+    console.log(`[LOG] Chạy git push -u origin ${branchName}`);
+    execSync(`git push -u origin "${branchName}"`, { stdio: 'inherit' });
+    console.log(`[LOG] Đã push code lên GitHub nhánh '${branchName}' thành công.`);
+
+    const prUrl = `https://github.com/Khoi67/ai-automation-test/compare/main...${branchName}?expand=1`;
+    console.log(`[LOG] Đường dẫn mở Pull Request: ${prUrl}`);
 
     // Bước 2: Cập nhật trạng thái Jira
     const { hasBugs, linkedBugs } = await checkTicketBugs(ticket);
@@ -178,13 +192,14 @@ async function runDelivery() {
 
     // Bước 3: Kích Hoạt CI/CD Pipeline
     try {
-      execSync(`node "${notifyScript}" --ticket ${ticket} --step ${startStep + 2} --title "Kích Hoạt CI/CD Pipeline" --detail "GitHub Actions đang tự động chạy kiểm thử trên Cloud và cập nhật Allure Report"`, { stdio: 'inherit' });
+      execSync(`node "${notifyScript}" --ticket ${ticket} --step ${startStep + 2} --title "Kích Hoạt CI/CD Pipeline" --detail "GitHub Actions đang tự động chạy kiểm thử trên Cloud cho nhánh ${branchName}"`, { stdio: 'inherit' });
     } catch (e) {
       console.warn('[WARN] Lỗi khi gửi notify step 3:', e.message);
     }
 
     // 7. Gửi thông báo hoàn tất bàn giao kèm action buttons
     const completeButtons = [
+      [{ text: `🔍 Mở Pull Request (${branchName})`, url: prUrl }],
       [{ text: `🚀 Chạy CI/CD (${ticket})`, callback_data: `run_ci:${ticket}` }]
     ];
     const inlineKeyboard = buildInlineKeyboard(completeButtons);
@@ -196,13 +211,14 @@ async function runDelivery() {
     await sendTelegramMessage(
       `🎉 <b>[HOÀN TẤT BÀN GIAO: ${ticket}]</b>\n\n` +
       `⚡ <b>Trạng thái quy trình:</b> <code>Hoàn thành</code>\n` +
-      `✅ <b>Code:</b> Đã push thành công lên nhánh <code>main</code>\n` +
+      `🌿 <b>Nhánh Git:</b> <code>${branchName}</code> (Protected Main Safe)\n` +
+      `🔗 <b>Pull Request:</b> <a href="${prUrl}">Tạo Pull Request trên GitHub</a>\n` +
       `📌 <b>Jira:</b> ${jiraStatusMsg}\n` +
-      `⚡ <b>CI/CD:</b> GitHub Actions đang tự động kích hoạt workflow kiểm thử trên Cloud.\n\n` +
-      `👏 Chúc mừng! Quy trình bàn giao hoàn tất an toàn.`,
+      `⚡ <b>CI/CD:</b> Nhánh đã sẵn sàng để review và merge vào main.\n\n` +
+      `👏 Chúc mừng! Quy trình bàn giao feature branch hoàn tất an toàn.`,
       inlineKeyboard
     );
-    console.log(`[GIT DELIVERY] Hoàn tất thành công cho ${ticket}!`);
+    console.log(`[GIT DELIVERY] Hoàn tất thành công cho ${ticket} trên nhánh ${branchName}!`);
   } catch (err) {
     console.error('[GIT DELIVERY ERROR]', err.message);
     await sendTelegramMessage(`❌ <b>[LỖI GIT DELIVERY: ${ticket}]</b>\nChi tiết: <code>${err.message}</code>`);

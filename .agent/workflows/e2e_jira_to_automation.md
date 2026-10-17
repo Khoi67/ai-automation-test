@@ -172,18 +172,20 @@ flowchart TD
 
 ---
 
-### Bước 5: Phê Duyệt & Đẩy Mã Nguồn Lên GitHub (Git Delivery & Jira Transition)
+### Bước 5: Phê Duyệt & Đẩy Mã Nguồn Lên GitHub (Feature Branch Delivery & Jira Transition)
 1. Khi Tester bấm nút `[🚀 Duyệt & Push Git (<JIRA_KEY>)]` trên Telegram (hoặc ra lệnh trực tiếp trên IDE):
    - Bot ghi nhận phê duyệt vào `scratch/push_trigger.txt`.
 2. Agent thực thi script bàn giao tự động:
    ```bash
    node scripts/integrations/git_push_delivery.js --ticket <JIRA_KEY>
    ```
-   - Tự động kiểm tra `git status`.
+   - Tự động kiểm tra Pre-Push Quality Gate (`npm run typecheck` & `npx playwright test`).
+   - Tự động tạo và chuyển sang Feature Branch: `feat/<JIRA_KEY>` (**CẤM push vào main**).
    - Stage và commit với message chuẩn: `feat(automation): add test suite and POM for <JIRA_KEY>`.
-   - Push lên nhánh `main`.
+   - Push nhánh tính năng lên GitHub: `git push -u origin feat/<JIRA_KEY>`.
+   - Tự động sinh link mở **Pull Request (PR)** trên GitHub (`compare/main...feat/<JIRA_KEY>`).
    - Cập nhật trạng thái Jira qua `jira_transition.js`: **Giữ In Progress nếu còn Bug**, chỉ chuyển sang **In Review** khi không còn Bug (`test.fixme`).
-   - Gửi thông báo hoàn tất bàn giao về Telegram.
+   - Gửi thông báo kèm nút bấm mở Pull Request trực tiếp về Telegram.
 
 ---
 

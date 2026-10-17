@@ -1,4 +1,4 @@
-import { Locator, Page, test } from '@playwright/test';
+import { Page, test } from '@playwright/test';
 import { UIElement } from '../core/element/ui-element.js';
 import { BasePage } from './base-page.js';
 
@@ -32,25 +32,81 @@ export class ForgotPasswordPage extends BasePage {
     super(page);
 
     // Login form locators
-    this.loginForm = new UIElement(page.locator('form').filter({ hasText: /đăng nhập/i }).first(), 'loginForm');
-    this.linkForgotPassword = new UIElement(page.getByRole('link', { name: /quên mật khẩu/i }), 'linkForgotPassword');
-    this.inputUsername = new UIElement(page.locator('form').filter({ hasText: /đăng nhập/i }).getByPlaceholder(/tài khoản/i), 'inputUsername');
-    this.inputPassword = new UIElement(page.locator('form').filter({ hasText: /đăng nhập/i }).getByPlaceholder(/mật khẩu/i), 'inputPassword');
-    this.btnLogin = new UIElement(page.locator('form').filter({ hasText: /đăng nhập/i }).getByRole('button', { name: /đăng nhập/i }), 'btnLogin');
+    this.loginForm = new UIElement(
+      page
+        .locator('form')
+        .filter({ hasText: /đăng nhập/i })
+        .first(),
+      'loginForm',
+    );
+    this.linkForgotPassword = new UIElement(
+      page.getByRole('link', { name: /quên mật khẩu/i }),
+      'linkForgotPassword',
+    );
+    this.inputUsername = new UIElement(
+      page
+        .locator('form')
+        .filter({ hasText: /đăng nhập/i })
+        .getByPlaceholder(/tài khoản/i),
+      'inputUsername',
+    );
+    this.inputPassword = new UIElement(
+      page
+        .locator('form')
+        .filter({ hasText: /đăng nhập/i })
+        .getByPlaceholder(/mật khẩu/i),
+      'inputPassword',
+    );
+    this.btnLogin = new UIElement(
+      page
+        .locator('form')
+        .filter({ hasText: /đăng nhập/i })
+        .getByRole('button', { name: /đăng nhập/i }),
+      'btnLogin',
+    );
 
     // Forgot password elements
-    this.forgotPasswordContainer = new UIElement(page.locator('.modal, .popup, [class*="forgot"], form[name*="forgot"]').first(), 'forgotPasswordContainer');
-    this.inputEmailForgot = this.forgotPasswordContainer.getByPlaceholder(/nhập email|email của bạn/i).or(this.forgotPasswordContainer.locator('input[type="email"]'));
-    this.btnSubmitForgot = this.forgotPasswordContainer.getByRole('button', { name: /gửi yêu cầu|lấy lại mật khẩu|xác nhận/i });
-    this.alertSuccess = new UIElement(page.locator('.alert-success, .toast-success, [class*="success"], [role="alert"]').filter({ hasText: /hướng dẫn|thành công/i }), 'alertSuccess');
-    this.alertError = new UIElement(page.locator('.alert-danger, .toast-error, [class*="error"], [role="alert"]').filter({ hasText: /không tồn tại|lỗi/i }), 'alertError');
-    this.errorMsgRequiredEmail = new UIElement(page.getByText(/vui lòng nhập email|không được để trống/i), 'errorMsgRequiredEmail');
-    this.errorMsgInvalidFormat = new UIElement(page.getByText(/email không hợp lệ|định dạng email sai/i), 'errorMsgInvalidFormat');
+    this.forgotPasswordContainer = new UIElement(
+      page.locator('.modal, .popup, [class*="forgot"], form[name*="forgot"]').first(),
+      'forgotPasswordContainer',
+    );
+    this.inputEmailForgot = this.forgotPasswordContainer
+      .getByPlaceholder(/nhập email|email của bạn/i)
+      .or(this.forgotPasswordContainer.locator('input[type="email"]'));
+    this.btnSubmitForgot = this.forgotPasswordContainer.getByRole('button', {
+      name: /gửi yêu cầu|lấy lại mật khẩu|xác nhận/i,
+    });
+    this.alertSuccess = new UIElement(
+      page
+        .locator('.alert-success, .toast-success, [class*="success"], [role="alert"]')
+        .filter({ hasText: /hướng dẫn|thành công/i }),
+      'alertSuccess',
+    );
+    this.alertError = new UIElement(
+      page
+        .locator('.alert-danger, .toast-error, [class*="error"], [role="alert"]')
+        .filter({ hasText: /không tồn tại|lỗi/i }),
+      'alertError',
+    );
+    this.errorMsgRequiredEmail = new UIElement(
+      page.getByText(/vui lòng nhập email|không được để trống/i),
+      'errorMsgRequiredEmail',
+    );
+    this.errorMsgInvalidFormat = new UIElement(
+      page.getByText(/email không hợp lệ|định dạng email sai/i),
+      'errorMsgInvalidFormat',
+    );
 
     // 404 page locators
     this.heading404 = new UIElement(page.getByRole('heading', { name: '404' }), 'heading404');
-    this.errorMessage404 = new UIElement(page.getByRole('heading', { name: /có gì đó sai/i }), 'errorMessage404');
-    this.btnBackToHome = new UIElement(page.getByRole('link', { name: /quay về trang chủ/i }), 'btnBackToHome');
+    this.errorMessage404 = new UIElement(
+      page.getByRole('heading', { name: /có gì đó sai/i }),
+      'errorMessage404',
+    );
+    this.btnBackToHome = new UIElement(
+      page.getByRole('link', { name: /quay về trang chủ/i }),
+      'btnBackToHome',
+    );
   }
 
   /** Navigate to login page */

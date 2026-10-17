@@ -27,9 +27,15 @@ const repoName = process.env.REPO_NAME || 'ai-automation-test';
 const repo = process.env.REPO || `${repoOwner}/${repoName}`;
 const runId = process.env.RUN_ID || '';
 
+const mergeResult = process.env.MERGE_RESULT;
+const mergeInfo = mergeResult === 'success' 
+  ? `🔀 <b>Auto-Merge:</b> ✅ <i>Đã tự động merge nhánh ${refName} vào main thành công!</i>\n` 
+  : '';
+
 const text = `🤖 <b>[CI/CD GITHUB ACTIONS HOÀN TẤT]</b>\n\n` +
   `⚡ <b>Kết quả:</b> ${statusIcon} <code>${statusText}</code>\n` +
   `📌 <b>Nhánh:</b> <code>${refName}</code>\n` +
+  mergeInfo +
   `👤 <b>Tác giả:</b> ${actor}\n` +
   `📝 <b>Commit:</b> <code>${commitMsg}</code>\n` +
   `📊 <b>Allure Report:</b> https://${repoOwner}.github.io/${repoName}/\n\n` +

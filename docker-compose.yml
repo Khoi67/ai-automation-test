@@ -11,4 +11,3 @@ services:
       - ./scratch:/usr/src/app/scratch
     environment:
       - TZ=Asia/Ho_Chi_Minh
-

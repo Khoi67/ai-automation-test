@@ -94,3 +94,17 @@
 - Mỗi test case phải **độc lập** — không phụ thuộc kết quả test khác.
 - Setup/teardown rõ ràng (`@BeforeMethod/@AfterMethod` hoặc `beforeEach/afterEach`).
 - Không chia sẻ state giữa các test methods.
+
+## 8. Quy Tắc Bàn Giao Mã Nguồn & Phân Nhánh (Git Branching & Delivery)
+
+- **CẤM PUSH TRỰC TIẾP LÊN MAIN:** Nhánh `main` là protected branch, chỉ merge qua Pull Request.
+- **Quy tắc phân nhánh (Feature Branching):**
+  - Mọi kịch bản test mới phải tạo branch theo định dạng: `feat/<JIRA_KEY>` (ví dụ: `feat/SCRUM-17`).
+  - Sửa lỗi test / heal locator: `fix/<JIRA_KEY>`.
+- **Pre-Push Quality Gate:**
+  - Bắt buộc chạy `npm run typecheck` và `npx playwright test` đạt 100% PASS (hoặc fixme bảo vệ CI) trước khi push.
+- **Quy trình bàn giao:**
+  - `git checkout -b feat/<JIRA_KEY>`
+  - `git commit -m "feat(automation): add test suite and POM for <JIRA_KEY>"`
+  - `git push -u origin feat/<JIRA_KEY>`
+  - Tự động sinh link mở Pull Request để Reviewer kiểm tra trước khi merge vào `main`.
