@@ -27,7 +27,7 @@ Dự án được thiết kế theo kiến trúc chuẩn Enterprise, phân tách
 ```text
 demo-ai-automation/
 ├── .agent/                       # Quy chuẩn, Kỹ năng & Workflows của AI Automation Agent
-│   ├── rules/                    # Rules bắt buộc: automation_rules.md, playwright_rules.md, locator_strategy.md
+│   ├── rules/                    # Rules bắt buộc: automation_rules.md, playwright_rules.md, locator_strategy.md, api_rules.md
 │   ├── skills/                   # Skills chuyên sâu: qa_automation_engineer, ui_debug_agent, smart_locator,...
 │   └── workflows/                # Workflows thực thi: e2e_jira_to_automation.md, e2e_retest_bug.md,...
 ├── .github/
@@ -78,7 +78,7 @@ demo-ai-automation/
 ├── test-data/                    # Dữ liệu kiểm thử ngoại vi & Fixture files (avatar.png, document.pdf)
 │   └── ui/
 ├── tests/                        # Toàn bộ mã nguồn kiểm thử tự động
-│   ├── api/                      # API Test Specifications (auth.spec.ts, course.spec.ts)
+│   ├── api/                      # API Test Specifications (auth.spec.ts, course.spec.ts, course-enrollment.spec.ts)
 │   └── ui/                       # UI Test Specifications (TỔ CHỨC THEO MODULE THƯ MỤC)
 │       ├── auth/                 # Module Xác thực: login, register, forgot-password
 │       ├── cart/                 # Module Giỏ hàng & Khuyến mãi: cart.spec.ts
@@ -444,12 +444,23 @@ npm run docker:down
   * **Hỗ trợ Fluent Chaining:** Cung cấp các hàm chuỗi tương tự Playwright Locator: `first()`, `nth()`, `filter()`, `locator()`, `getByRole()`, `getByPlaceholder()`, `getByText()`, `or()`, `and()`.
   * **Tương thích hoàn toàn với Web-First Assertions:** Cung cấp hàm `getLocator()` để tương thích 100% với cú pháp `await expect(element.getLocator()).toBeVisible()` của Playwright Test.
 
-### 4. Quy chuẩn Test Data
+### 4. Quy chuẩn API Testing Framework (Kiến trúc 5 Tầng DRY)
+Quy chuẩn chi tiết tại [.agent/rules/api_rules.md](file:///.agent/rules/api_rules.md):
+* **Tầng 1 - API Services (`services/`):** Kế thừa `BaseService`, bao bọc endpoints, headers và method (`GET`, `POST`, `PUT`, `DELETE`).
+* **Tầng 2 - Data Objects & Models (`data-object/api/`):** Định nghĩa interface TypeScript cho Request payload và Response DTO.
+* **Tầng 3 - Fixture Injection (`fixture/page-fixture.ts`):** Inject tập trung các service (`courseService`, `authService`) và workflow qua fixture; **CẤM** tạo `new Service(request)` thủ công trong test spec.
+* **Tầng 4 - API Workflows (`workflow/api/`):** Đóng gói logic nghiệp vụ phức tạp như chu kỳ sinh tài khoản + cấp Bearer Token (`createAccountAndGetAccessToken()`), lấy dữ liệu tiền điều kiện hợp lệ.
+* **Tầng 5 - Test Specifications (`tests/api/`):**
+  * Tách biệt rõ ràng Happy Path (200 OK) và Negative Path (401 Unauthorized, 400 Bad Request, Conflict).
+  * Kiểm soát thời gian phản hồi: `expect(duration).toBeLessThan(2000)`.
+  * **Nguyên tắc Chống False Healing:** Tuyệt đối không thay đổi assertion theo kết quả sai của server để ép test pass CI.
+
+### 5. Quy chuẩn Test Data
 * Dữ liệu cho các trường yêu cầu unique (tài khoản, email) bắt buộc phải sinh động qua `core/utils/string.ts` (`generateUsername()`, `generateEmail()`).
 * Dữ liệu phải mang tính **traceable** (chứa timestamp và prefix) để dễ dàng tra cứu trong database khi cần debug.
 * Tài khoản tạo mới tuân thủ giới hạn backend của CyberSoft: độ dài `<= 16 ký tự`.
 
-### 5. Cơ chế CI Safety (`test.fixme`)
+### 6. Cơ chế CI Safety (`test.fixme`)
 * Khi phát hiện lỗi ứng dụng (Bug), test case được chuyển thành `test.fixme(...)`:
   ```typescript
   // Đánh dấu fixme do Bug SCRUM-22 trên Jira: Không hiển thị hộp thoại xác nhận khi Hủy khóa học
@@ -459,6 +470,15 @@ npm run docker:down
   1. Toàn bộ mã nguồn kiểm thử vẫn được lưu giữ đầy đủ trên Git.
   2. GitHub Actions CI/CD Pipeline luôn **PASS XANH 100%** (vì test case này được skip an toàn).
   3. Khi Dev sửa xong Bug, Tester chỉ cần chạy `/e2e_retest_bug` để tự động kích hoạt lại test case.
+
+### 7. Clean Code & Definition of Done (DoD)
+Mọi mã nguồn trước khi bàn giao đều phải vượt qua bộ lọc chất lượng:
+- [x] **Zero Hard Sleep:** 100% không còn `waitForTimeout()` hay fixed delay; dùng hoàn toàn Smart Auto-Waiting của Playwright.
+- [x] **Zero Debug Logs:** Không để lại `console.log()` hoặc mã debug tạm thời.
+- [x] **NodeNext ESM Compliant:** Toàn bộ relative import module nội bộ sử dụng đuôi mở rộng `.js`.
+- [x] **Chống trùng lặp & Đúng thư mục:** UI test đặt theo module `tests/ui/<module>/`, API test đặt tại `tests/api/`, không đặt theo mã Jira.
+- [x] **Selective Staging:** Quá trình Git Push chỉ nạp các thư mục mã nguồn được chỉ định, loại trừ 100% file runtime rác trong `scratch/`.
+- [x] **Pre-Push Quality Gate:** Bắt buộc `npm run typecheck` và Playwright Test đạt 100% PASS (hoặc fixme) trước khi tạo nhánh feature.
 
 ---
 
