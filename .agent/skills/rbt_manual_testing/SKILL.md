@@ -94,8 +94,13 @@ Sinh test cases **nhanh, đủ chất lượng** từ requirements/user stories 
    - **Decision Table:** Liệt kê tổ hợp điều kiện (nếu có nhiều rules)
    - **State Transition:** Test chuyển đổi trạng thái (nếu có workflow)
 4. **Validation chuyên biệt từng trường (Field-Level Validation):**
-   - Liệt kê **tất cả input fields** trên form/UI
-   - Sinh validation tes6. **Xuất ra bảng Markdown** chuẩn có đầy đủ metadata cho Automation, sẵn sàng sync vào Google Sheets hoặc Jira/TestRail.
+   - Liệt kê **tất cả input fields** trên form/UI.
+   - Sinh validation TCs riêng cho từng trường theo Bảng 15 Field Types, tuyệt đối không gộp nhiều trường vào 1 TC.
+5. **Bao phủ Scenarios Chuyên Sâu & Non-Functional:**
+   - Tích hợp kiểm thử Double Submit/Race Condition, Session & Network Resilience (3G/Offline), Localization/UTF-8/Emoji, Keyboard Accessibility, và chuẩn HTTP Status Codes.
+6. **Xuất ra bảng Markdown:**
+   - Chuẩn hóa đầy đủ metadata cho Automation, sẵn sàng sync vào Google Sheets hoặc Jira/TestRail.
+   - **Token Limit Safety (Quy tắc chống tràn Token):** Tối đa xuất 25 Test Cases mỗi lượt. Nếu module có > 25 TCs, bắt buộc chia thành từng Batch/Part (Part 1, Part 2...) để đảm bảo các bước hành động (Test Steps) và kết quả mong đợi (Expected Results) không bị cắt cụt.
 7. **Chạy Self-Quality Gate (Tự kiểm tra chất lượng):** Rà soát lại 100% test cases trước khi xuất kết quả.
 
 ## Bảng Output Standard (chuẩn hóa đầy đủ Metadata)
@@ -107,7 +112,7 @@ Sinh test cases **nhanh, đủ chất lượng** từ requirements/user stories 
 > **Giải thích Metadata Automation:**
 > - **Automatable:** `Yes` / `No` / `Partial` (Độ khả thi để viết script tự động)
 > - **Auto Type:** `UI` / `API` / `Unit` / `N/A` (Loại automation phù hợp)
-> - **Tags:** `@Smoke`, `@Regression`, `@CriticalPath`, `@Security`, `@Boundary`
+> - **Tags:** `@Smoke`, `@Regression`, `@CriticalPath`, `@Security`, `@Boundary`, `@<JIRA_KEY>`
 
 ## Quy tắc Test Data (áp dụng cho cả 2 modes)
 
@@ -136,13 +141,13 @@ Khi form/UI có các input fields, agent **BẮT BUỘC** phải liệt kê từ
 | **Dropdown / Select** | Giá trị mặc định · Tất cả options hợp lệ · Option disabled · Thay đổi selection · Required validation |
 | **Checkbox / Radio** | Trạng thái mặc định · Check/Uncheck · Required validation · Nhóm radio (chỉ chọn 1) |
 | **File Upload** | File type hợp lệ/không hợp lệ · Max size · File rỗng (0 KB) · Tên file ký tự đặc biệt · Multiple files · Kéo thả vs nút chọn |
-| **Password** | Min/Max length · Ký tự đặc biệt · Chữ hoa/thường · Số · Copy-paste bị chặn? · Hiện/ẩn password · Confirm password |
-| **Textarea** | Max length · Line breaks · HTML tags · Resize · Character counter |
-| **OTP / MFA Code** *(Mới)* | Auto-focus ô tiếp theo · Paste chuỗi OTP · Hết hạn timeout · Vượt số lần nhập sai (retry limit/lockout) · Re-send OTP rate limit |
-| **Date Range / Time Picker** *(Mới)* | Ngày kết thúc < Ngày bắt đầu · Khung giờ trùng lặp (time conflict) · Giới hạn khoảng ngày (VD: max 30 ngày) · Quá khứ/Tương lai restriction |
-| **Rich Text Editor (WYSIWYG)** *(Mới)* | Sanitize HTML tags nguy hiểm (`<script>`, `<iframe>`) · Paste văn bản kèm format/ảnh · Character counter tính theo text thô vs HTML markup |
-| **Multi-Select / Tag Input** *(Mới)* | Giới hạn số lượng tag · Tag trùng lặp · Xóa tag bằng Backspace/nút X · Tag có ký tự đặc biệt |
-| **Range Slider / Stepper** *(Mới)* | Giới hạn min/max · Bước nhảy (step increment violation) · Nhập tay trực tiếp so với kéo slider |
+| **Password** | Min/Max length · Ký tự đặc biệt · Chữ hoa/thường · Số · Copy-paste bị chặn? · Hiện/ẩn password · Confirm password khớp/không khớp |
+| **Textarea** | Max length · Line breaks · HTML tags · Resize (nếu UI cho phép) · Character counter |
+| **OTP / MFA Code** | Auto-focus ô tiếp theo · Paste chuỗi OTP · Hết hạn timeout · Vượt số lần nhập sai (retry limit/lockout) · Re-send OTP rate limit |
+| **Date Range / Time Picker** | Ngày kết thúc < Ngày bắt đầu · Khung giờ trùng lặp (time conflict) · Giới hạn khoảng ngày (VD: max 30 ngày) · Quá khứ/Tương lai restriction |
+| **Rich Text Editor (WYSIWYG)** | Sanitize HTML tags nguy hiểm (`<script>`, `<iframe>`) · Paste văn bản kèm format/ảnh · Character counter tính theo text thô vs HTML markup |
+| **Multi-Select / Tag Input** | Giới hạn số lượng tag · Tag trùng lặp · Xóa tag bằng Backspace/nút X · Tag có ký tự đặc biệt |
+| **Range Slider / Stepper** | Giới hạn min/max · Bước nhảy (step increment violation) · Nhập tay trực tiếp so với kéo slider |
 
 ## Scenarios Chuyên Sâu & Non-Functional Checklist (Áp dụng nâng cao)
 
@@ -168,7 +173,7 @@ Agent phải tích hợp thêm các tình huống kiểm thử nâng cao khi ph�
 ## Direct Export & Integration Options
 
 Sau khi sinh Test Cases, agent có thể hỗ trợ user xuất hoặc đồng bộ dữ liệu:
-- **Google Sheets:** Tự động ghi test cases vào Google Sheet dự án thông qua script [sheet_writer.js](file:///Users/anhtester/AnhTester/Antigravity/antigravity-testing-kit/scripts/integrations/google_sheet/sheet_writer.js).
+- **Google Sheets:** Tự động ghi test cases vào Google Sheet dự án thông qua script `scripts/integrations/google_sheet/sheet_writer.js`.
 - **Jira Xray / TestRail Export:** Định dạng Markdown/CSV chuẩn giúp import 1-click lên các công cụ Quản lý Test.
 
 ---
@@ -179,22 +184,8 @@ Trước khi xuất kết quả cuối cùng cho user, Agent **BẮT BUỘC** t�
 - [ ] **1. Unique TC ID:** Đảm bảo không trùng mã TC ID và đúng quy tắc dự án (`PROJECT_MODULE_TC_001`).
 - [ ] **2. 1-to-1 Step-Expected Matching:** Các bước `Test Steps` (đánh số 1,2,3) khớp 1-1 với `Expected Result` (đánh số 1,2,3).
 - [ ] **3. Concrete Test Data:** 100% test data chứa giá trị cụ thể, không còn từ ngữ mơ hồ ("hợp lệ", "dữ liệu đúng").
-- [ ] **4. Field Validation Coverage:** Mọi input field trên UI đều có ít nhất 1 Positive TC và 2+ Negative/Boundary TCs.
+- [ ] **4. Field Validation Coverage:** Mọi input field trên UI đều có ít nhất 1 Positive TC và 2+ Negative/Boundary TCs theo bảng 15 Field Types.
 - [ ] **5. Automation Metadata Ready:** 100% test cases được gắn đầy đủ `Automatable`, `Auto Type`, và `@Tag`.
-
-## Anti-Patterns (Mode QUICK)
-
-- ❌ Sinh test data chung chung / placeholder
-- ❌ Chỉ có Happy Path, thiếu Negative/Boundary
-- ❌ Bỏ qua validation rules trong requirements
-- ❌ Test Steps mơ hồ ("nhập dữ liệu" → phải ghi rõ nhập gì, ở đâu)
-- ❌ Gộp validation nhiều trường vào 1 test case → mỗi trường phải có TC validation riêng
-- ❌ Dùng chung 1 bộ validation cho tất cả fields (mỗi field type có checklist riêng)
-- ❌ Bỏ qua security validation (XSS, SQL injection) cho text fieldsKéo thả vs nút chọn |
-| **Password** | Min/Max length · Yêu cầu ký tự đặc biệt · Yêu cầu chữ hoa/thường · Yêu cầu số · Copy-paste bị chặn? · Hiện/ẩn password · Confirm password khớp/không khớp |
-| **Textarea** | Max length · Line breaks · HTML tags · Resize (nếu UI cho phép) · Character counter (nếu có) |
-
-> **Nguyên tắc:** Mỗi trường có đặc tính riêng → validation riêng. Agent PHẢI phân tích từng field trước khi sinh TCs, không được dùng chung 1 bộ validation cho tất cả fields.
 
 ## Anti-Patterns (Mode QUICK)
 

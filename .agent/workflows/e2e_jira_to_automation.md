@@ -58,6 +58,19 @@ flowchart TD
 
 ## Các Bước Thực Hiện Chi Tiết
 
+### Bước 0: Pre-Flight & Git Clean Check (Kiểm Tra Môi Trường & Nhánh Local)
+Trước khi bắt đầu quy trình với ticket mới, Agent **bắt buộc** thực hiện 2 kiểm tra tiền đề:
+1. **Kiểm tra trạng thái Git:** Đảm bảo local repository đang ở nhánh `main` và đồng bộ với remote mới nhất:
+   ```bash
+   git checkout main && git pull origin main
+   ```
+   Nếu working tree còn file uncommitted từ tác vụ trước, hãy kiểm tra hoặc dọn dẹp trước khi tiếp tục.
+2. **Kiểm tra môi trường ứng dụng (Pre-Flight Healthcheck):** Gửi request kiểm tra `UI_BASE_URL` và `API_BASE_URL`.
+   - Nếu trả về mã lỗi hạ tầng `502`, `503`, `504` hoặc `ECONNREFUSED`: Dừng lại ngay và báo cáo cho người dùng môi trường đang sập, không bắt đầu viết test khi hệ thống chưa sẵn sàng.
+   - Khi môi trường hoạt động bình thường (`200 OK` / `3xx`): Cho phép tiến hành Bước 1.
+
+---
+
 ### Bước 1: Lấy Requirements từ Jira (`/fetch_jira_requirements`)
 0. Gửi thông báo: `node scripts/integrations/notify_step.js --ticket <JIRA_KEY> --step 1 --title "Kéo Requirement từ Jira" --detail "Bắt đầu lấy User Story và tiêu chí chấp nhận"`
 1. Nhận `JIRA_KEY` (ví dụ: `SCRUM-19`) từ người dùng hoặc từ file `trigger.txt`.
@@ -97,6 +110,7 @@ flowchart TD
    - **Tầng 2 - Fixtures Injection (`fixture/`):**
      - Inject Page Objects thông qua fixture (`fixture/index.ts`). Trong file spec: nhận thẳng Page Object làm fixture param (`async ({ profilePage, homePage }) => { ... }`).
      - **CẤM** khởi tạo thủ công `const profilePage = new ProfilePage(page)` lặp đi lặp lại trong mỗi test case.
+     - **Tái sử dụng Authentication State (`storageState`):** Bắt buộc ưu tiên tái sử dụng auth state đã cache (thông qua setup project `tests/setup/auth.setup.ts`) cho các test case yêu cầu trạng thái đăng nhập. Tuyệt đối **không thực hiện đăng nhập qua UI lặp đi lặp lại** ở từng test case nhằm tối ưu tốc độ và tránh flaky do network.
    - **Tầng 3 - Workflows Nghiệp Vụ (`workflow/`):**
      - Nếu một chuỗi thao tác gồm nhiều bước liên hoàn được dùng ở nhiều test specs (ví dụ: Quy trình Đăng nhập -> Mở trang Cá nhân -> Mở dialog cập nhật), kiểm tra và gọi hàm nghiệp vụ trong `workflow/` thay vì copy-paste 5-10 dòng code vào từng spec.
    - **Tầng 4 - Helper, Utils & Constants (`core/utils/`, `constant/`, `test-data/`):**
@@ -124,7 +138,7 @@ flowchart TD
 
 ### Bước 4: Thực Thi Kiểm Thử & Phân Loại Lỗi (Failure Classification)
 0. Gửi thông báo: `node scripts/integrations/notify_step.js --ticket <JIRA_KEY> --step 4 --title "Chạy Test & Phân loại lỗi" --detail "Kiểm tra kết quả và phân loại Root Cause"`
-1. Chạy test suite cục bộ: `npm test`
+1. **Chạy targeted test suite cục bộ:** Thay vì chạy toàn bộ hàng trăm bài test gây timeout ở local, Agent chỉ định chạy targeted test theo module hoặc tag vừa viết (`npx playwright test tests/ui/<module>/ --headed` hoặc `npx playwright test --grep @<JIRA_KEY> --headed`) để kiểm tra tính năng mới và kiểm tra hồi quy cục bộ trong module đó (Full Regression Suite sẽ do GitHub Actions CI trên Cloud đảm nhận).
 2. **Failure Classification (CRITICAL):**
    - Thay vì mù quáng "thấy FAIL là tự sửa code test cho đến khi PASS" (gây ra False Healing), phải **phân tích root cause**:
      - **Nguyên nhân 1 (Lỗi Automation):** Do locator sai, timeout, logic test sai $\rightarrow$ **Kích hoạt Self-Healing (Tự sửa code automation)**.
@@ -205,8 +219,17 @@ flowchart TD
 
 ### Bước 7: Re-test (Xác nhận Dev Fix Bug)
 Khi Dev cập nhật Jira báo cáo đã Fix xong Bug:
-1. **Trên Telegram Bot**: Bấm nút **"🔄 Test Lại (<JIRA_KEY>)"** để Agent biết.
+1. **Trên Telegram Bot**: Bấm nút **"🔄 Test Lại (<JIRA_KEY>)"** (hoặc ra lệnh trực tiếp trên IDE: `/e2e_retest_bug trigger.txt`).
 2. **Loại bỏ cờ SKIP (`test.fixme`)**: Agent mở test file tương ứng, tìm các `test.fixme(...)` có gắn mã Bug vừa fix, đổi lại thành `test(...)`.
-3. **Chạy Test Local**: Agent chạy lại lệnh kiểm thử ở local (ví dụ: `npm run test:ui`) để đảm bảo Test PASS xanh 100%.
-4. **Push Git**: Agent commit và đẩy thay đổi lên Git, CI/CD chạy lại toàn bộ và gửi báo cáo xanh về Telegram Bot.
+3. **Chạy Test Local**: Agent chạy lại lệnh kiểm thử ở local theo tag hoặc file spec để đảm bảo Test PASS xanh 100%:
+   ```bash
+   npx playwright test --grep @<JIRA_KEY> --headed
+   # Hoặc: npx playwright test <path/to/test-file.spec.ts> --headed
+   ```
+4. **Bàn giao qua Feature Branch**: Khi test PASS xanh cục bộ, đẩy code qua nhánh `fix/retest-<JIRA_KEY>` (hoặc gọi `node scripts/integrations/git_push_delivery.js --ticket <JIRA_KEY>`).
+5. **Đóng Bug khi CI PASS**: Theo dõi kết quả CI qua `node scripts/integrations/check_ci.js --ticket <JIRA_KEY> --wait true`. Khi CI/CD chạy xong và PASS xanh 100%, tự động gọi:
+   ```bash
+   node scripts/integrations/jira/jira_transition.js --issue <JIRA_KEY> --status "Done"
+   ```
+   để đóng Bug trên Jira và gửi báo cáo kết quả hoàn tất về Telegram.
 

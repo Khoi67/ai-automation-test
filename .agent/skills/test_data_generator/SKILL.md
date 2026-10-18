@@ -108,12 +108,32 @@ Example: `Test@12345`
 - Empty string vs null
 - Zero, negative numbers
 
-### Edge Cases
-- Unicode / special characters
-- Very long strings
-- SQL injection patterns (for security testing)
+### Edge Cases & Security Payloads
+- Unicode / special characters (`Tiếng Việt có dấu`, `😀🎉🚀`, RTL Arabic)
+- Very long strings (boundary max length + 100 chars)
+- SQL injection patterns (`' OR '1'='1`, `'; DROP TABLE users;--`)
+- XSS payloads (`<script>alert(1)</script>`, `<img src=x onerror=alert(1)>`)
 - HTML tags in text fields
 - Leading/trailing whitespace
+
+> ⚠️ **CẢNH BÁO AN TOÀN (SECURITY GUARDRAIL):**
+> - Các bộ dữ liệu chứa payload tấn công (SQLi / XSS / Script Injection) **CHỈ ĐƯỢC PHÉP CHẠY** trên môi trường Local / Staging nội bộ.
+> - Bắt buộc gắn tag `@security` cho các test case này để có thể loại trừ khi chạy trên môi trường có Web Application Firewall (WAF) bảo vệ, tránh việc CI Runner bị khóa IP hoặc gây báo động giả hệ thống bảo mật.
+
+---
+
+## TypeScript Automation Helpers (5-Tier DRY Reusability)
+
+Khi sinh dữ liệu cho code automation Playwright / TypeScript của dự án:
+- **NGHIÊM CẤM** tự viết lại logic random inline rải rác trong từng test block.
+- **BẮT BUỘC** kiểm tra và tái sử dụng các hàm utilities sẵn có trong `core/utils/`:
+  ```typescript
+  import { generateRandomEmail, generateUsername } from '../../core/utils/string';
+
+  const testEmail = generateRandomEmail('checkout');
+  const testUser = generateUsername('student');
+  ```
+- Tái sử dụng và mở rộng các bộ dữ liệu mẫu có cấu trúc trong thư mục `test-data/ui/` (ví dụ: `test-data/ui/course.data.ts`, `test-data/ui/user.data.ts`).
 
 ---
 

@@ -14,14 +14,20 @@ Kỹ năng này cung cấp các hướng dẫn chi tiết để AI (Antigravity)
 
 ## 2. Quy trình trích xuất thông tin
 Khi được yêu cầu tạo Requirements từ một trang web:
-1. **Phân tích Khung giao diện (Layout Analysis):** Xác định các phần Header, Footer, Sidebar, và Nội dung chính (Main Content).
-2. **Thu thập Form & Inputs:**
+1. **Khởi tạo và Điều hướng (Browser Initialization):**
+   - Khi sử dụng Playwright MCP, **BẮT BUỘC** tuân thủ chuỗi lệnh chuẩn:
+     1. `browser_navigate(url)`
+     2. `browser_resize(1920, 1080)` (set viewport desktop 1920x1080 ngay sau navigate)
+     3. `browser_wait_for()` (chờ page load xong)
+     4. `browser_snapshot()` (thu thập DOM và accessibility tree)
+2. **Phân tích Khung giao diện (Layout Analysis):** Xác định các phần Header, Footer, Sidebar, và Nội dung chính (Main Content).
+3. **Thu thập Form & Inputs:**
    - Tìm tất cả các trường nhập liệu (`input`, `select`, `textarea`).
    - Ghi nhận thuộc tính `type` (text, email, password, number), `required`, `maxlength`, `minlength`, `pattern`.
-3. **Thu thập Các nút tương tác (Buttons/Links/Actions):**
+4. **Thu thập Các nút tương tác (Buttons/Links/Actions):**
    - Xác định chức năng của từng nút (Save, Submit, Cancel, Delete, Edit).
    - Các cảnh báo, thông báo (Alerts, Toasts, Validation Messages) xuất hiện khi tương tác lỗi.
-4. **Trích xuất Luồng công việc (Workflows):**
+5. **Trích xuất Luồng công việc (Workflows):**
    - Sự phụ thuộc giữa các thành phần (VD: Nút Submit chỉ enable khi đã tích chọn Checkbox "Tôi đồng ý").
 
 ## 3. Cấu trúc Tài liệu Yêu cầu Đầu ra (Output Format)
@@ -40,11 +46,11 @@ Chia thành các **User Stories** hoặc **Use Cases**:
 
 ### 3.3. Đặc tả Trường Dữ liệu (Field Specifications)
 Đây là phần cốt lõi dành cho Automation Tester:
-* Dùng bảng Markdown (*Markdown Table*) để liệt kê:
+* Dùng bảng Markdown (*Markdown Table*) để liệt kê, phân loại cột **Loại (Type UI)** khớp chuẩn với **15 Field Types** của `rbt_manual_testing` (Text, Email, Phone, Date, Number, Dropdown, Checkbox/Radio, File Upload, Password, Textarea, OTP/MFA, Date Range, Rich Text, Multi-Select, Range Slider):
   - Tên Trường (Label)
-  - Loại (Type UI)
-  - Validation Rules (Bắt buộc / Mặc định / Giới hạn độ dài).
-  - Ghi chú (Notes).
+  - Loại (Type UI) — *phân loại theo 15 Field Types chuẩn*
+  - Validation Rules (Bắt buộc / Mặc định / Giới hạn độ dài, ký tự đặc biệt, XSS/SQLi).
+  - Ghi chú (Notes & UI Behavior).
 
 ### 3.4. Các luồng xử lý và Báo lỗi (Business Rules & Validations)
 Liệt kê chi tiết các Validation Message mong đợi khi người dùng nhập sai dữ liệu.

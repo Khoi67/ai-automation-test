@@ -80,9 +80,13 @@ skills:
 7. **Phân tích element trong snapshot:**
    - Tìm ref element trong DOM tree
    - Ghi lại **tất cả attributes có giá trị**: `role`, `aria-label`, `aria-labelledby`, `data-testid`, `data-test`, `data-qa`, `id`, `name`, `placeholder`, `type`, `href`, text content
-   - Ghi lại **parent context** (dialog? table? sidebar? iframe?)
+   - Ghi lại **parent context** (dialog? table? sidebar? iframe? shadow DOM?)
 
-8. **Nếu element bị ẩn** (dropdown menu, modal, tooltip...):
+8. **Nhận diện iFrame & Shadow DOM (CRITICAL):**
+   - **iFrame:** Nếu element nằm bên trong thẻ `<iframe>`: Bắt buộc ghi lại locator của thẻ iframe chứa nó. Khi sinh code Playwright, bắt buộc dùng `page.frameLocator('<iframe_selector>')` để định tuyến trước khi truy cập element con.
+   - **Shadow DOM:** Kiểm tra xem element có nằm dưới một `#shadow-root` hay không. Playwright mặc định tự động xuyên thấu (pierces) qua Shadow DOM với các bộ chọn CSS và role-based; đối với Selenium/Java, bắt buộc sử dụng `.getShadowRoot()` để truy cập.
+
+9. **Nếu element bị ẩn** (dropdown menu, modal, tooltip...):
    - Thực hiện action mở element: `browser_click(ref=<trigger>)`
    - Capture lại: `browser_snapshot()`
 
@@ -130,6 +134,9 @@ skills:
 
     // Priority 6: XPath (cuối cùng)
     page.locator('//button[@type="submit"]')
+
+    // Xử lý iFrame (Bắt buộc dùng frameLocator khi element nằm trong iframe)
+    page.frameLocator('iframe#checkout-frame').getByRole('button', { name: 'Submit' })
     ```
 
     **Playwright (Python):**
@@ -152,6 +159,9 @@ skills:
 
     # Priority 6: XPath (cuối cùng)
     page.locator("//button[@type='submit']")
+
+    # Xử lý iFrame
+    page.frame_locator("iframe#checkout-frame").get_by_role("button", name="Submit")
     ```
 
     **Selenium (Java):**
@@ -196,10 +206,19 @@ skills:
 
 11. **Verify uniqueness — PHẢI match đúng 1 element:**
 
-    **Web (Playwright MCP):**
-    ```
-    browser_evaluate(function="() => document.querySelectorAll('<css_selector>').length")
-    ```
+    **Web (Playwright):**
+    - **Đối với CSS Selector / ID thuần:** Sử dụng `document.querySelectorAll` để đếm số lượng node khớp:
+      ```
+      browser_evaluate(function="() => document.querySelectorAll('<css_selector>').length")
+      ```
+      *(Lưu ý: `document.querySelectorAll` CHỈ áp dụng cho CSS Selector tiêu chuẩn, KHÔNG dùng được cho cú pháp `getByRole`, `getByLabel`...)*
+    - **Đối với Playwright Semantic Locators (`getByRole`, `getByLabel`, `getByText`):**
+      - **Accessibility Snapshot Check:** Dùng `browser_snapshot()` và kiểm tra tree để bảo đảm chỉ có DUY NHẤT 1 phần tử khớp với cặp `(role, accessible name)` trong scope tương ứng.
+      - **Runtime Locator Count:** Khi chạy code hoặc qua Playwright evaluate, xác minh locator trả về đúng 1 phần tử:
+        ```typescript
+        await expect(locator).toHaveCount(1);
+        // hoặc: const count = await locator.count(); assert(count === 1);
+        ```
 
     **Selenium:**
     ```java

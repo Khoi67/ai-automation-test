@@ -127,6 +127,9 @@ code:     TC_BOOK_1712049200
 | **Special numbers** | Số đặc biệt | `0.1 + 0.2`, `Number.MAX_SAFE_INTEGER`, `NaN` |
 | **Date edge** | Ngày đặc biệt | `"2024-02-29"` (năm nhuận), `"2024-12-31"`, `"1970-01-01"` |
 
+> ⚠️ **SECURITY GUARDRAIL (LƯU Ý AN TOÀN BẢO MẬT):**
+> Các bộ dữ liệu kiểm thử chứa payload **SQL Injection (`'; DROP TABLE...`)** hoặc **XSS (`<script>...`, `<img onerror=...>`)** CHỈ ĐƯỢC PHÉP thực thi trên môi trường **Local hoặc Staging nội bộ**. Bắt buộc gắn tag `@security` cho các test case sử dụng bộ dữ liệu này để dễ dàng loại trừ (`--grep-invert @security`) khi chạy pipeline trên môi trường Production/UAT có bật tường lửa ứng dụng web (WAF - Web Application Firewall), tránh nguy cơ runner bị khóa địa chỉ IP tự động.
+
 ---
 
 ### Bước 3: Đóng gói Output

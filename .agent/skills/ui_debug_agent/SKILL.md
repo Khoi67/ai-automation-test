@@ -130,10 +130,10 @@ Với mỗi element cần locator, áp dụng **priority order** theo framework:
 
 | Priority | Locator | Ví dụ |
 |---|---|---|
-| 1 ⭐ | Accessibility ID | `MobileBy.accessibilityId("loginButton")` |
-| 2 | ID (resource-id) | `MobileBy.id("com.app:id/login_btn")` |
-| 3 | Name | `MobileBy.name("Login")` |
-| 4 | XPath (relative) | `MobileBy.xpath("//android.widget.Button[@text='Login']")` |
+| 1 ⭐ | Accessibility ID | `AppiumBy.accessibilityId("loginButton")` |
+| 2 | ID (resource-id) | `AppiumBy.id("com.app:id/login_btn")` |
+| 3 | Name | `AppiumBy.name("Login")` |
+| 4 | XPath (relative) | `AppiumBy.xpath("//android.widget.Button[@text='Login']")` |
 
 ### 4. Verify Locator
 
@@ -157,9 +157,10 @@ browser_snapshot → xác nhận kết quả
 ## Xử lý tình huống đặc biệt
 
 ### Trang yêu cầu đăng nhập
-- Dùng fixture login sẵn có trong project hoặc hỏi user credentials
-- **KHÔNG đọc .env trực tiếp**
-- Sau khi login, navigate đến trang cần inspect
+- **Ưu tiên Session Caching:** Tái sử dụng phiên đăng nhập đã lưu trong `storageState` (hoặc inject login token qua API) để vào thẳng trang cần test, tránh lặp lại luồng đăng nhập UI thủ công.
+- Nếu cần debug luồng đăng nhập: Dùng fixture login sẵn có trong project hoặc hỏi user credentials.
+- **KHÔNG đọc file `.env` trực tiếp** (quy tắc bảo mật AI agent).
+- Sau khi login, navigate đến trang cần inspect.
 
 ### Modal / Dialog / Popup
 - Modal thường là overlay trên page chính

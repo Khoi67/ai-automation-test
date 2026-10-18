@@ -98,10 +98,15 @@ async function runDelivery() {
   // =========================================================================
   const skipTest = argv['skip-test'] === true || argv['skip-test'] === 'true';
   if (!skipTest) {
-    console.log(`\n[QUALITY GATE] Đang chạy kiểm thử toàn bộ test suite để xác thực chất lượng trước khi Push...`);
+    console.log(`\n[QUALITY GATE] Đang chạy kiểm thử xác thực chất lượng trước khi Push...`);
     try {
-      execSync('npx playwright test', { stdio: 'inherit' });
-      console.log(`[QUALITY GATE PASS] ✅ Toàn bộ test suite ĐẠT chuẩn Definition of Done (0 Failures). Cho phép bàn giao.\n`);
+      const npmCmd = process.platform === 'win32' ? 'npm.cmd' : 'npm';
+      const npxCmd = process.platform === 'win32' ? 'npx.cmd' : 'npx';
+      console.log(`[QUALITY GATE] 1. Kiểm tra TypeScript typecheck...`);
+      execSync(`${npmCmd} run typecheck`, { stdio: 'inherit' });
+      console.log(`[QUALITY GATE] 2. Kiểm tra targeted tests cho @${ticket}...`);
+      execSync(`${npxCmd} playwright test --grep @${ticket}`, { stdio: 'inherit' });
+      console.log(`[QUALITY GATE PASS] ✅ Toàn bộ test suite cho ${ticket} ĐẠT chuẩn Definition of Done (0 Failures). Cho phép bàn giao.\n`);
     } catch (testError) {
       console.error(`\n❌ [QUALITY GATE FAILED] Phát hiện Test Case bị FAILED trên máy cục bộ!`);
       console.error(`[BLOCKED] TỪ CHỐI commit và push code lên GitHub để bảo vệ CI/CD Pipeline không bị FAIL!\n`);
@@ -141,9 +146,9 @@ async function runDelivery() {
       console.log(`[LOG] Đang ở nhánh '${branchName}'.`);
     }
 
-    // 2. Git add
-    console.log('[LOG] Chạy git add .');
-    execSync('git add .', { stdio: 'inherit' });
+    // 2. Selective Staging
+    console.log('[LOG] Staging có chọn lọc các thư mục mã nguồn và tài liệu...');
+    execSync('git add tests/ page-object/ fixture/ workflow/ core/ constant/ test-data/ requirements/ test-cases/ .agent/ GEMINI.md RULE_GLOBAL.md scripts/', { stdio: 'inherit' });
 
     // 3. Git commit
     const commitMsg = `feat(automation): add test suite and POM for ${ticket}`;

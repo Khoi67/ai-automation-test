@@ -7,18 +7,21 @@ Các prompt templates tái sử dụng cho các tác vụ QA automation phổ bi
 ## 1. Test Case Generation
 
 ```
-Phân tích requirement sau và sinh test cases:
+Phân tích requirement sau và sinh test cases chất lượng cao:
 
-**Requirement:** [Mô tả requirement]
+**Requirement:** [Mô tả requirement / User Story / Jira Ticket]
 
-**Output format:**
-| TC ID | Test Case Title | Precondition | Steps | Expected Result | Priority | Type |
+**Output format (Bảng chuẩn 11-12 cột Automation Metadata):**
+| TC ID | Module | Risk Level | Test Title | Pre-Condition | Test Steps | Expected Result | Priority | Test Data | Automatable | Auto Type | Tags |
 
 **Yêu cầu:**
-- Bao gồm positive, negative, boundary, edge cases
-- Sử dụng tiếng Việt cho mô tả
-- Priority: High / Medium / Low
-- Type: Positive / Negative / Boundary / Edge
+- Bao phủ: Positive (Happy path), Negative (Validation lỗi), Boundary (Biên), Edge Cases (Bảo mật/Race condition)
+- Risk Level: Critical / High / Medium / Low
+- Priority: P0 (Blocker) / P1 (Critical) / P2 (Major) / P3 (Minor)
+- Automatable: Yes / No
+- Auto Type: UI / API / E2E
+- Tags: @smoke, @regression, @<JIRA_KEY>, @security
+- Ngôn ngữ: Tiếng Việt rõ ràng, từng bước hành động cụ thể
 ```
 
 ---
@@ -26,21 +29,24 @@ Phân tích requirement sau và sinh test cases:
 ## 2. Automation Script Generation
 
 ```
-Chuyển đổi test case sau thành automation script:
+Chuyển đổi test case sau thành Playwright TypeScript Automation Script:
 
-**Test Case:** [TC content]
-**Framework:** [Selenium Java / Playwright TypeScript]
-**Pattern:** Page Object Model
+**Test Case:** [TC ID + Tiêu đề + Các bước + Expected Result]
+**Framework:** Playwright Test (TypeScript)
+**Kiến trúc:** 5-Tier DRY Architecture (POM + Custom Fixtures)
 
 **Output:**
-1. Page Object class(es)
-2. Test class
-3. Test data (nếu cần)
+1. Page Object class(es) trong `page-object/<name>-page.ts` (kế thừa UIElement, chỉ chứa Scoped Locators và User Actions)
+2. Shared Component class(es) nếu có phần tử dùng chung trong `page-object/components/`
+3. Fixture Injection đăng ký tại `fixture/index.ts` (không khởi tạo `new PageObject(page)` trong test spec)
+4. Test Spec tại `tests/ui/<module>/<feature>.spec.ts`
 
 **Quy tắc:**
-- Smart waits only (không hard sleep)
-- Random test data với prefix + timestamp
-- Assertions rõ ràng
+- Tái sử dụng Page Objects và Fixture đã có, không tạo trùng lặp
+- Gắn Jira Tag `@<JIRA_KEY>` và module tag vào `test.describe('...', { tag: ['@<JIRA_KEY>', '@module'] })`
+- Web-First Assertions đặt tại Test Spec (`expect(locator).toBeVisible()`)
+- Sử dụng hàm sinh random data traceable từ `core/utils/`
+- Tuyệt đối không dùng hard sleep (`waitForTimeout`)
 ```
 
 ---

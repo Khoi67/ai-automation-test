@@ -39,6 +39,8 @@ Trigger keywords:
 scripts/integrations/
 ├── jira/
 │   ├── jira_fetcher.js      # Lấy Requirement/User Story từ Jira
+│   ├── jira_transition.js   # Cập nhật trạng thái Jira Ticket (In Progress, In Review, Done)
+│   ├── jira_create_bug.js    # Tự động tạo ticket Bug liên kết với Story khi test fail
 │   ├── xray_auth.js         # Xác thực và lấy Token Xray
 │   ├── xray_importer.js     # Import kết quả test lên Xray
 │   └── utils.js             # Hàm utility dùng chung
@@ -124,6 +126,21 @@ node scripts/integrations/jira/jira_fetcher.js --issue PROJ-123 --format md
 node scripts/integrations/jira/jira_fetcher.js --epic PROJ-10 --format md
 ```
 
+### Chuyển trạng thái Jira Issue (Transition Workflow)
+
+```bash
+# Đổi trạng thái sang In Progress, In Review, hoặc Done
+node scripts/integrations/jira/jira_transition.js --issue PROJ-123 --status "In Progress"
+node scripts/integrations/jira/jira_transition.js --issue PROJ-123 --status "In Review"
+node scripts/integrations/jira/jira_transition.js --issue PROJ-123 --status "Done"
+```
+
+### Tự động tạo Bug liên kết khi phát hiện App Bug
+
+```bash
+node scripts/integrations/jira/jira_create_bug.js --parent PROJ-123 --tc TC_02 --summary "[Cart] Khóa học hiển thị sai thuế VAT" --actual "Thuế tính 15% thay vì 10%" --attachment "auto"
+```
+
 ### Test Xray authentication
 
 ```bash
@@ -150,16 +167,25 @@ node scripts/integrations/jira/xray_importer.js --format junit --file ./junit-re
 | Workflow | Mô tả |
 |----------|--------|
 | `/fetch_jira_requirements` | Lấy requirements từ Jira ticket và lưu thành file |
+| `/e2e_jira_to_automation` | Tự động hóa trọn gói từ Jira issue đến push Git và chuyển trạng thái ticket |
+| `/e2e_retest_bug` | Retest bug, bỏ fixme, push Git và đóng bug ticket trên Jira |
 | `/import_test_results_xray` | Đẩy kết quả test lên Xray |
 
 ---
 
 ## Lưu ý quan trọng
 
-- **Bảo mật**: KHÔNG bao giờ commit file `.env` lên Git. File `.gitignore` đã được cấu hình bỏ qua `.env`.
+- **Bảo mật AI Agent (Security Guardrail):**
+  - **CẤM TUYỆT ĐỐI** AI Agent dùng công cụ đọc file (`view_file`, `run_command` dạng `cat .env`) để mở và in toàn bộ nội dung file `.env` lên context hội thoại.
+  - Agent chỉ được phép kiểm tra sự tồn tại của file (`git status`, kiểm tra file exist). Các scripts Node.js đã tự động nạp biến qua thư viện `dotenv`.
+  - KHÔNG bao giờ commit file `.env` lên Git (`.gitignore` đã cấu hình bỏ qua `.env`).
 - **Rate Limiting**: Jira Cloud có giới hạn API calls. Script đã hỗ trợ phân trang (pagination) để tránh vượt limit.
 - **Atlassian Document Format (ADF)**: Jira Cloud sử dụng ADF cho description. Script tự động chuyển đổi ADF → plain text.
-- **Test Key Convention**: Khi import Playwright results, nên đặt test key trong title: `test('[PROJ-123] Login should work', ...)` để Xray mapping đúng test case.
+- **Test Key Convention**: Đồng bộ mã Jira thông qua Playwright Tag trong `test.describe`:
+  ```typescript
+  test.describe('Chức năng Giỏ hàng', { tag: ['@SCRUM-18', '@cart'] }, () => { ... });
+  ```
+  Khi import Xray, hệ thống sẽ map tag `@<JIRA_KEY>` trực tiếp với issue hoặc test case trên Jira/Xray.
 
 ---
 
