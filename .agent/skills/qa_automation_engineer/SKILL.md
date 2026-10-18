@@ -280,6 +280,34 @@ Triggers when user asks:
 
 ---
 
+### E2E Jira to Automation Pipeline
+
+Use workflow: `e2e_jira_to_automation`
+
+> Quy trình tự động hóa khép kín End-to-End từ Jira Ticket: Kéo requirement → Sinh Test Cases → Sinh mã nguồn Automation (POM 5 tầng) → Thực thi test & Self-Healing → Phân nhánh Git & Push → Kiểm tra CI → Gửi báo cáo Telegram.
+
+Triggers when user asks:
+
+- e2e jira to automation
+- chạy trọn gói ticket jira / automate jira ticket end-to-end
+- tự động hóa từ jira story / triển khai test từ jira
+
+---
+
+### E2E Retest Bug
+
+Use workflow: `e2e_retest_bug`
+
+> Quy trình tự động thực hiện Retest lại các Bug đã được Dev báo cáo Fix xong: Bỏ đánh dấu `test.fixme()`, chạy targeted test & regression cục bộ, đẩy code qua nhánh `fix/retest-<JIRA_KEY>` và tự động đóng Jira ticket khi CI pass.
+
+Triggers when user asks:
+
+- retest bug / retest ticket
+- dev đã fix bug / dev reported bug fixed
+- kiểm tra lại bug jira / gỡ fixme chạy lại test bug
+
+---
+
 ### Deliver automation code via Git Branch
 
 > **Delegate:** Tác vụ này sử dụng skill **`git_branch_delivery`** để quản lý phân nhánh và ngăn chặn push trực tiếp vào main.
@@ -297,42 +325,44 @@ Triggers when user asks:
 
 # Automation Framework
 
-Default automation stack:
+### Default / Primary Stack (Dự án chính)
 
-- **Language:** Java
-- **UI automation:** Selenium WebDriver or Playwright
-- **Test framework:** TestNG
-- **API automation:** REST Assured
-- **Mobile automation:** Appium
-- **Design pattern:** Page Object Model (POM)
+- **Language:** TypeScript (Node.js / npm)
+- **UI & API Automation:** Playwright Test (`tests/ui/`, `tests/api/`)
+- **Design Pattern:** 5-Tier DRY Architecture
+  1. `page-object/`: Page classes chứa Scoped Locators và User Actions
+  2. `page-object/components/`: Reusable components (Header, Footer, Dialog...)
+  3. `fixture/`: Custom Fixtures injection (`fixture/index.ts`)
+  4. `workflow/`: Business workflows liên hoàn nhiều trang
+  5. `test-data/`, `constant/`, `core/utils/`: Dữ liệu và utilities dùng chung
+- **Assertions:** Web-First Assertions (`expect(locator).toBeVisible()`, `expect(locator).toHaveText()`)
+- **Execution:** Headed mode khi debug local (1920x1080), Headless mode trên CI
+
+### Secondary / Supported Multi-Stack (Khi có yêu cầu cụ thể)
+
+- **Java Stack:** Java 11/17+ with Selenium WebDriver 4, TestNG, REST Assured, Appium (`AppiumBy`), Maven
+- **Python Stack:** Python 3.10+ with Playwright / Selenium, Pytest, Requests
 
 ---
 
 # Locator Strategy
 
-## Selenium Locator Priority
+Mọi tác vụ định vị phần tử phải tuân thủ nghiêm ngặt **Bản Đồ Ưu Tiên 4 Tầng (4-Tier Master Priority Map)**:
 
-1. `id`
-2. `data-testid`
-3. `name`
-4. `css selector`
-5. `xpath` (last resort)
+1. **Tier 1 — User-Facing Semantic & Accessibility (Ưu tiên cao nhất):**
+   - Playwright: `getByRole()`, `getByLabel()`, `getByPlaceholder()`, `getByText()`
+   - Appium: `AppiumBy.accessibilityId()`
+   - Mô phỏng chính xác hành vi người dùng, bền bỉ nhất trước thay đổi DOM/CSS.
+2. **Tier 2 — Dedicated Test Attributes:**
+   - Playwright: `getByTestId()` hoặc `[data-testid]`, `[data-test]`, `[data-qa]`
+   - Thuộc tính chuyên dụng dành cho automation test, ổn định cao.
+3. **Tier 3 — Stable DOM Identifiers:**
+   - Thuộc tính cố định có ngữ nghĩa: `id`, `name`, `resource-id` (cấm chuỗi hash/auto-generated ngẫu nhiên).
+4. **Tier 4 — Scoped CSS / Relative XPath (Lựa chọn cuối cùng):**
+   - Scoped CSS Selector hoặc XPath tương đối ngắn có neo ngữ nghĩa.
+   - Luôn sử dụng kỹ thuật Container Scoping (`locator.filter({ hasText: ... })`, `page.frameLocator(...)` cho iFrame) thay vì viết XPath tuyệt đối dài.
 
-Avoid fragile locators such as auto-generated class names or positional xpaths.
-
-## Playwright Locator Priority
-
-1. `getByRole()`
-2. `getByLabel()`
-3. `getByPlaceholder()`
-4. `getByText()`
-5. `getByTestId()`
-6. `css selector`
-7. `xpath` (last resort)
-
-Avoid fragile selectors such as dynamic class names.
-
-> **Note:** For detailed locator rules, refer to `.agent/rules/locator_strategy.md`.
+> **Note:** Chi tiết quy tắc xem tại `.agent/rules/locator_strategy.md` và `.agent/rules/playwright_rules.md`.
 
 ---
 
@@ -340,11 +370,11 @@ Avoid fragile selectors such as dynamic class names.
 
 The agent MUST also follow the detailed rules defined in `.agent/rules/`:
 
-- [automation_rules.md](.agent/rules/automation_rules.md) — General automation best practices
-- [locator_strategy.md](.agent/rules/locator_strategy.md) — Detailed locator selection rules
-- [playwright_rules.md](.agent/rules/playwright_rules.md) — Playwright-specific rules
+- [automation_rules.md](.agent/rules/automation_rules.md) — General automation best practices (5-tier DRY, False Healing prevention, Git Flow)
+- [locator_strategy.md](.agent/rules/locator_strategy.md) — 4-Tier Master Locator Priority & Scoping
+- [playwright_rules.md](.agent/rules/playwright_rules.md) — Playwright standards, wait strategy, fixture injection
 - [selenium_rules.md](.agent/rules/selenium_rules.md) — Selenium-specific rules
-- [appium_rules.md](.agent/rules/appium_rules.md) — Appium mobile automation rules
+- [appium_rules.md](.agent/rules/appium_rules.md) — Appium mobile automation rules (`AppiumBy`)
 - [api_rules.md](.agent/rules/api_rules.md) — API automation standards, assertions, auth management
 
 ---
@@ -353,14 +383,14 @@ The agent MUST also follow the detailed rules defined in `.agent/rules/`:
 
 The agent may consult additional documentation in the `references/` folder:
 
-- `PROJECT_CONTEXT.md` — Project domain, tech stack, key modules
-- `TEST_STRATEGY.md` — Testing objectives, scope, execution plan
-- `PROMPT_TEMPLATES.md` — Reusable prompt templates for common QA tasks
+- `PROJECT_CONTEXT.md` — Project domain, tech stack, key modules, secure credentials
+- `TEST_STRATEGY.md` — Testing objectives, scope, targeted local & CI execution plan
+- `PROMPT_TEMPLATES.md` — Reusable prompt templates (11-12 columns TC metadata, 5-tier DRY POM)
 
-External references (thay thế cho các file đã gộp):
+External references:
 
-- `plans/automation/project_architecture/README.md` — Repository structure & project architecture (thay thế REPOSITORY_MAP.md)
-- `GEMINI.md` > "Cleanup & Delivery" — Quality checklist / Definition of Done (thay thế SELF_CHECK.md)
+- `plans/automation/project_architecture/README.md` — Repository structure & project architecture
+- `GEMINI.md` > "Cleanup & Delivery" — Quality checklist / Definition of Done
 
 ---
 
@@ -368,17 +398,16 @@ External references (thay thế cho các file đã gộp):
 
 Depending on the request, the agent may return:
 
-- Manual test cases (structured format)
-- Automation scripts (Java/TypeScript)
-- API tests (REST Assured)
-- Locator recommendations
-- Test data (structured, randomized, traceable)
-- Automation framework design
-- Requirements documents
+- Manual test cases (chuẩn 11-12 cột đầy đủ metadata)
+- Automation scripts (Playwright TypeScript chuẩn 5 tầng DRY hoặc Java/Selenium khi yêu cầu)
+- API tests (Playwright API / REST Assured)
+- Locator recommendations (4-tier semantic locators)
+- Test data (structured, randomized, traceable qua UUID/timestamp)
+- Requirements documents & analysis
 
-Automation outputs should include:
+Automation outputs **BẮT BUỘC** đáp ứng:
 
-- Page Object classes
-- Test classes
-- Assertions validating expected behavior
-- Clean, readable, maintainable code (no debug logs, no commented code)
+- **Tuân thủ 5 tầng DRY Reusability:** Không tạo Page Object trùng lặp, bắt buộc inject qua `fixture/index.ts`, dùng hàm sinh data từ `core/utils/`.
+- **Nguyên tắc Chống False Healing:** Tuyệt đối không sửa assertion theo lỗi sai của ứng dụng để ép test PASS. Nếu gặp App Bug, giữ nguyên assertion đúng và đánh dấu `test.fixme(...)` kèm mã Jira Bug.
+- **Traceability qua Jira Tag:** Đánh tag `@<JIRA_KEY>` và module tag vào `test.describe` options.
+- **Clean Code:** Không debug log (`console.log`), không commented code, không hardcoded sleeps.

@@ -70,7 +70,7 @@ Thực hiện theo hướng dẫn chi tiết trong skill `rbt_manual_testing` �
    `| TC ID | Module | Risk Level | Test Title | Pre-Condition | Test Steps | Expected Result | Priority | Test Data | Automatable | Auto Type | Tags |`
 2. **Chạy Self-Quality Gate (5 tiêu chí):** Unique TC ID, 1-to-1 Step-Expected matching, Concrete Test Data, Field Validation Coverage, và Automation Metadata Ready.
 3. Xuất dưới dạng Artifact (`test_cases_<module>.md`).
-4. **Export / Sync Options:** Đồng bộ vào Google Sheet dự án qua [sheet_writer.js](file:///Users/anhtester/AnhTester/Antigravity/antigravity-testing-kit/scripts/integrations/google_sheet/sheet_writer.js) hoặc xuất định dạng CSV cho Jira Xray/TestRail nếu user yêu cầu.
+4. **Export / Sync Options:** Đồng bộ vào Google Sheet dự án qua `scripts/integrations/google_sheet/sheet_writer.js` hoặc xuất định dạng CSV cho Jira Xray/TestRail nếu user yêu cầu.
 
 ## Output
 

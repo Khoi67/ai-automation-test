@@ -50,7 +50,7 @@ Workflow này sử dụng **Mode QUICK** của skill `rbt_manual_testing` để 
    - Auto Type (`UI` / `API` / `Unit` / `N/A`)
    - Tags (`@Smoke`, `@Regression`, `@CriticalPath`, `@Security`, `@Boundary`)
 7. **Chạy Self-Quality Gate:** Tự kiểm tra 5 tiêu chí chất lượng (Unique TC ID, Step-Expected 1-1, Concrete Test Data, Field Coverage, Automation Metadata Ready).
-8. **Xuất ra bảng Markdown chuẩn**, sẵn sàng sync vào Google Sheets (qua [sheet_writer.js](file:///Users/anhtester/AnhTester/Antigravity/antigravity-testing-kit/scripts/integrations/google_sheet/sheet_writer.js)) hoặc export CSV cho Jira Xray/TestRail.
+8. **Xuất ra bảng Markdown chuẩn**, sẵn sàng sync vào Google Sheets (qua `scripts/integrations/google_sheet/sheet_writer.js`) hoặc export CSV cho Jira Xray/TestRail.
 
 ## Bảng Output Standard
 
@@ -60,13 +60,13 @@ Workflow này sử dụng **Mode QUICK** của skill `rbt_manual_testing` để 
 
 ## Quy tắc quan trọng
 
+- **Token Safety Threshold (BẮT BUỘC):** Tối đa xuất **25 Test Cases mỗi lượt/batch**. Nếu module có > 25 TCs, Agent **bắt buộc chia nhỏ thành Batch 1, Batch 2...** để đảm bảo chi tiết từng bước (Steps, Expected, Test Data) không bị mô hình cắt cụt hoặc tóm tắt sơ sài.
 - Test Data phải cụ thể: `test_login_01@domain.com`, không phải "email hợp lệ"
 - Phải bao gồm cả Positive, Negative, Boundary, Edge cases, và Advanced Non-functional scenarios
 - Mỗi trường input phải có validation TCs riêng (không gộp nhiều trường vào 1 TC)
 - Gắn đầy đủ Metadata cho Automation (`Automatable`, `Auto Type`, `Tags`)
 - Chạy Self-Quality Gate rà soát chất lượng trước khi deliver
 - TC ID theo format thống nhất do user quy ước hoặc mặc định `[DỰ_ÁN]_[MODULE]_TC_[SỐ]`
-- Nếu quá nhiều TCs → chia thành Part 1, Part 2 và hỏi user
 
 ## Khi nào chuyển sang FULL RBT
 

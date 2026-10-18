@@ -18,24 +18,30 @@ rules:
 ## Các Bước Thực Hiện Chi Tiết
 
 ### Bước 0: Pre-Push Quality Gate (Chốt Chặn Kiểm Thử Bắt Buộc)
-> **MANDATORY:** Trước khi tạo nhánh, commit hoặc push bất kỳ dòng code nào lên Git, hệ thống **BẮT BUỘC** phải chạy kiểm thử toàn bộ test suite cục bộ:
+> **MANDATORY:** Trước khi tạo nhánh, commit hoặc push bất kỳ dòng code nào lên Git, hệ thống **BẮT BUỘC** phải chạy kiểm thử local có mục tiêu:
 > ```bash
 > npm run typecheck
-> npx playwright test
+> # Chạy targeted test cho module vừa phát triển hoặc các file spec bị ảnh hưởng:
+> npx playwright test tests/ui/<module>/
+> # Hoặc chạy trực tiếp các test file vừa sửa đổi:
+> # npx playwright test $(git diff --name-only origin/main | grep '\.spec\.ts$')
 > ```
 > - **Nếu có bất kỳ Test Case nào FAILED hoặc có lỗi TypeScript:** **DỪNG NGAY LẬP TỨC!** Tuyệt đối không được phép tạo branch hay push code lên GitHub.
 > - **Chỉ khi PASS 100% (hoặc các test case lỗi app đã được gắn cờ `test.fixme()`):** Mới được phép tiếp tục sang Bước 1.
 
 ---
 
-### Bước 1: Tạo Feature Branch & Chuyển Nhánh
+### Bước 1: Đồng Bộ Rebase & Tạo Feature Branch
 0. Gửi thông báo:
    ```bash
-   node scripts/integrations/notify_step.js --ticket <JIRA_KEY> --step 1 --title "Tạo Feature Branch" --detail "Tạo nhánh mới feat/<JIRA_KEY> từ main và chuyển sang nhánh làm việc"
+   node scripts/integrations/notify_step.js --ticket <JIRA_KEY> --step 1 --title "Tạo Feature Branch" --detail "Rebase trên main mới nhất và tạo nhánh feat/<JIRA_KEY>"
    ```
-1. Tạo và checkout sang feature branch mới:
+1. Đồng bộ và rebase từ `main` mới nhất để chống Merge Conflict khi nhiều Agent hoặc thành viên làm việc song song:
    ```bash
-   # Quy ước đặt tên: feat/<JIRA_KEY>
+   git fetch origin main && git rebase origin/main
+   ```
+2. Tạo và checkout sang feature branch mới (tuân thủ quy ước `feat/<JIRA_KEY>`):
+   ```bash
    git checkout -b feat/<JIRA_KEY>
    ```
 
@@ -46,15 +52,16 @@ rules:
    ```bash
    node scripts/integrations/notify_step.js --ticket <JIRA_KEY> --step 2 --title "Commit & Push Feature Branch" --detail "Đẩy mã nguồn kiểm thử lên nhánh feat/<JIRA_KEY> và sinh Pull Request link"
    ```
-1. Stage, commit và push nhánh tính năng:
+1. Stage có chọn lọc (tránh commit file rác/artifacts) và push nhánh tính năng:
    ```bash
-   git add .
+   # Chỉ stage các thư mục mã nguồn và test data cần thiết
+   git add tests/ page-object/ fixture/ workflow/ core/ constant/ test-data/
    git commit -m "feat(automation): add test suite and POM for <JIRA_KEY>"
    git push -u origin feat/<JIRA_KEY>
    ```
 2. Sinh liên kết mở Pull Request:
    ```
-   https://github.com/Khoi67/ai-automation-test/compare/main...feat/<JIRA_KEY>?expand=1
+   https://github.com/<GITHUB_OWNER>/<GITHUB_REPO>/compare/main...feat/<JIRA_KEY>?expand=1
    ```
 
 ---

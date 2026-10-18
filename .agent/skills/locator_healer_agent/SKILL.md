@@ -48,26 +48,35 @@ Locator is considered broken when:
 - Read error log to identify which locator failed
 - Identify the Page Object file and line number
 
-### Step 2: Inspect Current DOM
-- Open the page using MCP tools
-- Navigate to the same state as the failing test
-- Inspect the target area in DOM
+### Step 2: Inspect Current DOM (Chống Blind Healing)
+- Mở trang bằng Playwright MCP theo đúng thứ tự bắt buộc:
+  1. `browser_navigate(url)`
+  2. `browser_resize(width=1920, height=1080)` (bắt buộc set desktop viewport chuẩn)
+  3. `browser_snapshot()` hoặc `browser_take_screenshot()`
+- **Chốt chặn chống Blind Healing (CRITICAL GUARDRAIL):**
+  - Trước khi cố tìm locator thay thế, kiểm tra xem UI có đang bị lỗi ứng dụng (HTTP 500/502, crash trắng trang, spinner loading vô tận, hoặc modal không mở do bug logic).
+  - **NẾU LÀ APP BUG:** **DỪNG HEALING NGAY LẬP TỨC!** Không được tự ý nhặt một element ngẫu nhiên khác trên trang để thay thế nhằm ép test pass (Blind / False Healing). Đánh dấu `test.fixme()` kèm Jira Bug ticket.
+  - **NẾU DO DOM THAY ĐỔI:** Tiếp tục sang Step 3 để tìm locator mới.
 
-### Step 3: Find Alternative Locator
-Try the following in priority order:
+### Step 3: Find Alternative Locator (4-Tier Master Priority Map)
+Tìm kiếm locator thay thế theo đúng 4 tầng ưu tiên chuẩn:
 
-1. Accessibility attributes (`aria-label`, `role`)
-2. `data-testid` / `data-test`
-3. `id` (if stable, not auto-generated)
-4. Semantic locator (Playwright `getByRole`, `getByLabel`)
-5. `css selector` (stable attributes)
-6. `xpath` (relative, not positional)
+1. **Tier 1 — User-Facing Semantic & Accessibility (Ưu tiên cao nhất):**
+   - Playwright: `getByRole()`, `getByLabel()`, `getByPlaceholder()`, `getByText()`
+   - Appium: `AppiumBy.accessibilityId()`
+2. **Tier 2 — Dedicated Test Attributes:**
+   - `getByTestId()` hoặc `[data-testid]`, `[data-test]`, `[data-qa]`
+3. **Tier 3 — Stable DOM Identifiers:**
+   - `id`, `name`, `resource-id` (chỉ dùng khi cố định, cấm auto-generated hashes)
+4. **Tier 4 — Scoped CSS / Relative XPath (Lựa chọn cuối cùng):**
+   - Áp dụng Scoping: `parentContainer.filter({ hasText: ... }).locator(...)`
+   - Với iFrame: dùng `page.frameLocator(...)`
 
 ### Step 4: Validate & Replace
-- Verify the new locator matches exactly one element
+- Verify the new locator matches exactly one element (Strict Uniqueness: `await expect(locator).toHaveCount(1)`)
 - Verify the element is the correct one (text, position, behavior)
-- Replace the broken locator in the Page Object class
-- Re-run the test
+- Replace the broken locator in the Page Object class (không viết inline trong test spec)
+- Re-run the test to verify stability
 
 ---
 

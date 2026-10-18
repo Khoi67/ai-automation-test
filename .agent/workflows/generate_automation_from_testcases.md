@@ -58,6 +58,17 @@ Nếu user chưa cung cấp đủ → hỏi trước khi bắt đầu.
 
 ## Các bước thực hiện
 
+### Bước 0: Pre-Flight Environment Check (Kiểm Tra Môi Trường Ứng Dụng)
+Trước khi tiến hành phân tích hay chạy bất kỳ bước kiểm thử nào, Agent **bắt buộc** thực hiện healthcheck nhanh đối với URL ứng dụng mục tiêu:
+1. Gửi request kiểm tra tính sẵn sàng của URL (sử dụng curl hoặc native fetch/browser check).
+2. **Nếu server phản hồi lỗi hạ tầng (`502 Bad Gateway`, `503 Service Unavailable`, `504 Gateway Timeout`, hoặc `ECONNREFUSED`):**
+   - **DỪNG WORKFLOW NGAY LẬP TỨC!**
+   - Báo cáo rõ ràng cho người dùng: *"Môi trường ứng dụng mục tiêu hiện đang DOWN hoặc mất kết nối mạng. Workflow tự động tạm dừng để tránh rơi vào vòng lặp Auto-Heal vô nghĩa."*
+   - Tuyệt đối không cố gắng inspect UI hay tự sửa locator khi server đang sập.
+3. **Chỉ khi HTTP status trong dải hợp lệ (`200 OK`, `3xx Redirect`):** Mới tiếp tục sang Bước 1.
+
+---
+
 ### Bước 1: Khởi tạo, Phân tích & Lên Kế Hoạch (Context & Analysis)
 
 1. **Đọc file test cases** do user cung cấp:
@@ -245,15 +256,16 @@ Nếu user chưa cung cấp đủ → hỏi trước khi bắt đầu.
      1. Đọc error log / stack trace → xác định step fail
      2. Phân loại lỗi:
 
-        | Lỗi | Hành động |
-        |---|---|
-        | Element not found | Mở MCP → snapshot → verify/thay locator |
-        | Click intercepted | Chờ overlay biến mất → retry click |
-        | Timeout | Tăng timeout hoặc thêm wait condition |
-        | Assertion fail | Kiểm tra expected value vs actual → cập nhật assertion |
-        | Navigation error | Kiểm tra URL, redirect, page load |
-        | Test data conflict | Sinh data unique mới |
-        | Import/compile error | Sửa import, check class name |
+        | Lỗi | Nguyên nhân | Hành động |
+        |---|---|---|
+        | Element not found | DOM thay đổi / sai selector | Mở MCP → snapshot → verify/thay locator |
+        | Click intercepted | Bị che bởi modal/overlay | Chờ overlay biến mất → retry click |
+        | Timeout | Network chậm / render trễ | Tăng timeout hoặc thêm wait condition thích hợp |
+        | Assertion fail (Code Test) | Code test viết sai text/attribute so với TC | Sửa lại assertion trong test spec cho đúng chuẩn TC gốc |
+        | Assertion fail (App Bug) | App hiển thị sai so với Requirement/TC | ⛔ NGHIÊM CẤM False Healing (không sửa assertion theo cái sai của App để ép test PASS)! Dừng Auto-Heal, đánh dấu test.fixme() kèm comment mô tả Bug và ghi nhận vào báo cáo |
+        | Navigation error | Sai route / redirect | Kiểm tra URL, redirect, page load |
+        | Test data conflict | Trùng lặp username/email | Sinh data unique mới qua random/timestamp |
+        | Import/compile error | Sai path / type mismatch | Sửa import, check class name và kiểu dữ liệu |
 
      3. Sửa code bằng replace_file_content / multi_replace_file_content
      4. Chạy lại test
@@ -291,9 +303,9 @@ Nếu user chưa cung cấp đủ → hỏi trước khi bắt đầu.
    | TC03 | Đăng ký tài khoản | ⚠️ SKIP | — | Cần CAPTCHA |
 
    ## Files Created
-   - src/pages/login.page.ts
-   - src/pages/dashboard.page.ts
-   - src/tests/login.spec.ts
+   - page-object/login-page.ts
+   - page-object/home-page.ts
+   - tests/ui/auth/login.spec.ts
    ```
 
 3. **Báo cáo** cho user:

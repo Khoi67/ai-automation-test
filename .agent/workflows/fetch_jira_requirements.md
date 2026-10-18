@@ -46,6 +46,7 @@ Workflow này giúp lấy requirements, user stories, hoặc issues từ Jira v�
    - Kiểm tra output file được tạo trong `requirements/jira/` (hoặc `--output` chỉ định).
    - Nếu format `json`: Đọc và hiển thị tóm tắt issues cho user.
    - Nếu format `md`: Hiển thị nội dung markdown requirement cho user review.
+   - **Kiểm tra thông tin đính kèm & UI Context:** Kiểm tra các trường đính kèm (`attachments`, `figma_links`, hình ảnh mockup UI) trong dữ liệu Jira trả về. Nạp các liên kết Figma, hình ảnh màn hình thiết kế vào ngữ cảnh phân tích UI để hỗ trợ việc đối chiếu UI layout, định danh element và luồng nghiệp vụ trực quan trước khi sinh kịch bản test.
    - Nếu gặp lỗi: Đọc log, phân tích nguyên nhân theo bảng Troubleshooting trong skill.
 
 5. **Xử lý lỗi thường gặp:**

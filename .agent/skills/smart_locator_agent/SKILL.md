@@ -37,38 +37,53 @@ The agent must:
 
 ---
 
-## Locator Priority
+## Locator Priority (4-Tier Master Priority Map)
 
-Use the following priority order:
+Mọi locator phải tuân theo thứ tự 4 tầng ưu tiên chuẩn:
 
-1. Accessibility attributes (aria-label, role)
-2. `data-testid` / `data-test` / `data-qa`
-3. `id`
-4. `name`
-5. Framework semantic locator
-6. `css selector`
-7. `xpath` (last option)
+1. **Tier 1 — User-Facing Semantic & Accessibility (Ưu tiên cao nhất):**
+   - Playwright: `getByRole()`, `getByLabel()`, `getByPlaceholder()`, `getByText()`
+   - Appium: `AppiumBy.accessibilityId()`
+   - Phản ánh trung thực trải nghiệm người dùng, bền vững nhất trước thay đổi DOM.
+2. **Tier 2 — Dedicated Test Attributes:**
+   - Playwright: `getByTestId()` hoặc `[data-testid]`, `[data-test]`, `[data-qa]`
+3. **Tier 3 — Stable DOM Identifiers:**
+   - `id`, `name`, `resource-id` (chỉ dùng khi tĩnh, không chứa hash tự sinh)
+4. **Tier 4 — Scoped CSS / Relative XPath (Lựa chọn cuối cùng):**
+   - CSS có thuộc tính ngữ nghĩa hoặc XPath tương đối ngắn có neo mốc.
 
 > **Note:** For detailed rules, refer to `.agent/rules/locator_strategy.md`.
 
 ---
 
-## Playwright Locators
+## Playwright Locators & Scoping Techniques
 
-Preferred locator methods:
-
-1. `getByRole()` — Best for semantic elements
-2. `getByLabel()` — Best for form fields with labels
+### 1. Preferred Semantic Locator Methods:
+1. `getByRole()` — Best for semantic elements (button, link, heading, dialog, checkbox...)
+2. `getByLabel()` — Best for form inputs associated with labels
 3. `getByPlaceholder()` — Best for inputs with placeholder text
-4. `getByText()` — Best for text content
+4. `getByText()` — Best for static text elements
 5. `getByTestId()` — Best when data-testid is available
 
-Example:
+### 2. Component Scoping & Filtering (Thay thế XPath phức tạp):
+Khi phần tử nằm trong danh sách hoặc bảng động, định vị container rồi dùng `.filter()`:
 ```typescript
-page.getByRole("button", { name: "Submit" })
-page.getByLabel("Email")
-page.getByPlaceholder("Enter your password")
+// Tìm dòng chứa tên khóa học rồi bấm nút Xóa bên trong
+const targetRow = page.getByRole('row').filter({ hasText: 'Playwright Masterclass' });
+await targetRow.getByRole('button', { name: 'Xóa' }).click();
+
+// Scope bên trong Modal Dialog
+const confirmModal = page.getByRole('dialog', { name: 'Xác nhận xóa' });
+await confirmModal.getByRole('button', { name: 'Đồng ý' }).click();
 ```
+
+### 3. iFrame & Shadow DOM Handling:
+- **iFrame:** Bắt buộc khai báo context frame rõ ràng:
+  ```typescript
+  const paymentFrame = page.frameLocator('iframe[name="stripe-checkout"]');
+  await paymentFrame.getByPlaceholder('Card number').fill('4242...');
+  ```
+- **Shadow DOM:** Playwright tự động xuyên qua open Shadow DOM đối với cả CSS và Semantic Locators.
 
 > **Note:** For detailed rules, refer to `.agent/rules/playwright_rules.md`.
 

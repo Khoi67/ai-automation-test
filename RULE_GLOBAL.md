@@ -4,7 +4,7 @@
 
 - Mặc định giao tiếp, phân tích và giải thích mã nguồn bằng Tiếng Việt.
 - Code comments có thể viết bằng Tiếng Anh để đảm bảo tính quốc tế.
-- Tên biến, hàm, class luôn viết bằng Tiếng Anh.
+- Tên biến, hàm, class, tên file code luôn viết bằng Tiếng Anh (tuân thủ camelCase, PascalCase, kebab-case). Tuy nhiên, nội dung mô tả trong `test.describe('...')`, `test('...')` và các câu thông báo báo cáo kết quả kiểm thử được phép viết bằng Tiếng Việt có dấu rõ ràng theo chuẩn của `automation_rules.md`.
 
 ## An toàn dữ liệu (CRITICAL)
 
@@ -32,7 +32,7 @@ AI **bắt buộc** phải dọn dẹp mọi file tạm, file debug, hoặc file
 | `dom_dump.txt`, `html_dump.html`                                | DOM dump tạm                                  |
 | `network_requests.txt`, `console_log.txt`                       | Log mạng/console tạm                         |
 | `scratch_*.py`, `scratch_*.js`, `scratch_*.ts`                | Script tạm thời                              |
-| File `.py/.js/.ts` nằm ngoài `src/`, `tests/`, `scripts/` | Script lạc chỗ                               |
+| File script nháp (.py/.js/.ts) nằm lạc ở thư mục gốc và KHÔNG thuộc các thư mục kiến trúc chuẩn của dự án (tests/, page-object/, fixture/, workflow/, core/, constant/, test-data/, scripts/, src/) | Script lạc chỗ |
 
 ---
 
@@ -46,6 +46,9 @@ AI **bắt buộc** phải dọn dẹp mọi file tạm, file debug, hoặc file
 
 ### KHÔNG được xóa
 
+- Các thư mục mã nguồn kiến trúc 5 tầng DRY: `page-object/**`, `fixture/**`, `workflow/**`, `core/**`, `constant/**`, `test-data/**`, `tests/**`, `scripts/**`, `requirements/**`, `test-cases/**`, `plans/**`
+- Thư mục tích hợp Bot trigger: `scratch/` (giữ nguyên thư mục `scratch/` và các file trigger hợp lệ của Telegram Bot nếu đang trong tiến trình E2E)
+- Các file Artifact báo cáo chính thức: `flaky_analysis.md`, `requirements_spec.md` khi người dùng yêu cầu giữ lại để review
 - `playwright-report/**`, `test-results/**` — báo cáo test chính thức do Playwright sinh ra
 - `logs/` — thư mục log có chủ ý của dự án
 - `artifacts/` — deliverable đã được xác nhận

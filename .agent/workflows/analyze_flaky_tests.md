@@ -53,8 +53,8 @@ Agent cần ít nhất **1 trong các input** sau từ user:
 2. **Chạy test** để tái hiện lỗi (nếu chưa có error log):
    - Chạy test **3 lần liên tiếp** bằng `run_command`:
      ```bash
-     # Playwright
-     npx playwright test <test_file> --retries=0 --reporter=list
+     # Playwright (Bật --trace on để thu thập Network log, Console log và DOM snapshot khi fail)
+     npx playwright test <test_file> --retries=0 --repeat-each=3 --trace on --reporter=list
 
      # Pytest
      python -m pytest <test_file> -v --count=3
@@ -203,7 +203,7 @@ Agent cần ít nhất **1 trong các input** sau từ user:
    |---|---|
    | ✅ **3/3 PASS** | Test đã ổn định → cập nhật artifact, báo cáo thành công |
    | ⚠️ **2/3 PASS** | Vẫn còn flaky → quay lại Bước 2 phân tích lần fail, fix tiếp (tối đa 3 vòng) |
-   | ❌ **0-1/3 PASS** | Fix sai hướng → rollback, phân tích lại root cause |
+   | ❌ **0-1/3 PASS** | Fix sai hướng → Rollback về trạng thái sạch: `git checkout -- <test_file> <page_object_file>`, sau đó phân tích lại root cause từ đầu, tránh sửa chồng chéo lên code đã hỏng |
 
 3. **Stability Checklist** (phải đạt toàn bộ trước khi kết thúc):
    - [ ] Locator unique và ổn định qua nhiều lần reload

@@ -28,40 +28,48 @@ description: Skill quản lý quy trình phân nhánh (Branching Strategy) và b
 ## 🔄 2. QUY TRÌNH BÀN GIAO THEO NHÁNH (5 BƯỚC CHUẨN)
 
 ### Bước 1: Kiểm Tra Cổng Chất Lượng Cục Bộ (Quality Gate)
-Trước khi tạo nhánh hoặc commit:
+Trước khi tạo nhánh hoặc commit, thực hiện kiểm tra kiểu dữ liệu và chạy targeted test theo module/tag vừa phát triển:
 ```bash
 npm run typecheck
-npx playwright test
+npx playwright test tests/ui/<module>/ --grep @<JIRA_KEY>
 ```
 *Nếu có lỗi typing hoặc test fail: DỪNG LẠI và sửa lỗi ngay.*
 
 ---
 
-### Bước 2: Tạo và Chuyển Sang Feature Branch
-Kiểm tra nhánh hiện tại:
+### Bước 2: Đồng Bộ và Tạo Feature Branch (Chống Branch-on-Branch)
+Trước khi tạo nhánh mới, **BẮT BUỘC** chuyển về nhánh `main` và kéo code mới nhất để tránh lỗi tạo nhánh đè lên nhánh cũ chưa merge (Branch-on-Branch):
 ```bash
-git branch --show-current
-```
-Nếu đang ở `main` hoặc nhánh khác:
-```bash
-# Tạo nhánh mới và chuyển sang nhánh đó
+# 1. Chuyển về nhánh main và đồng bộ
+git checkout main
+git pull origin main
+
+# 2. Tạo nhánh mới theo đúng loại tác vụ
+# Kịch bản mới:
 git checkout -b feat/<JIRA_KEY>
+
+# Hoặc sửa lỗi automation / heal locator:
+# git checkout -b fix/<JIRA_KEY>
+
+# Hoặc retest bug đã được Dev fix:
+# git checkout -b fix/retest-<JIRA_KEY>
 ```
 
 ---
 
-### Bước 3: Conventional Commit
-Thực hiện staging và commit với message chuẩn ngữ nghĩa:
+### Bước 3: Conventional Commit (Staging Có Chọn Lọc)
+**TUYỆT ĐỐI CẤM `git add .`** để tránh commit nhầm các file artifacts (`task.md`, `scratch/`, logs tạm, `.env`). Thực hiện staging có chọn lọc đúng các thư mục mã nguồn:
 ```bash
 git status
-git add .
+git add tests/ page-object/ fixture/ workflow/ core/ constant/ test-data/
 git commit -m "feat(automation): add test suite and POM for <JIRA_KEY>"
 ```
 
 ---
 
 ### Bước 4: Đẩy Nhánh Lên Remote (Push with Upstream)
-Đẩy nhánh tính năng lên GitHub:
+Trước khi push, đảm bảo đồng bộ với head của main: `git fetch origin main && git rebase origin/main`.
+Sau đó đẩy nhánh tính năng lên GitHub:
 ```bash
 git push -u origin feat/<JIRA_KEY>
 ```
@@ -71,7 +79,7 @@ git push -u origin feat/<JIRA_KEY>
 ### Bước 5: Sinh Liên Kết Pull Request & Báo Cáo
 Tự động trích xuất GitHub Remote URL để tạo link mở Pull Request:
 ```
-https://github.com/<OWNER>/<REPO>/compare/main...feat/<JIRA_KEY>?expand=1
+https://github.com/<GITHUB_OWNER>/<GITHUB_REPO>/compare/main...feat/<JIRA_KEY>?expand=1
 ```
 * Gửi thông báo kèm link PR về nhóm Telegram của dự án.
 * Chuyển trạng thái Jira sang `In Review` (nếu không có Bug) hoặc giữ `In Progress` (nếu có Bug fixme).
@@ -111,6 +119,8 @@ https://github.com/<OWNER>/<REPO>/compare/main...feat/<JIRA_KEY>?expand=1
 | ❌ Điều cấm | ✅ Hành động đúng |
 | :--- | :--- |
 | `git push origin main` | `git push -u origin feat/<JIRA_KEY>` |
-| Push khi test local còn FAILED | Chạy `npx playwright test` đạt 100% pass/fixme trước khi push |
-| Đặt tên nhánh tùy tiện (`test1`, `my-branch`) | Tuân thủ convention: `feat/<JIRA_KEY>` |
-| Dùng `git pull` hoặc rebase gây ghi đè code | Giữ nguyên trạng thái local theo quy định `GEMINI.md` |
+| Push khi test local còn FAILED | Chạy `npm run typecheck` và `npx playwright test tests/ui/<module>/` đạt 100% pass/fixme trước khi push |
+| Đặt tên nhánh tùy tiện (`test1`, `my-branch`) | Tuân thủ convention: `feat/<JIRA_KEY>`, `fix/<JIRA_KEY>`, `fix/retest-<JIRA_KEY>` |
+| Dùng `git add .` bừa bãi làm dính file rác | Staging có chọn lọc: `git add tests/ page-object/ fixture/ workflow/ core/ constant/ test-data/` |
+| Tạo nhánh từ nhánh feature cũ (Branch-on-Branch) | Luôn `git checkout main && git pull origin main` trước khi tạo nhánh mới |
+| Dùng `git push --force` hoặc `git reset --hard` làm mất code | Luôn chạy `git fetch origin main && git rebase origin/main` trước khi push để tránh Merge Conflict |
