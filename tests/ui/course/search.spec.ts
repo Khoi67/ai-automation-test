@@ -10,8 +10,8 @@ test.describe('SCRUM-7: Course Search', { tag: ['@SCRUM-7', '@course', '@search'
     const keyword = 'React';
     await homePage.searchCourse(keyword);
 
-    // Chờ 1 chút để DOM cập nhật nếu client-side filtering hoặc API
-    await page.waitForTimeout(2000);
+    // Chờ danh sách khóa học hiển thị (smart wait)
+    await expect(homePage.courseCards.getLocator().first()).toBeVisible();
     // Kiểm tra danh sách hiển thị
     const count = await homePage.getCourseCardCount();
     expect(count).toBeGreaterThan(0);
@@ -23,13 +23,12 @@ test.describe('SCRUM-7: Course Search', { tag: ['@SCRUM-7', '@course', '@search'
     }
   });
 
-  // Đánh dấu fixme do Bug SCRUM-8 trên Jira: Tìm kiếm từ khóa lạ vẫn trả về danh sách khóa học
+  // Đánh dấu fixme do Bug SCRUM-8 trên Jira: Tìm kiếm từ khóa lạ vẫn trả về danh sách khóa học (Retest xác nhận Dev chưa fix)
   test.fixme('TC_SEARCH_02: Tìm kiếm không có kết quả', async ({ homePage, page }) => {
     const keyword = 'xyz123randomnotfound';
     await homePage.searchCourse(keyword);
 
-    await page.waitForTimeout(2000);
-    // Kiểm tra thông báo không tìm thấy kết quả từ hệ thống
+    // Kiểm tra thông báo không tìm thấy kết quả từ hệ thống (smart wait tự động)
     await expect(page.getByText('Không tìm thấy khóa học nào phù hợp')).toBeVisible();
   });
 
